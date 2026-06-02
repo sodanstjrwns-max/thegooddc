@@ -218,8 +218,9 @@ section { position: relative; }
 /* ---------- HERO ---------- */
 .hero { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; color: #fff; }
 .hero-bg { position: absolute; inset: -10% 0; z-index: -2; background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 55%, var(--accent-dark) 130%); }
+.hero-bg.has-img { background-image: url('/images/hero.webp'); background-size: cover; background-position: center; }
 .hero-bg::after { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(45,212,191,0.25) 0, transparent 45%); }
-.hero-overlay { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(17,74,126,0.35) 0%, rgba(17,74,126,0.1) 50%, rgba(17,74,126,0.55) 100%); }
+.hero-overlay { position: absolute; inset: 0; z-index: -1; background: linear-gradient(115deg, rgba(17,74,126,0.92) 0%, rgba(30,111,184,0.7) 45%, rgba(17,74,126,0.45) 100%); }
 .hero-inner { padding: 140px 0 100px; max-width: 860px; }
 .hero h1 { font-size: clamp(38px, 7vw, 82px); line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 26px; }
 .hero h1 .grad { background: linear-gradient(120deg, #fff, var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
@@ -257,9 +258,9 @@ section { position: relative; }
 .core-card p { opacity: 0.92; margin: 0 0 18px; font-size: 15px; line-height: 1.6; }
 .core-card .more { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; }
 .core-card:hover .more { gap: 14px; }
-.core-1::before { background-image: linear-gradient(135deg, #114A7E, #1E6FB8); }
-.core-2::before { background-image: linear-gradient(135deg, #1E6FB8, #2DD4BF); }
-.core-3::before { background-image: linear-gradient(135deg, #14a89a, #4A95D6); }
+.core-1::before { background-image: url('/images/core-implant.webp'); }
+.core-2::before { background-image: url('/images/core-aligner.webp'); }
+.core-3::before { background-image: url('/images/core-minish.webp'); }
 
 /* ---------- Split feature ---------- */
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }

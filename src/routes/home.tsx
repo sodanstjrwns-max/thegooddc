@@ -17,7 +17,7 @@ export const HomePage: FC = () => {
     >
       {/* ===== HERO ===== */}
       <section class="hero">
-        <div class="hero-bg" data-parallax="0.15"></div>
+        <div class="hero-bg has-img" data-parallax="0.15"></div>
         <div class="hero-overlay"></div>
         <div class="container hero-inner">
           <div class="hero-badge reveal"><i class="fa-solid fa-tooth"></i> 부산 강서구 명지 · 통합치의학과 전문의</div>
@@ -102,9 +102,7 @@ export const HomePage: FC = () => {
               <li><span class="fi"><i class="fa-solid fa-wave-square"></i></span><div><h4>정밀 신경치료기</h4><p>플라젠 신경치료기로 자연 치아를 최대한 보존합니다.</p></div></li>
             </ul>
           </div>
-          <div class="split-img reveal-scale" data-delay="2" style="display:grid;place-items:center;color:rgba(255,255,255,0.85);font-size:18px;font-weight:700;text-align:center;padding:40px">
-            <div><i class="fa-solid fa-tooth" style="font-size:64px;margin-bottom:16px;display:block"></i>디지털 정밀 진단 시스템</div>
-          </div>
+          <div class="split-img reveal-scale" data-delay="2" style="background-image:url('/images/digital-system.webp');background-size:cover;background-position:center"></div>
         </div>
       </section>
 

@@ -18,7 +18,7 @@ export const MissionPage: FC = () => {
       schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema()]}
     >
       <section class="hero" style="min-height:80vh">
-        <div class="hero-bg" data-parallax="0.12"></div>
+        <div class="hero-bg has-img" data-parallax="0.12"></div>
         <div class="hero-overlay"></div>
         <div class="container hero-inner" style="padding:160px 0 90px">
           <div class="hero-badge reveal"><i class="fa-solid fa-heart"></i> OUR MISSION</div>

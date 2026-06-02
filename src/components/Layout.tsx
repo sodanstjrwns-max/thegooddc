@@ -19,7 +19,7 @@ const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/di
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
   const url = canonical(path)
-  const img = ogImage ? canonical(ogImage) : canonical('/images/og-default.jpg')
+  const img = ogImage ? canonical(ogImage) : canonical('/images/hero.webp')
   const allSchemas = [dentistSchema(), organizationSchema(), ...schemas]
 
   return (
