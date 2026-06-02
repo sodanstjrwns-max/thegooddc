@@ -19,13 +19,27 @@
   /* ---- MOBILE drawer ---- */
   function initDrawer() {
     var toggle = document.querySelector('.nav-toggle');
-    var drawer = document.querySelector('.mobile-drawer');
+    var drawer = document.querySelector('.drawer');
+    var backdrop = document.querySelector('.drawer-backdrop');
     var close = document.querySelector('.drawer-close');
     if (!toggle || !drawer) return;
-    function open() { drawer.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    function shut() { drawer.classList.remove('open'); document.body.style.overflow = ''; }
+    function open() {
+      drawer.classList.add('open');
+      if (backdrop) backdrop.classList.add('open');
+      drawer.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+    function shut() {
+      drawer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('open');
+      drawer.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
     toggle.addEventListener('click', open);
     if (close) close.addEventListener('click', shut);
+    if (backdrop) backdrop.addEventListener('click', shut);
     drawer.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', shut); });
   }
 
