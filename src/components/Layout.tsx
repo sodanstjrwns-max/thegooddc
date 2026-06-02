@@ -51,7 +51,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
 
         {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
-        <meta name="theme-color" content="#2E7DF6" />
+        <meta name="theme-color" content="#FFFFFF" />
 
         {/* Fonts & Icons */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous" />

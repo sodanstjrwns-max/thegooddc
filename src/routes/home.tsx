@@ -50,7 +50,7 @@ export const HomePage: FC = () => {
       {/* ===================== HERO ===================== */}
       <section class="hero">
         <div class="container-wide hero-inner">
-          <div class="hero-text">
+          <div class="hero-text reveal">
             <span class="hero-badge"><i class="fa-solid fa-location-dot"></i> 부산 강서구 명지 · 통합치의학 전문의 진료</span>
             <h1>
               치과의 두려움을<br />
@@ -62,7 +62,7 @@ export const HomePage: FC = () => {
             </p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> 진료 예약하기</a>
-              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost on-navy btn-lg"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost btn-lg"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
             </div>
             <div class="hero-trust">
               <div class="tc"><i class="fa-solid fa-circle-check"></i><span>무통 마취 시스템</span></div>
@@ -70,10 +70,10 @@ export const HomePage: FC = () => {
               <div class="tc"><i class="fa-solid fa-circle-check"></i><span>원내 기공실 보유</span></div>
             </div>
           </div>
-          <div class="hero-visual reveal">
-            <div class="hero-frame">
-              <div class="ph"><i class="fa-solid fa-tooth"></i></div>
-            </div>
+        </div>
+        <div class="container-wide hero-stage reveal reveal-d1">
+          <div class="hero-frame">
+            <div class="ph"><i class="fa-solid fa-tooth"></i></div>
             <div class="hero-stat s1">
               <div class="n"><span data-count="24">24</span><span class="u">년</span></div>
               <div class="l">대표원장 임상 경력</div>
