@@ -15,7 +15,6 @@ interface LayoutProps {
 
 const FA = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css'
 const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css'
-const NOTO_SERIF = 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap'
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
@@ -52,13 +51,12 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
 
         {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
-        <meta name="theme-color" content="#0F2438" />
+        <meta name="theme-color" content="#2E7DF6" />
 
         {/* Fonts & Icons */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link rel="stylesheet" href={PRETENDARD} />
-        <link rel="stylesheet" href={NOTO_SERIF} />
         <link rel="stylesheet" href={FA} />
         <link rel="stylesheet" href="/static/style.css" />
 
@@ -84,7 +82,7 @@ const Header: FC = () => (
     <div class="bar">
       <a href="/" class="brand" aria-label={`${CLINIC.name} 홈`}>
         <span class="logo"><i class="fa-solid fa-tooth"></i></span>
-        <span>{CLINIC.name}<small>The Good Dental</small></span>
+        <span class="nm"><b>{CLINIC.name}</b><small>The Good Dental</small></span>
       </a>
       <nav aria-label="주 메뉴">
         <ul class="nav-top">
@@ -137,7 +135,7 @@ const MobileDrawer: FC = () => (
     <div class="drawer-backdrop" aria-hidden="true"></div>
     <aside class="drawer" aria-hidden="true">
       <div class="drawer-head">
-        <a href="/" class="brand"><span class="logo"><i class="fa-solid fa-tooth"></i></span><span>{CLINIC.name}</span></a>
+        <a href="/" class="brand"><span class="logo"><i class="fa-solid fa-tooth"></i></span><span class="nm"><b>{CLINIC.name}</b><small>The Good Dental</small></span></a>
         <button class="drawer-close" aria-label="메뉴 닫기"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <nav>
@@ -167,7 +165,7 @@ const Footer: FC = () => (
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <a href="/" class="brand"><span class="logo"><i class="fa-solid fa-tooth"></i></span><span>{CLINIC.name}</span></a>
+          <a href="/" class="brand"><span class="logo"><i class="fa-solid fa-tooth"></i></span><span class="nm"><b>{CLINIC.name}</b><small>The Good Dental</small></span></a>
           <p>{CLINIC.brandSlogan}</p>
           <p style="opacity:.7;font-size:13px">{CLINIC.address}</p>
           <div class="footer-social">

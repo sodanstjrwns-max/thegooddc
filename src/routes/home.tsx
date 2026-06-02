@@ -179,7 +179,7 @@ export const HomePage: FC = () => {
           <div class="reveal">
             <div class="shead" style="margin-bottom:0">
               <span class="eyebrow on-navy">Digital Dentistry</span>
-              <h2>원내 기공실에서<br /><span style="color:var(--gold-l)">직접, 더 빠르고 정확하게</span></h2>
+              <h2>원내 기공실에서<br /><span>직접, 더 빠르고 정확하게</span></h2>
               <p>보철물을 외부에 맡기지 않습니다. 밀링기 2대·3D 프린터 3대·구강 스캐너로 진료의 정확도와 속도를 함께 높입니다.</p>
             </div>
             <div class="dfeatures">
