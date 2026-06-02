@@ -17,18 +17,15 @@ export const MissionPage: FC = () => {
       keywords={['강서구 치과 소개', '명지 치과 철학', '더착한치과 미션']}
       schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema()]}
     >
-      <section class="hero" style="min-height:80vh">
-        <div class="hero-bg has-img" data-parallax="0.12"></div>
-        <div class="hero-overlay"></div>
-        <div class="container hero-inner" style="padding:160px 0 90px">
-          <div class="hero-badge reveal"><i class="fa-solid fa-heart"></i> OUR MISSION</div>
-          <h1 class="reveal" data-delay="1" style="font-size:clamp(34px,6vw,64px)">
-            치과 통증의 두려움을<br /><span class="grad">안심으로</span> 바꾸겠습니다
-          </h1>
-          <p class="hero-sub reveal" data-delay="2">{CLINIC.philosophy.vision}</p>
+      <section class="page-hero has-img">
+        <div class="bg" data-parallax="0.12" style="background-image:url('/images/hero.webp')"></div>
+        <div class="container">
+          <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]} />
+          <div class="eyebrow">OUR MISSION</div>
+          <h1>치과 통증의 두려움을<br /><span class="grad">안심으로</span> 바꾸겠습니다</h1>
+          <p>{CLINIC.philosophy.vision}</p>
         </div>
       </section>
-      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]} />
 
       <section class="sec">
         <div class="container article-body">

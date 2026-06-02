@@ -51,7 +51,6 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
 
         {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
-        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
         <meta name="theme-color" content={CLINIC.brand.primary} />
 
         {/* Fonts & Icons */}
@@ -67,10 +66,16 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
       </head>
       <body>
         <Header />
+        <MobileDrawer />
         <main>{children}</main>
         <Footer />
         <FloatingCTA />
+        {/* 2026 interaction libs */}
+        <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
         <script src="/static/app.js" defer></script>
+        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener('load',function(){if(window.gsap&&window.ScrollTrigger){window.gsap.registerPlugin(window.ScrollTrigger);window.ScrollTrigger.refresh();}});` }} />
       </body>
     </html>
   )
@@ -126,11 +131,27 @@ const Header: FC = () => (
         </ul>
       </nav>
       <div class="nav-cta">
-        <a href={`tel:${CLINIC.phoneRaw}`} class="btn-call"><i class="fa-solid fa-phone"></i><span>{CLINIC.phone}</span></a>
+        <a href={`tel:${CLINIC.phoneRaw}`} class="btn-call magnetic" data-mag="0.25"><i class="fa-solid fa-phone"></i><span>{CLINIC.phone}</span></a>
         <button class="nav-toggle" aria-label="메뉴 열기"><i class="fa-solid fa-bars"></i></button>
       </div>
     </div>
   </header>
+)
+
+const MobileDrawer: FC = () => (
+  <div class="mobile-drawer" aria-hidden="true">
+    <button class="drawer-close" aria-label="메뉴 닫기"><i class="fa-solid fa-xmark"></i></button>
+    <a href="/mission">병원소개</a>
+    <a href="/doctors">의료진</a>
+    <a href="/treatments">진료안내</a>
+    {CORE_TREATMENTS.map((t) => <a href={`/treatments/${t.slug}`} class="sub">— {t.shortName}</a>)}
+    <a href="/cases">비포 / 애프터</a>
+    <a href="/column">원장 칼럼</a>
+    <a href="/encyclopedia">치과 백과사전</a>
+    <a href="/directions">오시는 길 · 진료시간</a>
+    <a href="/faq">자주 묻는 질문</a>
+    <a href="/reservation">진료 예약</a>
+  </div>
 )
 
 const Footer: FC = () => (

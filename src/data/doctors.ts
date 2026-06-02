@@ -22,7 +22,7 @@ export const DOCTORS: Doctor[] = [
     name: '황우석',
     title: '대표원장',
     license: '치의학박사 · 통합치의학과 전문의',
-    photo: '/images/doctor-hwang.jpg',
+    photo: '/images/doctor-hwang.webp',
     tagline: '24년의 임상 경험, 한 분 한 분께 정확하게',
     intro: [
       '안녕하세요, 더착한치과 대표원장 황우석입니다.',
