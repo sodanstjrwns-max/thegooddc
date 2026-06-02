@@ -13,7 +13,7 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
   if (!area || !t) {
     return (
       <Layout title="페이지를 찾을 수 없습니다" description="요청하신 지역 진료 정보를 찾을 수 없습니다." path="/">
-        <section class="page-hero"><div class="container ph-inner"><h1>페이지를 찾을 수 없습니다</h1><p><a href="/treatments" style="color:#fff;text-decoration:underline">진료 안내 보기</a></p></div></section>
+        <section class="page-hero"><div class="container ph-inner"><h1>페이지를 찾을 수 없습니다</h1><p><a href="/treatments" style="color:var(--blue);text-decoration:underline">진료 안내 보기</a></p></div></section>
       </Layout>
     )
   }

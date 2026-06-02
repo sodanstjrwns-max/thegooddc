@@ -216,7 +216,7 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
 
 const NotFoundInline: FC = () => (
   <Layout title="페이지를 찾을 수 없습니다" description="요청하신 진료 정보를 찾을 수 없습니다." path="/treatments">
-    <section class="page-hero"><div class="container ph-inner"><h1>진료 정보를 찾을 수 없습니다</h1><p><a href="/treatments" style="color:#fff;text-decoration:underline">전체 진료 보기</a></p></div></section>
+    <section class="page-hero"><div class="container ph-inner"><h1>진료 정보를 찾을 수 없습니다</h1><p><a href="/treatments" style="color:var(--blue);text-decoration:underline">전체 진료 보기</a></p></div></section>
   </Layout>
 )
 

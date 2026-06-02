@@ -30,9 +30,9 @@ export const DoctorsListPage: FC = () => (
             <div class="doctor-photo" style={d.photo ? `background-image:url('${d.photo}')` : ''}>{!d.photo && <i class="fa-solid fa-user-doctor"></i>}</div>
             <div>
               <span class="license">{d.license}</span>
-              <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2rem);margin-bottom:8px;color:#fff">{d.name} {d.title}</h2>
-              <p class="section-lead" style="margin-bottom:18px;color:var(--teal-glow)">{d.tagline}</p>
-              <p style="color:var(--d-fg-soft);line-height:1.8;margin-bottom:22px">{d.philosophy}</p>
+              <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2rem);margin-bottom:8px;color:var(--ink)">{d.name} {d.title}</h2>
+              <p class="section-lead" style="margin-bottom:18px;color:var(--blue);font-weight:700">{d.tagline}</p>
+              <p style="color:var(--ink-soft);line-height:1.8;margin-bottom:22px">{d.philosophy}</p>
               <span class="btn btn-accent" style="pointer-events:none">프로필 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
             </div>
           </a>
@@ -47,7 +47,7 @@ export const DoctorDetailPage: FC<{ slug: string }> = ({ slug }) => {
   if (!d) {
     return (
       <Layout title="의료진을 찾을 수 없습니다" description="요청하신 의료진 정보를 찾을 수 없습니다." path="/doctors">
-        <section class="page-hero"><div class="container ph-inner"><h1>의료진 정보를 찾을 수 없습니다</h1><p><a href="/doctors" style="color:#fff;text-decoration:underline">의료진 전체 보기</a></p></div></section>
+        <section class="page-hero"><div class="container ph-inner"><h1>의료진 정보를 찾을 수 없습니다</h1><p><a href="/doctors" style="color:var(--blue);text-decoration:underline">의료진 전체 보기</a></p></div></section>
       </Layout>
     )
   }

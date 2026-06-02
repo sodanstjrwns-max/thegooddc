@@ -180,7 +180,7 @@ export const ColumnDetailPage: FC<{ slug: string }> = ({ slug }) => {
   if (!c) {
     return (
       <Layout title="칼럼을 찾을 수 없습니다" description="요청하신 칼럼을 찾을 수 없습니다." path="/column">
-        <section class="page-hero"><div class="container ph-inner"><h1>칼럼을 찾을 수 없습니다</h1><p><a href="/column" style="color:#fff;text-decoration:underline">칼럼 목록 보기</a></p></div></section>
+        <section class="page-hero"><div class="container ph-inner"><h1>칼럼을 찾을 수 없습니다</h1><p><a href="/column" style="color:var(--blue);text-decoration:underline">칼럼 목록 보기</a></p></div></section>
       </Layout>
     )
   }
@@ -284,7 +284,7 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
   if (!term) {
     return (
       <Layout title="용어를 찾을 수 없습니다" description="요청하신 용어를 찾을 수 없습니다." path="/encyclopedia">
-        <section class="page-hero"><div class="container ph-inner"><h1>용어를 찾을 수 없습니다</h1><p><a href="/encyclopedia" style="color:#fff;text-decoration:underline">백과사전 보기</a></p></div></section>
+        <section class="page-hero"><div class="container ph-inner"><h1>용어를 찾을 수 없습니다</h1><p><a href="/encyclopedia" style="color:var(--blue);text-decoration:underline">백과사전 보기</a></p></div></section>
       </Layout>
     )
   }

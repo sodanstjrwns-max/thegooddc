@@ -19,7 +19,7 @@ const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/di
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
   const url = canonical(path)
-  const img = ogImage ? canonical(ogImage) : canonical('/images/hero.webp')
+  const img = ogImage ? canonical(ogImage) : canonical('/images/hero-warm.webp')
   const allSchemas = [dentistSchema(), organizationSchema(), ...schemas]
 
   return (
@@ -70,12 +70,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <main>{children}</main>
         <Footer />
         <FloatingCTA />
-        {/* 2026 interaction libs */}
-        <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
-        <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
-        <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
         <script src="/static/app.js" defer></script>
-        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener('load',function(){if(window.gsap&&window.ScrollTrigger){window.gsap.registerPlugin(window.ScrollTrigger);window.ScrollTrigger.refresh();}});` }} />
       </body>
     </html>
   )
@@ -131,7 +126,7 @@ const Header: FC = () => (
         </ul>
       </nav>
       <div class="nav-cta">
-        <a href={`tel:${CLINIC.phoneRaw}`} class="btn-call magnetic" data-mag="0.25"><i class="fa-solid fa-phone"></i><span>{CLINIC.phone}</span></a>
+        <a href={`tel:${CLINIC.phoneRaw}`} class="btn-call"><i class="fa-solid fa-phone"></i><span>{CLINIC.phone}</span></a>
         <button class="nav-toggle" aria-label="메뉴 열기"><i class="fa-solid fa-bars"></i></button>
       </div>
     </div>
