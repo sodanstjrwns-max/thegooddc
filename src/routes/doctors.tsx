@@ -16,7 +16,7 @@ export const DoctorsListPage: FC = () => (
   >
     <section class="page-hero">
       <div class="container ph-inner">
-        <div class="hero-badge"><i class="fa-solid fa-user-doctor"></i> MEDICAL STAFF</div>
+        <div class="eyebrow">MEDICAL STAFF</div>
         <h1>의료진 소개</h1>
         <p>정확한 진단과 꼼꼼한 설명으로 환자분의 신뢰를 쌓아가는 더착한치과 의료진입니다.</p>
       </div>
@@ -27,13 +27,13 @@ export const DoctorsListPage: FC = () => (
       <div class="container" style="display:flex;flex-direction:column;gap:32px">
         {DOCTORS.map((d) => (
           <a href={`/doctors/${d.slug}`} class="doctor-card reveal" style="text-decoration:none">
-            <div class="doctor-photo"><i class="fa-solid fa-user-doctor"></i></div>
+            <div class="doctor-photo" style={d.photo ? `background-image:url('${d.photo}')` : ''}>{!d.photo && <i class="fa-solid fa-user-doctor"></i>}</div>
             <div>
               <span class="license">{d.license}</span>
-              <h2 class="section-title" style="font-size:30px;margin-bottom:8px">{d.name} {d.title}</h2>
-              <p class="section-lead" style="margin-bottom:18px">{d.tagline}</p>
-              <p style="color:var(--ink-soft);line-height:1.8;margin-bottom:18px">{d.philosophy}</p>
-              <span class="btn btn-outline" style="pointer-events:none"><i class="fa-solid fa-arrow-right"></i> 프로필 자세히 보기</span>
+              <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2rem);margin-bottom:8px;color:#fff">{d.name} {d.title}</h2>
+              <p class="section-lead" style="margin-bottom:18px;color:var(--teal-glow)">{d.tagline}</p>
+              <p style="color:var(--d-fg-soft);line-height:1.8;margin-bottom:22px">{d.philosophy}</p>
+              <span class="btn btn-accent" style="pointer-events:none">프로필 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
             </div>
           </a>
         ))}
@@ -66,22 +66,22 @@ export const DoctorDetailPage: FC<{ slug: string }> = ({ slug }) => {
     >
       <section class="page-hero">
         <div class="container ph-inner">
-          <div class="hero-badge"><i class="fa-solid fa-stethoscope"></i> {d.license}</div>
+          <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '의료진', path: '/doctors' }, { name: d.name, path: `/doctors/${d.slug}` }]} />
+          <div class="eyebrow">{d.license}</div>
           <h1>{d.name} {d.title}</h1>
           <p>{d.tagline}</p>
         </div>
       </section>
-      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '의료진', path: '/doctors' }, { name: d.name, path: `/doctors/${d.slug}` }]} />
 
       <section class="sec">
         <div class="container split">
-          <div class="split-img reveal-scale" style="display:grid;place-items:center;color:rgba(255,255,255,0.6);font-size:80px;aspect-ratio:3/4">
-            <i class="fa-solid fa-user-doctor"></i>
+          <div class="split-img reveal-scale" style={d.photo ? `background-image:url('${d.photo}');background-size:cover;background-position:center top;aspect-ratio:3/4` : 'display:grid;place-items:center;color:rgba(255,255,255,0.6);font-size:80px;aspect-ratio:3/4'}>
+            {!d.photo && <i class="fa-solid fa-user-doctor"></i>}
           </div>
           <div class="reveal">
-            <span class="license">{d.license}</span>
-            <h2 class="section-title" style="font-size:30px;margin:14px 0 24px">인사말</h2>
-            {d.intro.map((p) => <p style="color:var(--ink-soft);line-height:1.9;margin-bottom:16px;font-size:17px">{p}</p>)}
+            <span class="license" style="display:inline-block;font-size:.82rem;font-weight:700;color:var(--blue);background:rgba(30,111,184,.1);padding:6px 14px;border-radius:100px;margin-bottom:14px">{d.license}</span>
+            <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2rem);margin:0 0 24px">인사말</h2>
+            {d.intro.map((p) => <p style="color:var(--ink-soft);line-height:1.9;margin-bottom:16px;font-size:1.05rem">{p}</p>)}
           </div>
         </div>
       </section>
@@ -89,17 +89,12 @@ export const DoctorDetailPage: FC<{ slug: string }> = ({ slug }) => {
       <section class="sec bg-sand">
         <div class="container article-body">
           <h2>학력 및 경력</h2>
-          <ul style="list-style:none;padding:0;margin:24px 0">
-            {d.career.map((c) => (
-              <li style="display:flex;gap:14px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">
-                <i class="fa-solid fa-circle-check" style="color:var(--brand);font-size:18px"></i>
-                <span style="font-weight:600;color:var(--ink)">{c}</span>
-              </li>
-            ))}
+          <ul class="career-timeline">
+            {d.career.map((c) => <li><span style="font-weight:600;color:var(--ink)">{c}</span></li>)}
           </ul>
 
           {specialties.length > 0 && (
-            <div class="related-box">
+            <div class="related-box" style="margin-top:36px">
               <h3><i class="fa-solid fa-tooth" style="color:var(--brand);margin-right:8px"></i>{d.name} {d.title}의 주요 진료</h3>
               <div class="chip-row">
                 {specialties.map((t) => <a href={`/treatments/${t!.slug}`} class="chip"><i class={`fa-solid fa-${t!.icon}`}></i> {t!.shortName}</a>)}

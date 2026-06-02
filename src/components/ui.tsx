@@ -17,10 +17,10 @@ export const FaqList: FC<{ faqs: FAQ[] }> = ({ faqs }) => (
     {faqs.map((f) => (
       <div class="faq-item reveal">
         <button class="faq-q" aria-expanded="false">
-          <span><i class="fa-solid fa-q" style="color:var(--brand);margin-right:10px"></i>{f.q}</span>
-          <i class="fa-solid fa-chevron-down faq-icon"></i>
+          <span>{f.q}</span>
+          <span class="ico"><i class="fa-solid fa-plus"></i></span>
         </button>
-        <div class="faq-a"><p>{f.a}</p></div>
+        <div class="faq-a"><div class="faq-a-inner">{f.a}</div></div>
       </div>
     ))}
   </div>

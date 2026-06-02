@@ -6,6 +6,12 @@ import { TREATMENTS, CORE_TREATMENTS, GENERAL_TREATMENTS, getTreatment } from '.
 import { getDoctor } from '../data/doctors'
 import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema } from '../lib/seo'
 
+const CORE_IMG: Record<string, string> = {
+  implant: '/images/core-implant.webp',
+  'clear-aligner': '/images/core-aligner.webp',
+  minish: '/images/core-minish.webp',
+}
+
 // ===== 진료 목록 페이지 =====
 export const TreatmentsListPage: FC = () => (
   <Layout
@@ -15,14 +21,15 @@ export const TreatmentsListPage: FC = () => (
     keywords={['강서구 치과 진료', '명지 치과', '임플란트', '투명교정', '미니쉬']}
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }])]}
   >
-    <section class="page-hero">
+    <section class="page-hero has-img">
+      <div class="bg" data-parallax="0.12" style="background-image:url('/images/core-implant.webp')"></div>
       <div class="container ph-inner">
-        <div class="hero-badge"><i class="fa-solid fa-tooth"></i> TREATMENTS</div>
+        <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }]} />
+        <div class="eyebrow">TREATMENTS</div>
         <h1>진료 안내</h1>
         <p>디지털 정밀 진단을 기반으로, 한 분 한 분께 꼭 필요한 진료를 정확하게 설계합니다.</p>
       </div>
     </section>
-    <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }]} />
 
     <section class="sec">
       <div class="container">
@@ -82,74 +89,100 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
         speakableSchema(),
       ]}
     >
-      <section class="page-hero">
+      <section class="page-hero has-img">
+        <div class="bg" data-parallax="0.12" style={`background-image:url('${CORE_IMG[t.slug] || '/images/hero.webp'}')`}></div>
         <div class="container ph-inner">
-          <div class="hero-badge"><i class={`fa-solid fa-${t.icon}`}></i> {t.category === 'core' ? '핵심 진료' : '진료 안내'}</div>
+          <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }, { name: t.shortName, path: `/treatments/${t.slug}` }]} />
+          <div class="eyebrow">{t.category === 'core' ? 'SIGNATURE CARE' : 'TREATMENT'}</div>
           <h1>{t.name}</h1>
           <p>{t.tagline}</p>
+          <div class="hero-actions" style="margin-top:30px">
+            <a href="/reservation" class="btn btn-accent magnetic"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
+            <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost magnetic"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+          </div>
         </div>
       </section>
-      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }, { name: t.shortName, path: `/treatments/${t.slug}` }]} />
 
       <section class="sec">
-        <div class="container article-body">
-          {/* AEO: 질문형 H2 + 직답 */}
-          {t.qa.map((qa) => (
-            <>
-              <h2>{qa.question}</h2>
-              <p class="aeo-answer">{qa.answer}</p>
-            </>
-          ))}
+        <div class="container">
+          <div class="detail-layout">
+            {/* sticky TOC */}
+            <aside class="detail-toc">
+              <div class="toc-label">목차</div>
+              <ul>
+                {t.qa.length > 0 && <li><a href="#qa">핵심 Q&A</a></li>}
+                {t.sections.map((s, i) => <li><a href={`#sec-${i}`}>{s.heading}</a></li>)}
+                {t.subProcedures && <li><a href="#sub">세부 진료</a></li>}
+                {t.comparison && <li><a href="#cmp">비교 안내</a></li>}
+                <li><a href="#related">관련 진료</a></li>
+              </ul>
+            </aside>
 
-          {/* 본문 섹션 */}
-          {t.sections.map((s) => (
-            <>
-              <h2>{s.heading}</h2>
-              <p>{s.body}</p>
-            </>
-          ))}
+            <div class="article-body" style="margin:0">
+              {/* AEO: 질문형 H2 + 직답 */}
+              {t.qa.length > 0 && (
+                <div id="qa">
+                  {t.qa.map((qa) => (
+                    <>
+                      <h2>{qa.question}</h2>
+                      <p class="aeo-answer">{qa.answer}</p>
+                    </>
+                  ))}
+                </div>
+              )}
 
-          {/* 세부 시술 */}
-          {t.subProcedures && (
-            <>
-              <h2>세부 진료 안내</h2>
-              <div class="sub-grid">
-                {t.subProcedures.map((sp) => (
-                  <div class="sub-card"><h4>{sp.name}</h4><p>{sp.desc}</p></div>
-                ))}
+              {/* 본문 섹션 */}
+              {t.sections.map((s, i) => (
+                <div id={`sec-${i}`} class="reveal">
+                  <h2>{s.heading}</h2>
+                  <p>{s.body}</p>
+                </div>
+              ))}
+
+              {/* 세부 시술 */}
+              {t.subProcedures && (
+                <div id="sub" class="reveal">
+                  <h2>세부 진료 안내</h2>
+                  <div class="sub-grid">
+                    {t.subProcedures.map((sp) => (
+                      <div class="sub-card"><h4>{sp.name}</h4><p>{sp.desc}</p></div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 비교표 */}
+              {t.comparison && (
+                <div id="cmp" class="reveal">
+                  <h2>{t.comparison.title}</h2>
+                  <table class="cmp-table">
+                    <thead><tr>{t.comparison.columns.map((c) => <th>{c}</th>)}</tr></thead>
+                    <tbody>{t.comparison.rows.map((row) => <tr>{row.map((cell) => <td>{cell}</td>)}</tr>)}</tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* 인링크 */}
+              <div id="related">
+                {doctor && (
+                  <div class="related-box reveal">
+                    <h3><i class="fa-solid fa-user-doctor" style="color:var(--brand);margin-right:8px"></i>담당 의료진</h3>
+                    <a href={`/doctors/${doctor.slug}`} class="chip"><i class="fa-solid fa-stethoscope"></i> {doctor.name} {doctor.title} · {doctor.license}</a>
+                  </div>
+                )}
+                {related.length > 0 && (
+                  <div class="related-box reveal">
+                    <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 콘텐츠</h3>
+                    <div class="chip-row">
+                      {related.map((r) => <a href={`/treatments/${r!.slug}`} class="chip"><i class={`fa-solid fa-${r!.icon}`}></i> {r!.shortName}</a>)}
+                      <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터</a>
+                      <a href={`/encyclopedia/${t.slug}`} class="chip"><i class="fa-solid fa-book"></i> 백과사전</a>
+                    </div>
+                  </div>
+                )}
               </div>
-            </>
-          )}
-
-          {/* 비교표 */}
-          {t.comparison && (
-            <>
-              <h2>{t.comparison.title}</h2>
-              <table class="cmp-table">
-                <thead><tr>{t.comparison.columns.map((c) => <th>{c}</th>)}</tr></thead>
-                <tbody>{t.comparison.rows.map((row) => <tr>{row.map((cell) => <td>{cell}</td>)}</tr>)}</tbody>
-              </table>
-            </>
-          )}
-
-          {/* 담당 의료진 인링크 */}
-          {doctor && (
-            <div class="related-box">
-              <h3><i class="fa-solid fa-user-doctor" style="color:var(--brand);margin-right:8px"></i>담당 의료진</h3>
-              <a href={`/doctors/${doctor.slug}`} class="chip"><i class="fa-solid fa-stethoscope"></i> {doctor.name} {doctor.title} · {doctor.license}</a>
             </div>
-          )}
-
-          {/* 관련 진료 인링크 */}
-          {related.length > 0 && (
-            <div class="related-box">
-              <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료</h3>
-              <div class="chip-row">
-                {related.map((r) => <a href={`/treatments/${r!.slug}`} class="chip"><i class={`fa-solid fa-${r!.icon}`}></i> {r!.shortName}</a>)}
-                <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터 보기</a>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </section>
 

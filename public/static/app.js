@@ -247,8 +247,8 @@
   /* ---------- BEFORE/AFTER SLIDER ---------- */
   function initBASliders() {
     document.querySelectorAll('.ba-slider').forEach(function (slider) {
-      var after = slider.querySelector('.after');
-      var handle = slider.querySelector('.handle');
+      var after = slider.querySelector('.after') || slider.querySelector('.ba-after');
+      var handle = slider.querySelector('.handle') || slider.querySelector('.ba-handle');
       if (!after || !handle) return;
       var dragging = false;
       function move(clientX) {
