@@ -1,0 +1,329 @@
+import type { FC } from 'hono/jsx'
+import { Layout } from '../components/Layout'
+import { Breadcrumb } from '../components/ui'
+import { CLINIC } from '../data/clinic'
+import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
+import { DOCTORS, getDoctor } from '../data/doctors'
+import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
+import { breadcrumbSchema, articleSchema, speakableSchema } from '../lib/seo'
+
+// ============================================================
+// 비포 / 애프터 (애프터 사진 로그인 게이팅)
+// ============================================================
+interface DemoCase {
+  id: string
+  title: string
+  age: string
+  gender: string
+  category: string // treatment slug
+  area: string
+  doctor: string // doctor slug
+  period: string
+  desc: string
+}
+
+const DEMO_CASES: DemoCase[] = [
+  { id: 'c1', title: '디지털 가이드 임플란트 케이스', age: '50대', gender: '남성', category: 'implant', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 3개월', desc: '상실된 어금니를 디지털 가이드 임플란트로 회복한 사례입니다. 정밀 설계를 통해 안정적인 식립을 진행했습니다.' },
+  { id: 'c2', title: '투명교정 전후', age: '20대', gender: '여성', category: 'clear-aligner', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 12개월', desc: '앞니의 가벼운 배열을 투명교정으로 자연스럽게 개선한 사례입니다.' },
+  { id: 'c3', title: '미니쉬 심미 치료', age: '30대', gender: '여성', category: 'minish', area: '부산 강서구', doctor: 'hwang-wooseok', period: '약 2주', desc: '자연 치아 삭제를 최소화하며 앞니의 색과 형태를 개선한 심미 치료 사례입니다.' },
+  { id: 'c4', title: '다수 임플란트 회복', age: '60대', gender: '남성', category: 'implant', area: '경남 김해 장유', doctor: 'hwang-wooseok', period: '약 4개월', desc: '여러 개의 치아를 잃은 경우 정밀 설계로 저작 기능을 회복한 사례입니다.' },
+]
+
+export const CasesPage: FC<{ loggedIn?: boolean }> = ({ loggedIn = false }) => (
+  <Layout
+    title={`비포 / 애프터 | ${CLINIC.name} 강서구 명지 치과`}
+    description="더착한치과의 진료 전후 사례를 확인하세요. 임플란트, 투명교정, 미니쉬 등 디지털 정밀 진료 케이스를 소개합니다."
+    path="/cases"
+    keywords={['강서구 치과 전후', '명지 임플란트 후기', '투명교정 전후', '미니쉬 전후']}
+    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '비포/애프터', path: '/cases' }])]}
+  >
+    <section class="page-hero">
+      <div class="container ph-inner">
+        <div class="hero-badge"><i class="fa-solid fa-images"></i> BEFORE / AFTER</div>
+        <h1>비포 / 애프터</h1>
+        <p>디지털 정밀 진료의 실제 사례입니다. 진료 후 사진은 의료법에 따라 로그인 후 확인하실 수 있습니다.</p>
+      </div>
+    </section>
+    <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '비포/애프터', path: '/cases' }]} />
+
+    {!loggedIn && (
+      <section class="sec-sm">
+        <div class="container">
+          <div class="aeo-answer reveal" style="max-width:880px;margin:0 auto;display:flex;align-items:center;gap:16px;justify-content:center;text-align:center;flex-wrap:wrap">
+            <i class="fa-solid fa-lock" style="color:var(--brand);font-size:22px"></i>
+            <span>의료법에 따라 진료 <strong>후(After)</strong> 사진은 로그인한 회원만 열람할 수 있습니다.</span>
+            <a href="/auth/login" class="btn btn-primary" style="padding:12px 24px"><i class="fa-solid fa-right-to-bracket"></i> 로그인</a>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="sec" style={!loggedIn ? 'padding-top:20px' : ''}>
+      <div class="container">
+        <div class="tlist-grid">
+          {DEMO_CASES.map((cs) => {
+            const t = getTreatment(cs.category)
+            const dr = getDoctor(cs.doctor)
+            return (
+              <div class="card reveal" style="overflow:hidden">
+                {/* Before/After slider */}
+                <div class="ba-slider">
+                  <div style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#114A7E,#1E6FB8);color:rgba(255,255,255,0.7);font-size:14px;font-weight:700">진료 전 (Before)</div>
+                  {loggedIn ? (
+                    <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#1E6FB8,#2DD4BF);color:#fff;font-size:14px;font-weight:700;clip-path:inset(0 0 0 50%)">진료 후 (After)</div>
+                  ) : (
+                    <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:rgba(255,255,255,0.8);font-size:13px;font-weight:700;clip-path:inset(0 0 0 50%);text-align:center;padding:20px">
+                      <span><i class="fa-solid fa-lock" style="display:block;font-size:24px;margin-bottom:8px"></i>로그인 후<br />열람 가능</span>
+                    </div>
+                  )}
+                  <div class="ba-handle"></div>
+                  <span class="ba-label before">Before</span>
+                  <span class="ba-label after">After</span>
+                </div>
+                <div style="padding:22px 24px">
+                  <h3 style="font-size:18px;margin-bottom:8px">{cs.title}</h3>
+                  <p style="color:var(--ink-soft);font-size:14px;margin:0 0 14px;line-height:1.6">{cs.desc}</p>
+                  <div class="chip-row" style="gap:7px">
+                    <span class="chip" style="font-size:12px;padding:6px 12px">{cs.age} {cs.gender}</span>
+                    <span class="chip" style="font-size:12px;padding:6px 12px">{cs.area}</span>
+                    <span class="chip" style="font-size:12px;padding:6px 12px">치료기간 {cs.period}</span>
+                  </div>
+                  <div class="chip-row" style="gap:7px;margin-top:8px">
+                    {t && <a href={`/treatments/${t.slug}`} class="chip" style="font-size:12px;padding:6px 12px"><i class={`fa-solid fa-${t.icon}`}></i> {t.shortName}</a>}
+                    {dr && <a href={`/doctors/${dr.slug}`} class="chip" style="font-size:12px;padding:6px 12px"><i class="fa-solid fa-user-doctor"></i> {dr.name}</a>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <p style="text-align:center;color:var(--ink-soft);font-size:13px;margin-top:36px;line-height:1.7">
+          ※ 위 사례는 개인의 구강 상태에 따라 결과가 다를 수 있으며, 모든 환자에게 동일한 결과를 보장하지 않습니다.
+        </p>
+      </div>
+    </section>
+  </Layout>
+)
+
+// ============================================================
+// 원장 칼럼
+// ============================================================
+const COLUMNS = [
+  {
+    slug: 'why-digital-implant',
+    title: '디지털 가이드 임플란트, 왜 정확할까요?',
+    excerpt: '3D CT와 구강 스캐너로 식립 위치를 미리 설계하는 디지털 가이드 임플란트의 원리를 쉽게 설명합니다.',
+    date: '2026-05-20',
+    modified: '2026-05-20',
+    author: 'hwang-wooseok',
+    related: 'implant',
+    body: [
+      { h: '임플란트의 정확도는 어디서 결정될까요?', p: '임플란트는 잇몸뼈 속 신경과 혈관을 피해 가장 안정적인 위치에 식립하는 정밀한 작업입니다. 식립 위치가 조금만 달라져도 결과에 영향을 줄 수 있기 때문에, 사전 설계가 매우 중요합니다.' },
+      { h: '디지털 가이드가 하는 일', p: '디지털 가이드 임플란트는 3D CT와 구강 스캔 데이터를 컴퓨터에서 분석해 식립 위치·깊이·각도를 미리 설계합니다. 그리고 그 설계대로 제작한 수술용 가이드를 사용하기 때문에, 계획한 위치에 정밀하게 식립할 수 있습니다.' },
+      { h: '환자에게 어떤 점이 좋을까요?', p: '사전 설계를 통해 시술 과정의 변수를 줄이고, 보다 예측 가능한 진료가 가능합니다. 더착한치과는 원내 기공실과 결합해 진단부터 보철까지 효율적으로 진행합니다.' },
+    ],
+  },
+  {
+    slug: 'clear-aligner-tips',
+    title: '투명교정, 결과를 좌우하는 착용 습관',
+    excerpt: '투명교정은 장치를 빼고 낄 수 있는 만큼, 착용 습관이 결과에 큰 영향을 줍니다. 핵심 관리법을 안내합니다.',
+    date: '2026-05-12',
+    modified: '2026-05-12',
+    author: 'hwang-wooseok',
+    related: 'clear-aligner',
+    body: [
+      { h: '투명교정의 장점과 책임', p: '투명교정은 눈에 잘 띄지 않고 식사·양치 시 분리할 수 있어 편리합니다. 다만 그만큼 정해진 시간을 꾸준히 착용하는 자기 관리가 결과에 중요합니다.' },
+      { h: '권장 착용 시간', p: '일반적으로 식사와 양치 시간을 제외하고 하루 대부분 착용하는 것이 권장됩니다. 착용 시간이 부족하면 계획한 치아 이동이 늦어질 수 있습니다.' },
+      { h: '관리 팁', p: '장치를 뺀 뒤에는 청결하게 보관하고, 식사 후 양치를 한 뒤 다시 착용하는 습관을 들이는 것이 좋습니다.' },
+    ],
+  },
+]
+
+export const ColumnListPage: FC = () => (
+  <Layout
+    title={`원장 칼럼 | ${CLINIC.name} 강서구 명지 치과`}
+    description="더착한치과 황우석 대표원장이 직접 쓰는 치과 건강 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다."
+    path="/column"
+    keywords={['치과 칼럼', '임플란트 정보', '강서구 치과 블로그', '명지 치과 칼럼']}
+    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }])]}
+  >
+    <section class="page-hero">
+      <div class="container ph-inner">
+        <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> COLUMN</div>
+        <h1>원장 칼럼</h1>
+        <p>정확한 치과 정보를 직접 전합니다. 검증된 내용으로 건강한 선택을 돕겠습니다.</p>
+      </div>
+    </section>
+    <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }]} />
+    <section class="sec">
+      <div class="container">
+        <div class="tlist-grid">
+          {COLUMNS.map((c) => {
+            const dr = getDoctor(c.author)
+            return (
+              <a href={`/column/${c.slug}`} class="card reveal" style="padding:32px;text-decoration:none">
+                <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{c.date}</div>
+                <h3 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h3>
+                <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{c.excerpt}</p>
+                <span style="color:var(--brand);font-weight:700;font-size:14px">{dr?.name} {dr?.title} · 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+              </a>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  </Layout>
+)
+
+export const ColumnDetailPage: FC<{ slug: string }> = ({ slug }) => {
+  const c = COLUMNS.find((x) => x.slug === slug)
+  if (!c) {
+    return (
+      <Layout title="칼럼을 찾을 수 없습니다" description="요청하신 칼럼을 찾을 수 없습니다." path="/column">
+        <section class="page-hero"><div class="container ph-inner"><h1>칼럼을 찾을 수 없습니다</h1><p><a href="/column" style="color:#fff;text-decoration:underline">칼럼 목록 보기</a></p></div></section>
+      </Layout>
+    )
+  }
+  const dr = getDoctor(c.author)!
+  const t = getTreatment(c.related)
+  return (
+    <Layout
+      title={`${c.title} | ${CLINIC.name} 원장 칼럼`}
+      description={c.excerpt}
+      path={`/column/${c.slug}`}
+      ogType="article"
+      keywords={['치과 칼럼', t?.shortName || '', '강서구 치과']}
+      schemas={[
+        breadcrumbSchema([{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }, { name: c.title, path: `/column/${c.slug}` }]),
+        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name }),
+        speakableSchema(),
+      ]}
+    >
+      <section class="page-hero">
+        <div class="container ph-inner">
+          <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> COLUMN · {c.date}</div>
+          <h1>{c.title}</h1>
+        </div>
+      </section>
+      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }, { name: c.title, path: `/column/${c.slug}` }]} />
+      <section class="sec">
+        <div class="container article-body">
+          <div style="display:flex;align-items:center;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:32px">
+            <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;color:#fff"><i class="fa-solid fa-user-doctor"></i></div>
+            <div>
+              <a href={`/doctors/${dr.slug}`} style="font-weight:800;color:var(--ink)">{dr.name} {dr.title}</a>
+              <div style="font-size:13px;color:var(--ink-soft)">{dr.license}</div>
+            </div>
+          </div>
+          {c.body.map((b) => (<><h2>{b.h}</h2><p>{b.p}</p></>))}
+          <div class="related-box">
+            <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 작성 의료진</h3>
+            <div class="chip-row">
+              {t && <a href={`/treatments/${t.slug}`} class="chip"><i class={`fa-solid fa-${t.icon}`}></i> {t.shortName}</a>}
+              <a href={`/doctors/${dr.slug}`} class="chip"><i class="fa-solid fa-user-doctor"></i> {dr.name} {dr.title}</a>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--ink-soft)">최종 검토: {c.modified} · 감수 {dr.name} {dr.title} ({dr.license})</p>
+        </div>
+      </section>
+    </Layout>
+  )
+}
+
+// ============================================================
+// 백과사전
+// ============================================================
+export const EncyclopediaListPage: FC<{ category?: string }> = ({ category }) => {
+  const filtered = category ? TERMS.filter((t) => t.category === category) : TERMS
+  return (
+    <Layout
+      title={`치과 백과사전 | ${CLINIC.name} 강서구 명지`}
+      description={`치과 용어와 진료 정보를 정리한 백과사전입니다. 임플란트, 교정, 신경치료 등 ${TERMS.length}개 이상의 용어를 쉽게 설명합니다.`}
+      path="/encyclopedia"
+      keywords={['치과 용어', '치과 백과사전', '임플란트 용어', '치과 정보']}
+      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }]), speakableSchema()]}
+    >
+      <section class="page-hero">
+        <div class="container ph-inner">
+          <div class="hero-badge"><i class="fa-solid fa-book"></i> ENCYCLOPEDIA</div>
+          <h1>치과 백과사전</h1>
+          <p>{TERMS.length}개 이상의 치과 용어와 진료 정보를 쉽게 풀어 설명합니다.</p>
+        </div>
+      </section>
+      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }]} />
+      <section class="sec-sm bg-sand">
+        <div class="container">
+          <div class="chip-row reveal">
+            <a href="/encyclopedia" class={`chip ${!category ? 'active' : ''}`} style={!category ? 'background:var(--brand);color:#fff;border-color:var(--brand)' : ''}>전체</a>
+            {TERM_CATEGORIES.map((cat) => (
+              <a href={`/encyclopedia?cat=${encodeURIComponent(cat)}`} class="chip" style={category === cat ? 'background:var(--brand);color:#fff;border-color:var(--brand)' : ''}>{cat}</a>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section class="sec">
+        <div class="container">
+          <div class="tlist-grid">
+            {filtered.slice(0, 120).map((term) => (
+              <a href={`/encyclopedia/${term.slug}`} class="card reveal" style="padding:24px;text-decoration:none">
+                <div style="font-size:12px;color:var(--brand);font-weight:700;margin-bottom:6px">{term.category}</div>
+                <h3 style="font-size:18px;margin-bottom:6px">{term.term}</h3>
+                <p style="color:var(--ink-soft);font-size:14px;margin:0;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{term.def}</p>
+              </a>
+            ))}
+          </div>
+          {filtered.length > 120 && <p style="text-align:center;color:var(--ink-soft);margin-top:30px">외 {filtered.length - 120}개 용어 수록</p>}
+        </div>
+      </section>
+    </Layout>
+  )
+}
+
+export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
+  const term = getTerm(slug)
+  if (!term) {
+    return (
+      <Layout title="용어를 찾을 수 없습니다" description="요청하신 용어를 찾을 수 없습니다." path="/encyclopedia">
+        <section class="page-hero"><div class="container ph-inner"><h1>용어를 찾을 수 없습니다</h1><p><a href="/encyclopedia" style="color:#fff;text-decoration:underline">백과사전 보기</a></p></div></section>
+      </Layout>
+    )
+  }
+  const related = (term.related || []).map((s) => getTreatment(s)).filter(Boolean)
+  return (
+    <Layout
+      title={`${term.term} | 치과 백과사전 · ${CLINIC.name}`}
+      description={`${term.term}: ${term.def}`}
+      path={`/encyclopedia/${term.slug}`}
+      keywords={[term.term, term.category, '치과 용어']}
+      schemas={[
+        breadcrumbSchema([{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }, { name: term.term, path: `/encyclopedia/${term.slug}` }]),
+        speakableSchema(),
+      ]}
+    >
+      <section class="page-hero">
+        <div class="container ph-inner">
+          <div class="hero-badge"><i class="fa-solid fa-book"></i> {term.category}</div>
+          <h1>{term.term}</h1>
+          {term.reading && <p>{term.reading}</p>}
+        </div>
+      </section>
+      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }, { name: term.term, path: `/encyclopedia/${term.slug}` }]} />
+      <section class="sec">
+        <div class="container article-body">
+          <p class="aeo-answer">{term.def}</p>
+          {related.length > 0 && (
+            <div class="related-box">
+              <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료</h3>
+              <div class="chip-row">
+                {related.map((t) => <a href={`/treatments/${t!.slug}`} class="chip"><i class={`fa-solid fa-${t!.icon}`}></i> {t!.shortName}</a>)}
+                <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터</a>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </Layout>
+  )
+}
+
+export { COLUMNS, DEMO_CASES }
