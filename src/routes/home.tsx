@@ -53,39 +53,34 @@ export const HomePage: FC = () => {
       description="부산 강서구 명지 더착한치과. 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 무통 마취·과잉진료 없는 진료."
       schemas={[speakableSchema()]}
     >
-      {/* ===================== HERO ===================== */}
+      {/* ===================== HERO — editorial asymmetric ===================== */}
       <section class="hero">
-        {/* 2026: aurora mesh-gradient blobs (animated, blurred) */}
-        <div class="aurora" aria-hidden="true">
-          <span class="blob b1"></span>
-          <span class="blob b2"></span>
-          <span class="blob b3"></span>
-        </div>
         <div class="container-wide hero-inner">
           <div class="hero-text reveal">
             <span class="hero-badge"><i class="fa-solid fa-location-dot"></i> 부산 강서구 명지 · 통합치의학 전문의 진료</span>
             <h1 class="kinetic">
               <span class="line">치과의 두려움을</span>
-              <span class="line"><span class="gold">안심</span>으로 바꿉니다</span>
+              <span class="line"><span class="accent-word">안심</span>으로</span>
+              <span class="line">바꿉니다</span>
             </h1>
             <p class="lead">
               치의학박사·통합치의학 전문의가 24년의 임상 경험과 디지털 기술로
               꼭 필요한 진료만 정확하게. 명지에서 오래 믿고 다니는 치과를 만듭니다.
             </p>
             <div class="hero-actions">
-              <a href="/reservation" class="btn btn-gold btn-lg" data-magnetic><i class="fa-solid fa-calendar-check"></i> 진료 예약하기</a>
-              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost btn-lg" data-magnetic><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+              <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> 진료 예약하기</a>
+              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost btn-lg"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
             </div>
-            <div class="hero-trust">
-              <div class="tc"><i class="fa-solid fa-circle-check"></i><span>무통 마취 시스템</span></div>
-              <div class="tc"><i class="fa-solid fa-circle-check"></i><span>과잉진료 없는 진료</span></div>
-              <div class="tc"><i class="fa-solid fa-circle-check"></i><span>원내 기공실 보유</span></div>
-            </div>
+            <ul class="hero-trust">
+              <li class="tc"><i class="fa-solid fa-check"></i><span>무통 마취 시스템</span></li>
+              <li class="tc"><i class="fa-solid fa-check"></i><span>과잉진료 없는 진료</span></li>
+              <li class="tc"><i class="fa-solid fa-check"></i><span>원내 기공실 보유</span></li>
+            </ul>
           </div>
-        </div>
-        <div class="container-wide hero-stage reveal reveal-d1">
-          <div class="hero-frame">
-            <div class="ph"><i class="fa-solid fa-tooth"></i></div>
+          <aside class="hero-visual reveal reveal-d1">
+            <figure class="hero-frame">
+              <span class="ph"><i class="fa-solid fa-tooth"></i></span>
+            </figure>
             <div class="hero-stat s1">
               <div class="n"><span data-count="24">24</span><span class="u">년</span></div>
               <div class="l">대표원장 임상 경력</div>
@@ -94,7 +89,7 @@ export const HomePage: FC = () => {
               <div class="n"><span data-count="10">10</span><span class="u">개과</span></div>
               <div class="l">대학병원급 통합진료</div>
             </div>
-          </div>
+          </aside>
         </div>
       </section>
 

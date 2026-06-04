@@ -279,7 +279,7 @@
   function init() {
     initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
-    initMagnetic(); initCursor(); initGrain();
+    initGrain();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
