@@ -58,8 +58,8 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link rel="stylesheet" href={PRETENDARD} />
-        {/* Newsreader — editorial serif for headlines (Calm Clinical) */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" />
+        {/* Editorial serif pairing — Newsreader (Latin) + Nanum Myeongjo (Korean) */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" />
         <link rel="stylesheet" href={FA} />
         <link rel="stylesheet" href="/static/style.css" />
 

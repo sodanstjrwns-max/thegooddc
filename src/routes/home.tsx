@@ -110,7 +110,7 @@ export const HomePage: FC = () => {
       {/* ===================== ASSURANCE ===================== */}
       <section class="assure">
         <div class="container">
-          <div class="shead">
+          <div class="shead" data-index="01">
             <span class="eyebrow">Why The Good Dental</span>
             <h2>치과가 무섭다는 분께,<br /><em>세 가지를 약속</em>드립니다</h2>
             <p>치과에 대한 막연한 두려움 때문에 꼭 받아야 할 진료를 미루지 않도록. 더착한치과의 진료 원칙입니다.</p>
@@ -157,7 +157,7 @@ export const HomePage: FC = () => {
       {/* ===================== CORE TREATMENTS ===================== */}
       <section class="core">
         <div class="container">
-          <div class="shead">
+          <div class="shead" data-index="02">
             <span class="eyebrow">Signature Treatments</span>
             <h2>가장 자신 있는 <em>세 가지 진료</em></h2>
             <p>디지털 장비, 24년의 임상, 그리고 원내 기공실. 핵심 진료를 한 곳에서 정확하게.</p>
@@ -186,7 +186,7 @@ export const HomePage: FC = () => {
       <section class="digital">
         <div class="bento-noise"></div>
         <div class="container">
-          <div class="shead center" style="margin-bottom:54px">
+          <div class="shead center" data-index="03" style="margin-bottom:54px">
             <span class="eyebrow on-navy center">Digital Dentistry</span>
             <h2>장비가 만드는 <span>정확함의 차이</span></h2>
             <p>밀링기 2대 · 3D 프린터 3대 · 구강 스캐너. 진단부터 보철 제작까지 한 곳에서.</p>
@@ -306,7 +306,7 @@ export const HomePage: FC = () => {
       {/* ===================== JOURNEY ===================== */}
       <section class="journey">
         <div class="container">
-          <div class="shead center">
+          <div class="shead center" data-index="04">
             <span class="eyebrow center">Patient Journey</span>
             <h2>처음 오신 순간부터,<br /><em>편안하게 안내</em>합니다</h2>
           </div>
@@ -326,7 +326,7 @@ export const HomePage: FC = () => {
       {/* ===================== COMPARE ===================== */}
       <section class="compare">
         <div class="container">
-          <div class="shead center">
+          <div class="shead center" data-index="05">
             <span class="eyebrow center">The Difference</span>
             <h2>왜 <span class="gold">더착한치과</span>일까요?</h2>
             <p>같은 진료라도 장비와 시스템에 따라 결과가 달라집니다.</p>
@@ -351,7 +351,7 @@ export const HomePage: FC = () => {
       {/* ===================== ALL TREATMENTS ===================== */}
       <section class="tlist">
         <div class="container">
-          <div class="shead center">
+          <div class="shead center" data-index="06">
             <span class="eyebrow center">All Departments</span>
             <h2>한 곳에서 받는 <em>모든 치과 진료</em></h2>
             <p>대학병원과 동일한 진료 시스템으로 10개 진료과를 통합 운영합니다.</p>
