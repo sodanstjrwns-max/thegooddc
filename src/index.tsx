@@ -17,10 +17,11 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage } from './routes/area'
-import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage } from './routes/auth'
+import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
+  listCases, createCase, updateCase, deleteCase,
 } from './lib/content-store'
 
 type Bindings = {
@@ -69,7 +70,7 @@ app.get('/encyclopedia/:slug', (c) => c.html(<EncyclopediaDetailPage slug={c.req
 
 app.get('/cases', async (c) => {
   const session = await getSession(c, 'member')
-  return c.html(<CasesPage loggedIn={!!session} />)
+  return c.html(<CasesPage loggedIn={!!session} cases={await listCases(c.env)} />)
 })
 
 // 지역 SEO: /area/:areaSlug-:treatmentSlug
@@ -112,8 +113,8 @@ app.get('/admin/dashboard', async (c) => {
     const r = await c.env.KV.list({ prefix: 'reservation:' })
     reservations = r.keys.length
   }
-  const [notices, columns] = await Promise.all([listNotices(c.env), listColumns(c.env)])
-  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length }} />)
+  const [notices, columns, cases] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env)])
+  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} />)
 })
 
 // Admin content management UI
@@ -126,6 +127,11 @@ app.get('/admin/columns', async (c) => {
   const s = await getSession(c, 'admin')
   if (!s) return c.redirect('/admin')
   return c.html(<AdminColumnsPage columns={await listColumns(c.env)} ok={c.req.query('ok')} />)
+})
+app.get('/admin/cases', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  return c.html(<AdminCasesPage cases={await listCases(c.env)} ok={c.req.query('ok')} />)
 })
 
 // Legal pages
@@ -259,6 +265,44 @@ app.post('/api/admin/columns/delete', async (c) => {
   const f = await c.req.parseBody()
   await deleteColumn(c.env, String(f.id || ''))
   return c.redirect('/admin/columns?ok=deleted')
+})
+
+// 비포/애프터 케이스 CRUD
+app.post('/api/admin/cases/create', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await createCase(c.env, {
+    title: String(f.title || ''),
+    category: String(f.category || ''),
+    doctor: String(f.doctor || 'hwang-wooseok'),
+    age: String(f.age || ''),
+    gender: String(f.gender || ''),
+    area: String(f.area || ''),
+    period: String(f.period || ''),
+    desc: String(f.desc || ''),
+  })
+  return c.redirect('/admin/cases?ok=created')
+})
+app.post('/api/admin/cases/update', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await updateCase(c.env, String(f.id || ''), {
+    title: String(f.title || ''),
+    category: String(f.category || ''),
+    doctor: String(f.doctor || 'hwang-wooseok'),
+    age: String(f.age || ''),
+    gender: String(f.gender || ''),
+    area: String(f.area || ''),
+    period: String(f.period || ''),
+    desc: String(f.desc || ''),
+  })
+  return c.redirect('/admin/cases?ok=updated')
+})
+app.post('/api/admin/cases/delete', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await deleteCase(c.env, String(f.id || ''))
+  return c.redirect('/admin/cases?ok=deleted')
 })
 
 app.post('/api/reservation', async (c) => {

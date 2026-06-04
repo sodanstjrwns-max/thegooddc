@@ -30,8 +30,22 @@ export interface Column {
   body: ColumnBlock[]
 }
 
+export interface CaseItem {
+  id: string
+  title: string
+  category: string // treatment slug
+  doctor: string // doctor slug
+  age: string
+  gender: string
+  area: string
+  period: string
+  desc: string
+  modified: string
+}
+
 const KV_NOTICES = 'content:notices'
 const KV_COLUMNS = 'content:columns'
+const KV_CASES = 'content:cases'
 
 // ---------- 시드 데이터 (KV가 비었을 때 fallback) ----------
 export const SEED_NOTICES: Notice[] = [
@@ -71,6 +85,13 @@ export const SEED_COLUMNS: Column[] = [
       { h: '관리 팁', p: '장치를 뺀 뒤에는 청결하게 보관하고, 식사 후 양치를 한 뒤 다시 착용하는 습관을 들이는 것이 좋습니다.' },
     ],
   },
+]
+
+export const SEED_CASES: CaseItem[] = [
+  { id: 'cs-seed-1', title: '디지털 가이드 임플란트 케이스', age: '50대', gender: '남성', category: 'implant', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 3개월', desc: '상실된 어금니를 디지털 가이드 임플란트로 회복한 사례입니다. 정밀 설계를 통해 안정적인 식립을 진행했습니다.', modified: '2026-05-01' },
+  { id: 'cs-seed-2', title: '투명교정 전후', age: '20대', gender: '여성', category: 'clear-aligner', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 12개월', desc: '앞니의 가벼운 배열을 투명교정으로 자연스럽게 개선한 사례입니다.', modified: '2026-05-01' },
+  { id: 'cs-seed-3', title: '미니쉬 심미 치료', age: '30대', gender: '여성', category: 'minish', area: '부산 강서구', doctor: 'hwang-wooseok', period: '약 2주', desc: '자연 치아 삭제를 최소화하며 앞니의 색과 형태를 개선한 심미 치료 사례입니다.', modified: '2026-05-01' },
+  { id: 'cs-seed-4', title: '다수 임플란트 회복', age: '60대', gender: '남성', category: 'implant', area: '경남 김해 장유', doctor: 'hwang-wooseok', period: '약 4개월', desc: '여러 개의 치아를 잃은 경우 정밀 설계로 저작 기능을 회복한 사례입니다.', modified: '2026-05-01' },
 ]
 
 // ---------- KV helpers ----------
@@ -249,5 +270,59 @@ export async function deleteColumn(env: any, id: string): Promise<boolean> {
   const next = list.filter((x) => x.id !== id)
   if (next.length === list.length) return false
   await writeList(env, KV_COLUMNS, next)
+  return true
+}
+
+// ============================================================
+// CASES (비포/애프터 — 텍스트 메타데이터만, 사진은 의료법 게이팅 유지)
+// ============================================================
+export async function listCases(env: any): Promise<CaseItem[]> {
+  return await readList<CaseItem>(env, KV_CASES, SEED_CASES)
+}
+
+export async function createCase(env: any, input: Partial<CaseItem>): Promise<CaseItem> {
+  const list = await readList<CaseItem>(env, KV_CASES, SEED_CASES)
+  const cs: CaseItem = {
+    id: newId('cs'),
+    title: (input.title || '제목 없음').toString().trim(),
+    category: (input.category || '').toString(),
+    doctor: (input.doctor || 'hwang-wooseok').toString(),
+    age: (input.age || '').toString().trim(),
+    gender: (input.gender || '').toString().trim(),
+    area: (input.area || '').toString().trim(),
+    period: (input.period || '').toString().trim(),
+    desc: (input.desc || '').toString().trim(),
+    modified: today(),
+  }
+  await writeList(env, KV_CASES, [cs, ...list])
+  return cs
+}
+
+export async function updateCase(env: any, id: string, input: Partial<CaseItem>): Promise<CaseItem | null> {
+  const list = await readList<CaseItem>(env, KV_CASES, SEED_CASES)
+  const idx = list.findIndex((x) => x.id === id)
+  if (idx === -1) return null
+  const updated: CaseItem = {
+    ...list[idx],
+    title: input.title !== undefined ? input.title.toString().trim() : list[idx].title,
+    category: input.category !== undefined ? input.category.toString() : list[idx].category,
+    doctor: input.doctor !== undefined ? input.doctor.toString() : list[idx].doctor,
+    age: input.age !== undefined ? input.age.toString().trim() : list[idx].age,
+    gender: input.gender !== undefined ? input.gender.toString().trim() : list[idx].gender,
+    area: input.area !== undefined ? input.area.toString().trim() : list[idx].area,
+    period: input.period !== undefined ? input.period.toString().trim() : list[idx].period,
+    desc: input.desc !== undefined ? input.desc.toString().trim() : list[idx].desc,
+    modified: today(),
+  }
+  list[idx] = updated
+  await writeList(env, KV_CASES, list)
+  return updated
+}
+
+export async function deleteCase(env: any, id: string): Promise<boolean> {
+  const list = await readList<CaseItem>(env, KV_CASES, SEED_CASES)
+  const next = list.filter((x) => x.id !== id)
+  if (next.length === list.length) return false
+  await writeList(env, KV_CASES, next)
   return true
 }

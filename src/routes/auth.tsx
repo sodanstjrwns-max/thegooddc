@@ -4,7 +4,7 @@ import { Breadcrumb } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
-import type { Notice, Column } from '../lib/content-store'
+import type { Notice, Column, CaseItem } from '../lib/content-store'
 import { bodyToText } from '../lib/content-store'
 
 const AuthShell: FC<{ title: string; children: any }> = ({ title, children }) => (
@@ -128,7 +128,7 @@ export const AdminLoginPage: FC = () => (
   </Layout>
 )
 
-export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number } }> = ({ stats }) => (
+export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number } }> = ({ stats }) => (
   <Layout title="관리자 대시보드" description="관리자 전용" path="/admin/dashboard">
     <section class="page-hero" style="padding:130px 0 50px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-gauge"></i> DASHBOARD</div><h1>관리자 대시보드</h1></div></section>
     <section class="sec">
@@ -138,6 +138,7 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
           <div class="stat"><div class="num">{stats.reservations}</div><div class="lbl">예약 신청</div></div>
           <div class="stat"><div class="num">{stats.notices}</div><div class="lbl">공지사항</div></div>
           <div class="stat"><div class="num">{stats.columns}</div><div class="lbl">원장 칼럼</div></div>
+          <div class="stat"><div class="num">{stats.cases}</div><div class="lbl">비포/애프터</div></div>
         </div>
         <div class="tlist-grid">
           <a href="/admin/reservations" class="tlist-card"><div class="tc-icon"><i class="fa-regular fa-calendar-check"></i></div><h3>예약 관리</h3><p>예약 목록 조회 및 상태 변경</p></a>
@@ -184,7 +185,7 @@ const ADMIN_CSS = `
 @media(max-width:640px){.adm-form .row{grid-template-columns:1fr}}
 `
 
-const AdminShell: FC<{ active: 'notices' | 'columns'; title: string; ok?: string; children: any }> = ({ active, title, ok, children }) => {
+const AdminShell: FC<{ active: 'notices' | 'columns' | 'cases'; title: string; ok?: string; children: any }> = ({ active, title, ok, children }) => {
   const okMsg: Record<string, string> = { created: '새 항목이 등록되었습니다.', updated: '수정사항이 저장되었습니다.', deleted: '항목이 삭제되었습니다.' }
   return (
     <Layout title={`${title} | 관리자`} description="관리자 전용" path="/admin/dashboard">
@@ -197,6 +198,7 @@ const AdminShell: FC<{ active: 'notices' | 'columns'; title: string; ok?: string
               <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
               <a href="/admin/notices" class={`chip ${active === 'notices' ? 'active' : ''}`} style={active === 'notices' ? 'background:var(--accent);color:#fff;border-color:var(--accent)' : ''}><i class="fa-solid fa-bullhorn"></i> 공지사항</a>
               <a href="/admin/columns" class={`chip ${active === 'columns' ? 'active' : ''}`} style={active === 'columns' ? 'background:var(--accent);color:#fff;border-color:var(--accent)' : ''}><i class="fa-solid fa-pen-nib"></i> 원장 칼럼</a>
+              <a href="/admin/cases" class={`chip ${active === 'cases' ? 'active' : ''}`} style={active === 'cases' ? 'background:var(--accent);color:#fff;border-color:var(--accent)' : ''}><i class="fa-solid fa-images"></i> 비포/애프터</a>
             </div>
           </div>
           {ok && okMsg[ok] && <div class="adm-toast"><i class="fa-solid fa-circle-check"></i> {okMsg[ok]}</div>}
@@ -307,6 +309,83 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string }> = ({ colum
             </details>
             <form method="post" action="/api/admin/columns/delete" onsubmit="return confirm('이 칼럼을 삭제할까요?')">
               <input type="hidden" name="id" value={c.id} />
+              <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> 삭제</button>
+            </form>
+          </div>
+        </div>
+      ))}
+    </AdminShell>
+  )
+}
+
+// ============================================================
+// ADMIN — 비포/애프터 케이스 관리 (사진 없이 텍스트 메타데이터만)
+// ============================================================
+export const AdminCasesPage: FC<{ cases: CaseItem[]; ok?: string }> = ({ cases, ok }) => {
+  const treatOpts = TREATMENTS.map((t) => ({ slug: t.slug, name: t.shortName || t.name }))
+  const treatName = (slug: string) => treatOpts.find((t) => t.slug === slug)?.name || '미지정'
+  return (
+    <AdminShell active="cases" title="비포/애프터 케이스 관리" ok={ok}>
+      <div class="adm-toast" style="background:var(--bg-2);color:var(--ink-soft);border-color:var(--line)">
+        <i class="fa-solid fa-circle-info"></i> 사진은 의료법 준수를 위해 추후 별도 게이팅으로 등록합니다. 여기서는 케이스 정보(텍스트)만 관리합니다.
+      </div>
+      {/* 새 케이스 작성 */}
+      <details class="adm-detail" style="margin-bottom:26px">
+        <summary><i class="fa-solid fa-plus"></i> 새 케이스 작성</summary>
+        <form class="adm-form" method="post" action="/api/admin/cases/create">
+          <div><label>제목</label><input type="text" name="title" required placeholder="예: 디지털 가이드 임플란트 케이스" /></div>
+          <div class="row">
+            <div><label>진료 분야</label><select name="category"><option value="">선택 안 함</option>{treatOpts.map((t) => <option value={t.slug}>{t.name}</option>)}</select></div>
+            <div><label>담당 의료진</label><select name="doctor">{DOCTORS.map((d) => <option value={d.slug}>{d.name} {d.title}</option>)}</select></div>
+          </div>
+          <div class="row">
+            <div><label>연령대</label><input type="text" name="age" placeholder="예: 50대" /></div>
+            <div><label>성별</label><input type="text" name="gender" placeholder="예: 남성" /></div>
+          </div>
+          <div class="row">
+            <div><label>거주 지역</label><input type="text" name="area" placeholder="예: 강서구 명지동" /></div>
+            <div><label>치료 기간</label><input type="text" name="period" placeholder="예: 약 3개월" /></div>
+          </div>
+          <div><label>케이스 설명</label><textarea name="desc" placeholder="치료 내용을 간단히 설명하세요"></textarea></div>
+          <div><button type="submit" class="btn btn-gold"><i class="fa-solid fa-check"></i> 등록하기</button></div>
+        </form>
+      </details>
+
+      {cases.length === 0 && <p style="color:var(--ink-soft)">등록된 케이스가 없습니다.</p>}
+      {cases.map((cs) => (
+        <div class="adm-card">
+          <div class="adm-meta">
+            <span class="adm-pin" style="background:var(--accent-2,var(--accent))">{treatName(cs.category)}</span>
+            <span>{cs.age} {cs.gender}</span>
+            {cs.area && <span style="color:var(--ink-faint)">{cs.area}</span>}
+            {cs.period && <span style="color:var(--ink-faint)">{cs.period}</span>}
+          </div>
+          <h3>{cs.title}</h3>
+          <p class="adm-body-prev">{cs.desc}</p>
+          <div class="adm-actions">
+            <details class="adm-detail" style="flex:1">
+              <summary><i class="fa-solid fa-pen"></i> 수정</summary>
+              <form class="adm-form" method="post" action="/api/admin/cases/update">
+                <input type="hidden" name="id" value={cs.id} />
+                <div><label>제목</label><input type="text" name="title" value={cs.title} required /></div>
+                <div class="row">
+                  <div><label>진료 분야</label><select name="category"><option value="" selected={!cs.category}>선택 안 함</option>{treatOpts.map((t) => <option value={t.slug} selected={t.slug === cs.category}>{t.name}</option>)}</select></div>
+                  <div><label>담당 의료진</label><select name="doctor">{DOCTORS.map((d) => <option value={d.slug} selected={d.slug === cs.doctor}>{d.name} {d.title}</option>)}</select></div>
+                </div>
+                <div class="row">
+                  <div><label>연령대</label><input type="text" name="age" value={cs.age} /></div>
+                  <div><label>성별</label><input type="text" name="gender" value={cs.gender} /></div>
+                </div>
+                <div class="row">
+                  <div><label>거주 지역</label><input type="text" name="area" value={cs.area} /></div>
+                  <div><label>치료 기간</label><input type="text" name="period" value={cs.period} /></div>
+                </div>
+                <div><label>케이스 설명</label><textarea name="desc">{cs.desc}</textarea></div>
+                <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
+              </form>
+            </details>
+            <form method="post" action="/api/admin/cases/delete" onsubmit="return confirm('이 케이스를 삭제할까요?')">
+              <input type="hidden" name="id" value={cs.id} />
               <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> 삭제</button>
             </form>
           </div>

@@ -7,31 +7,13 @@ import { DOCTORS, getDoctor } from '../data/doctors'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, speakableSchema } from '../lib/seo'
 import type { Column } from '../lib/content-store'
-import { SEED_COLUMNS } from '../lib/content-store'
+import { SEED_COLUMNS, SEED_CASES } from '../lib/content-store'
+import type { CaseItem } from '../lib/content-store'
 
 // ============================================================
 // 비포 / 애프터 (애프터 사진 로그인 게이팅)
 // ============================================================
-interface DemoCase {
-  id: string
-  title: string
-  age: string
-  gender: string
-  category: string // treatment slug
-  area: string
-  doctor: string // doctor slug
-  period: string
-  desc: string
-}
-
-const DEMO_CASES: DemoCase[] = [
-  { id: 'c1', title: '디지털 가이드 임플란트 케이스', age: '50대', gender: '남성', category: 'implant', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 3개월', desc: '상실된 어금니를 디지털 가이드 임플란트로 회복한 사례입니다. 정밀 설계를 통해 안정적인 식립을 진행했습니다.' },
-  { id: 'c2', title: '투명교정 전후', age: '20대', gender: '여성', category: 'clear-aligner', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 12개월', desc: '앞니의 가벼운 배열을 투명교정으로 자연스럽게 개선한 사례입니다.' },
-  { id: 'c3', title: '미니쉬 심미 치료', age: '30대', gender: '여성', category: 'minish', area: '부산 강서구', doctor: 'hwang-wooseok', period: '약 2주', desc: '자연 치아 삭제를 최소화하며 앞니의 색과 형태를 개선한 심미 치료 사례입니다.' },
-  { id: 'c4', title: '다수 임플란트 회복', age: '60대', gender: '남성', category: 'implant', area: '경남 김해 장유', doctor: 'hwang-wooseok', period: '약 4개월', desc: '여러 개의 치아를 잃은 경우 정밀 설계로 저작 기능을 회복한 사례입니다.' },
-]
-
-export const CasesPage: FC<{ loggedIn?: boolean }> = ({ loggedIn = false }) => (
+export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ loggedIn = false, cases = SEED_CASES }) => (
   <Layout
     title={`비포 / 애프터 | ${CLINIC.name} 강서구 명지 치과`}
     description="더착한치과의 진료 전후 사례를 확인하세요. 임플란트, 투명교정, 미니쉬 등 디지털 정밀 진료 케이스를 소개합니다."
@@ -63,7 +45,7 @@ export const CasesPage: FC<{ loggedIn?: boolean }> = ({ loggedIn = false }) => (
     <section class="sec" style={!loggedIn ? 'padding-top:20px' : ''}>
       <div class="container">
         <div class="tlist-grid">
-          {DEMO_CASES.map((cs) => {
+          {cases.map((cs) => {
             const t = getTreatment(cs.category)
             const dr = getDoctor(cs.doctor)
             return (
@@ -298,4 +280,4 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
   )
 }
 
-export { DEMO_CASES }
+
