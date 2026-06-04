@@ -17,7 +17,11 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage } from './routes/area'
-import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard } from './routes/auth'
+import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage } from './routes/auth'
+import {
+  listNotices, createNotice, updateNotice, deleteNotice,
+  listColumns, getColumn, createColumn, updateColumn, deleteColumn,
+} from './lib/content-store'
 
 type Bindings = {
   KV?: KVNamespace
@@ -56,10 +60,10 @@ app.get('/doctors/:slug', (c) => c.html(<DoctorDetailPage slug={c.req.param('slu
 app.get('/directions', (c) => c.html(<DirectionsPage />))
 app.get('/faq', (c) => c.html(<FaqPage />))
 app.get('/pricing', (c) => c.html(<PricingPage />))
-app.get('/notice', (c) => c.html(<NoticePage />))
+app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
-app.get('/column', (c) => c.html(<ColumnListPage />))
-app.get('/column/:slug', (c) => c.html(<ColumnDetailPage slug={c.req.param('slug')} />))
+app.get('/column', async (c) => c.html(<ColumnListPage columns={await listColumns(c.env)} />))
+app.get('/column/:slug', async (c) => c.html(<ColumnDetailPage slug={c.req.param('slug')} column={await getColumn(c.env, c.req.param('slug'))} />))
 app.get('/encyclopedia', (c) => c.html(<EncyclopediaListPage category={c.req.query('cat')} />))
 app.get('/encyclopedia/:slug', (c) => c.html(<EncyclopediaDetailPage slug={c.req.param('slug')} />))
 
@@ -108,7 +112,20 @@ app.get('/admin/dashboard', async (c) => {
     const r = await c.env.KV.list({ prefix: 'reservation:' })
     reservations = r.keys.length
   }
-  return c.html(<AdminDashboard stats={{ members, reservations, cases: 4, columns: 2 }} />)
+  const [notices, columns] = await Promise.all([listNotices(c.env), listColumns(c.env)])
+  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length }} />)
+})
+
+// Admin content management UI
+app.get('/admin/notices', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  return c.html(<AdminNoticesPage notices={await listNotices(c.env)} ok={c.req.query('ok')} />)
+})
+app.get('/admin/columns', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  return c.html(<AdminColumnsPage columns={await listColumns(c.env)} ok={c.req.query('ok')} />)
 })
 
 // Legal pages
@@ -169,6 +186,79 @@ app.post('/api/admin/login', async (c) => {
 app.get('/api/admin/logout', (c) => {
   c.header('Set-Cookie', clearCookie('admin_session'))
   return c.redirect('/admin')
+})
+
+// ============================================================
+// ADMIN CONTENT CRUD (admin 세션 가드 · form-encoded, POST→redirect)
+// ============================================================
+async function requireAdmin(c: any): Promise<boolean> {
+  return !!(await getSession(c, 'admin'))
+}
+
+// ----- NOTICES -----
+app.post('/api/admin/notices/create', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await createNotice(c.env, {
+    title: String(f.title || ''),
+    body: String(f.body || ''),
+    date: String(f.date || ''),
+    pinned: f.pinned === 'on' || f.pinned === 'true',
+  })
+  return c.redirect('/admin/notices?ok=created')
+})
+app.post('/api/admin/notices/update', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await updateNotice(c.env, String(f.id || ''), {
+    title: String(f.title || ''),
+    body: String(f.body || ''),
+    date: String(f.date || ''),
+    pinned: f.pinned === 'on' || f.pinned === 'true',
+  })
+  return c.redirect('/admin/notices?ok=updated')
+})
+app.post('/api/admin/notices/delete', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await deleteNotice(c.env, String(f.id || ''))
+  return c.redirect('/admin/notices?ok=deleted')
+})
+
+// ----- COLUMNS -----
+app.post('/api/admin/columns/create', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await createColumn(c.env, {
+    title: String(f.title || ''),
+    slug: String(f.slug || ''),
+    excerpt: String(f.excerpt || ''),
+    date: String(f.date || ''),
+    author: String(f.author || 'hwang-wooseok'),
+    related: String(f.related || ''),
+    bodyText: String(f.bodyText || ''),
+  })
+  return c.redirect('/admin/columns?ok=created')
+})
+app.post('/api/admin/columns/update', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await updateColumn(c.env, String(f.id || ''), {
+    title: String(f.title || ''),
+    slug: String(f.slug || ''),
+    excerpt: String(f.excerpt || ''),
+    date: String(f.date || ''),
+    author: String(f.author || 'hwang-wooseok'),
+    related: String(f.related || ''),
+    bodyText: String(f.bodyText || ''),
+  })
+  return c.redirect('/admin/columns?ok=updated')
+})
+app.post('/api/admin/columns/delete', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await deleteColumn(c.env, String(f.id || ''))
+  return c.redirect('/admin/columns?ok=deleted')
 })
 
 app.post('/api/reservation', async (c) => {

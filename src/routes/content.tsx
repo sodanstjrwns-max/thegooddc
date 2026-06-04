@@ -6,6 +6,8 @@ import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
 import { DOCTORS, getDoctor } from '../data/doctors'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, speakableSchema } from '../lib/seo'
+import type { Column } from '../lib/content-store'
+import { SEED_COLUMNS } from '../lib/content-store'
 
 // ============================================================
 // 비포 / 애프터 (애프터 사진 로그인 게이팅)
@@ -108,38 +110,8 @@ export const CasesPage: FC<{ loggedIn?: boolean }> = ({ loggedIn = false }) => (
 // ============================================================
 // 원장 칼럼
 // ============================================================
-const COLUMNS = [
-  {
-    slug: 'why-digital-implant',
-    title: '디지털 가이드 임플란트, 왜 정확할까요?',
-    excerpt: '3D CT와 구강 스캐너로 식립 위치를 미리 설계하는 디지털 가이드 임플란트의 원리를 쉽게 설명합니다.',
-    date: '2026-05-20',
-    modified: '2026-05-20',
-    author: 'hwang-wooseok',
-    related: 'implant',
-    body: [
-      { h: '임플란트의 정확도는 어디서 결정될까요?', p: '임플란트는 잇몸뼈 속 신경과 혈관을 피해 가장 안정적인 위치에 식립하는 정밀한 작업입니다. 식립 위치가 조금만 달라져도 결과에 영향을 줄 수 있기 때문에, 사전 설계가 매우 중요합니다.' },
-      { h: '디지털 가이드가 하는 일', p: '디지털 가이드 임플란트는 3D CT와 구강 스캔 데이터를 컴퓨터에서 분석해 식립 위치·깊이·각도를 미리 설계합니다. 그리고 그 설계대로 제작한 수술용 가이드를 사용하기 때문에, 계획한 위치에 정밀하게 식립할 수 있습니다.' },
-      { h: '환자에게 어떤 점이 좋을까요?', p: '사전 설계를 통해 시술 과정의 변수를 줄이고, 보다 예측 가능한 진료가 가능합니다. 더착한치과는 원내 기공실과 결합해 진단부터 보철까지 효율적으로 진행합니다.' },
-    ],
-  },
-  {
-    slug: 'clear-aligner-tips',
-    title: '투명교정, 결과를 좌우하는 착용 습관',
-    excerpt: '투명교정은 장치를 빼고 낄 수 있는 만큼, 착용 습관이 결과에 큰 영향을 줍니다. 핵심 관리법을 안내합니다.',
-    date: '2026-05-12',
-    modified: '2026-05-12',
-    author: 'hwang-wooseok',
-    related: 'clear-aligner',
-    body: [
-      { h: '투명교정의 장점과 책임', p: '투명교정은 눈에 잘 띄지 않고 식사·양치 시 분리할 수 있어 편리합니다. 다만 그만큼 정해진 시간을 꾸준히 착용하는 자기 관리가 결과에 중요합니다.' },
-      { h: '권장 착용 시간', p: '일반적으로 식사와 양치 시간을 제외하고 하루 대부분 착용하는 것이 권장됩니다. 착용 시간이 부족하면 계획한 치아 이동이 늦어질 수 있습니다.' },
-      { h: '관리 팁', p: '장치를 뺀 뒤에는 청결하게 보관하고, 식사 후 양치를 한 뒤 다시 착용하는 습관을 들이는 것이 좋습니다.' },
-    ],
-  },
-]
 
-export const ColumnListPage: FC = () => (
+export const ColumnListPage: FC<{ columns?: Column[] }> = ({ columns = SEED_COLUMNS }) => (
   <Layout
     title={`원장 칼럼 | ${CLINIC.name} 강서구 명지 치과`}
     description="더착한치과 황우석 대표원장이 직접 쓰는 치과 건강 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다."
@@ -158,7 +130,7 @@ export const ColumnListPage: FC = () => (
     <section class="sec">
       <div class="container">
         <div class="tlist-grid">
-          {COLUMNS.map((c) => {
+          {columns.map((c) => {
             const dr = getDoctor(c.author)
             return (
               <a href={`/column/${c.slug}`} class="card reveal" style="padding:32px;text-decoration:none">
@@ -175,8 +147,8 @@ export const ColumnListPage: FC = () => (
   </Layout>
 )
 
-export const ColumnDetailPage: FC<{ slug: string }> = ({ slug }) => {
-  const c = COLUMNS.find((x) => x.slug === slug)
+export const ColumnDetailPage: FC<{ slug: string; column?: Column | null }> = ({ slug, column }) => {
+  const c = column ?? SEED_COLUMNS.find((x) => x.slug === slug)
   if (!c) {
     return (
       <Layout title="칼럼을 찾을 수 없습니다" description="요청하신 칼럼을 찾을 수 없습니다." path="/column">
@@ -326,4 +298,4 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
   )
 }
 
-export { COLUMNS, DEMO_CASES }
+export { DEMO_CASES }

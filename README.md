@@ -17,7 +17,8 @@
 - **백과사전**: 500+ 용어, 카테고리 필터, 진료 자동 인링크
 - **지역 SEO**: 8개 지역 × 핵심 3진료 = 24개 조합 페이지 (`/area/[지역]-[진료]`)
 - **인증**: 회원가입/로그인(HMAC 세션, HttpOnly Secure 쿠키 30일), 마이페이지
-- **관리자**: 비밀번호 로그인(24시간 세션), 대시보드(회원·예약 집계)
+- **관리자**: 비밀번호 로그인(24시간 세션), 대시보드(회원·예약·공지·칼럼 집계)
+- **관리자 콘텐츠 CRUD**: 공지사항·원장 칼럼 작성/수정/삭제 (KV 저장, 코드 시드 fallback). 칼럼은 본문 단락 자동 파싱·자동 slug 생성. 모든 변경이 공개 페이지에 즉시 반영
 - **예약**: 폼 → KV 저장 + Resend 이메일 알림(설정 시)
 - **안내 페이지**: 미션, 오시는 길(지도/교통), 비용 안내, 통합 FAQ, 공지사항
 - **SEO/AEO**: 전 페이지 메타·canonical·OG, JSON-LD(Dentist/LocalBusiness/Person/MedicalProcedure/FAQPage/BreadcrumbList/Article/City/Speakable), sitemap.xml + sitemap-encyclopedia.xml, robots.txt(AI 크롤러 허용), llms.txt / llms-full.txt
@@ -36,13 +37,15 @@
 | `/area/:지역-:진료` | 지역 SEO (예: `/area/myeongji-implant`) |
 | `/directions` `/pricing` `/faq` `/notice` `/reservation` | 안내 |
 | `/auth/login` `/auth/register` `/auth/mypage` | 회원 |
-| `/admin` `/admin/dashboard` | 관리자 |
+| `/admin` `/admin/dashboard` | 관리자 로그인·대시보드 |
+| `/admin/notices` `/admin/columns` | 관리자 공지·칼럼 CRUD 화면 |
 | `/sitemap.xml` `/robots.txt` `/llms.txt` | SEO |
-| **API** | `POST /api/auth/register` `POST /api/auth/login` `GET /api/auth/logout` `POST /api/admin/login` `POST /api/reservation` |
+| **API (공개)** | `POST /api/auth/register` `POST /api/auth/login` `GET /api/auth/logout` `POST /api/admin/login` `POST /api/reservation` |
+| **API (admin 가드)** | `POST /api/admin/notices/{create,update,delete}` · `POST /api/admin/columns/{create,update,delete}` |
 
 ## 데이터 아키텍처
 - **데이터 모델**: 병원정보(clinic), 의료진(doctors), 진료+FAQ(treatments), 지역(areas), 백과사전(encyclopedia) — TypeScript 단일 진실 공급원(`src/data/`)
-- **스토리지**: Cloudflare KV (회원·예약 JSON 저장). 확장 시 R2(이미지/케이스), D1(조회수) 추가 가능
+- **스토리지**: Cloudflare KV — 회원·예약 + 공지(`content:notices`)·칼럼(`content:columns`) JSON 저장. KV가 비면 코드 시드(`src/lib/content-store.ts`)로 fallback → 공개 페이지가 절대 깨지지 않음. 확장 시 R2(이미지/케이스), D1(조회수) 추가 가능
 - **세션**: Web Crypto HMAC-SHA256 서명 토큰 → HttpOnly Secure 쿠키
 
 ## 의료광고법 컴플라이언스 (§B 필터 적용)
@@ -66,11 +69,16 @@
 - **로컬 실행**: `npm run build && pm2 start ecosystem.config.cjs` → http://localhost:3000
 
 ## 미구현 / 다음 단계
-- 히어로·시설·진료 실사진 적용 (현재 그라데이션+아이콘) — 신청서 제출 사진 또는 생성 이미지로 교체 예정
-- 관리자 CRUD 실제 작성 화면(케이스/칼럼/공지) — 현재 대시보드·집계까지 구현, KV 연동 폼 추가 예정
+- 히어로 비주얼 실사진 적용 (현재 그라데이션+아이콘 플레이스홀더) — 신청서 제출 사진 또는 생성 이미지로 교체 예정
+- 관리자 케이스(비포/애프터) CRUD — 공지·칼럼은 완료, 케이스는 동일 패턴으로 확장 예정
 - Google OAuth 실연동(현재 자리표시), 조회수 실측(D1 is_bot 집계)
 - IndexNow / Google Ping 자동 제출, _headers / _redirects
 - 커스텀 도메인 연결 (thegooddental.kr)
 
+## 디자인 컨셉
+- **Editorial Calm 2.0** (줌클리니컬) — 따뜻한 아이볼리(#FBFAF6) + 세이지 티틸(#3A6B5E) 강조 + brass(#B08D57) 보조
+- **타이포**: Newsreader(라틴) + 나눔명조(한글) 세리프 헤드라인 + Pretendard 본문
+- **에디토리얼 리듬**: 섹션 인덱스 넘버(01–06)·헤어라인 디바이더·대문자 키커·스크롤 마스킹 리빌
+
 ## 최종 수정일
-2026-06-02
+2026-06-04

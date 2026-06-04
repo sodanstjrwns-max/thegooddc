@@ -5,6 +5,8 @@ import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import { breadcrumbSchema, faqSchema, speakableSchema } from '../lib/seo'
+import type { Notice } from '../lib/content-store'
+import { SEED_NOTICES } from '../lib/content-store'
 
 // ===== 미션 / 병원소개 =====
 export const MissionPage: FC = () => {
@@ -215,12 +217,7 @@ export const PricingPage: FC = () => (
 )
 
 // ===== 공지사항 (정적 데모) =====
-export const NoticePage: FC = () => {
-  const notices = [
-    { pinned: true, date: '2026-05-25', title: '6월 5일~6일 휴진 안내', body: '6월 5일(금)부터 6일(토)까지 휴진합니다. 진료 예약에 참고 부탁드립니다.' },
-    { pinned: false, date: '2026-05-01', title: '수요일·월요일 야간진료 안내', body: '월요일과 수요일은 오후 8시까지 야간진료를 운영합니다.' },
-    { pinned: false, date: '2026-04-10', title: '디지털 가이드 임플란트 시스템 도입', body: '보다 정밀한 진료를 위해 AI 기반 디지털 가이드 임플란트 시스템을 운영하고 있습니다.' },
-  ]
+export const NoticePage: FC<{ notices?: Notice[] }> = ({ notices = SEED_NOTICES }) => {
   return (
     <Layout
       title={`공지사항 | ${CLINIC.name}`}
