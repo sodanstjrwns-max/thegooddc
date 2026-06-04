@@ -129,6 +129,59 @@
     });
   }
 
+  /* ---- SPOTLIGHT (mouse glow) ---- */
+  function initGlow() {
+    if (prefersReduced) return;
+    var cards = document.querySelectorAll('[data-glow]');
+    cards.forEach(function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+        card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+      });
+    });
+  }
+
+  /* ---- 3D TILT ---- */
+  function initTilt() {
+    if (prefersReduced || window.matchMedia('(hover: none)').matches) return;
+    var MAX = 7; // deg
+    document.querySelectorAll('[data-tilt]').forEach(function (card) {
+      var raf = null;
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          card.style.transform = 'perspective(900px) rotateX(' + (-py * MAX).toFixed(2) + 'deg) rotateY(' + (px * MAX).toFixed(2) + 'deg) translateY(-6px)';
+        });
+      });
+      card.addEventListener('pointerleave', function () {
+        if (raf) cancelAnimationFrame(raf);
+        card.style.transform = '';
+      });
+    });
+  }
+
+  /* ---- PROGRESS RING ---- */
+  function initRing() {
+    var rings = document.querySelectorAll('.ring[data-ring]');
+    if (!rings.length) return;
+    function fill(el) {
+      var pct = parseFloat(el.getAttribute('data-ring')) || 0;
+      var circ = 2 * Math.PI * 52; // r=52
+      var off = circ - (pct / 100) * circ;
+      el.style.setProperty('--off', off);
+      el.classList.add('on');
+    }
+    if (prefersReduced || !('IntersectionObserver' in window)) { rings.forEach(fill); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { fill(en.target); io.unobserve(en.target); } });
+    }, { threshold: 0.4 });
+    rings.forEach(function (el) { io.observe(el); });
+  }
+
   /* ---- Smooth anchors ---- */
   function initAnchors() {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
@@ -146,6 +199,7 @@
 
   function init() {
     initHeader(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
+    initGlow(); initTilt(); initRing();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

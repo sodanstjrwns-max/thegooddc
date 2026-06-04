@@ -31,6 +31,12 @@ const JOURNEY = [
   { ic: 'heart', t: '편안한 치료', d: '무통 마취로 두려움을 안심으로 바꿉니다.' },
 ]
 
+const MARQUEE = [
+  '디지털 가이드 임플란트', '투명교정', '미니쉬', '원내 기공실', '무통 마취 시스템',
+  '통합치의학 전문의', '치의학박사', '3D CT 정밀 진단', '구강 스캐너', '24년 임상 경력',
+  '과잉진료 없는 진료', '10개 진료과 통합',
+]
+
 const COMPARE = [
   { label: '진료 설계', us: '3D CT · AI 디지털 가이드', them: '경험·감에 의존' },
   { label: '보철물 제작', us: '원내 기공실 (밀링기·3D프린터)', them: '외부 기공소 위탁' },
@@ -108,9 +114,10 @@ export const HomePage: FC = () => {
             <h2>치과가 무섭다는 분께,<br /><em>세 가지를 약속</em>드립니다</h2>
             <p>치과에 대한 막연한 두려움 때문에 꼭 받아야 할 진료를 미루지 않도록. 더착한치과의 진료 원칙입니다.</p>
           </div>
-          <div class="assure-grid">
+          <div class="assure-grid" data-tilt-scope>
             {ASSURE.map((a, i) => (
-              <article class={`assure-card reveal reveal-d${i + 1}`}>
+              <article class={`assure-card reveal reveal-d${i + 1}`} data-glow>
+                <div class="bento-glow"></div>
                 <span class="idx">0{i + 1}</span>
                 <div class="ico"><i class={`fa-solid fa-${a.ic}`}></i></div>
                 <h3>{a.t}</h3>
@@ -154,9 +161,10 @@ export const HomePage: FC = () => {
             <h2>가장 자신 있는 <em>세 가지 진료</em></h2>
             <p>디지털 장비, 24년의 임상, 그리고 원내 기공실. 핵심 진료를 한 곳에서 정확하게.</p>
           </div>
-          <div class="core-grid">
+          <div class="core-grid" data-tilt-scope>
             {CORE_TREATMENTS.map((t, i) => (
-              <a href={`/treatments/${t.slug}`} class={`core-card reveal reveal-d${i + 1}`}>
+              <a href={`/treatments/${t.slug}`} class={`core-card reveal reveal-d${i + 1}`} data-tilt data-glow>
+                <div class="bento-glow"></div>
                 <div class="cc-img">
                   {CORE_IMG[t.slug] ? <img src={CORE_IMG[t.slug]} alt={t.name} loading="lazy" /> : <div class="ph"><i class={`fa-solid fa-${t.icon}`}></i></div>}
                   <span class="cc-num">0{i + 1}</span>
@@ -173,32 +181,100 @@ export const HomePage: FC = () => {
         </div>
       </section>
 
-      {/* ===================== DIGITAL ===================== */}
+      {/* ===================== DIGITAL — BENTO GRID ===================== */}
       <section class="digital">
-        <div class="container digital-grid">
-          <div class="reveal">
-            <div class="shead" style="margin-bottom:0">
-              <span class="eyebrow on-navy">Digital Dentistry</span>
-              <h2>원내 기공실에서<br /><span>직접, 더 빠르고 정확하게</span></h2>
-              <p>보철물을 외부에 맡기지 않습니다. 밀링기 2대·3D 프린터 3대·구강 스캐너로 진료의 정확도와 속도를 함께 높입니다.</p>
-            </div>
-            <div class="dfeatures">
-              <div class="dfeature">
-                <div class="ico"><i class="fa-solid fa-microchip"></i></div>
-                <div><h4>AI 디지털 가이드 임플란트</h4><p>3D CT 데이터로 식립 위치를 컴퓨터에서 미리 설계해 정확하게 진행합니다.</p></div>
-              </div>
-              <div class="dfeature">
-                <div class="ico"><i class="fa-solid fa-print"></i></div>
-                <div><h4>원내 기공실 (밀링기·3D프린터)</h4><p>보철물을 원내에서 제작해 제작 기간과 내원 횟수를 줄입니다.</p></div>
-              </div>
-              <div class="dfeature">
-                <div class="ico"><i class="fa-solid fa-bolt-lightning"></i></div>
-                <div><h4>플라젠 신경치료기</h4><p>정밀 신경치료 장비로 자연치아를 최대한 보존하는 진료를 지향합니다.</p></div>
-              </div>
-            </div>
+        <div class="bento-noise"></div>
+        <div class="container">
+          <div class="shead center" style="margin-bottom:54px">
+            <span class="eyebrow on-navy center">Digital Dentistry</span>
+            <h2>장비가 만드는 <span>정확함의 차이</span></h2>
+            <p>밀링기 2대 · 3D 프린터 3대 · 구강 스캐너. 진단부터 보철 제작까지 한 곳에서.</p>
           </div>
-          <div class="digital-visual reveal">
-            <img src="/images/digital-system.webp" alt="원내 디지털 기공 시스템" loading="lazy" />
+
+          <div class="bento" data-tilt-scope>
+            {/* big feature — AI guide */}
+            <article class="bento-card b-feature reveal" data-tilt data-glow>
+              <div class="bento-glow"></div>
+              <div class="bento-img">
+                <img src="/images/digital-system.webp" alt="원내 디지털 기공 시스템" loading="lazy" />
+                <div class="bento-img-grad"></div>
+              </div>
+              <div class="bento-body">
+                <span class="bento-kicker"><i class="fa-solid fa-microchip"></i> AI Guided</span>
+                <h3>AI 디지털 가이드<br />임플란트</h3>
+                <p>3D CT 데이터로 식립 위치·깊이·각도를 컴퓨터에서 미리 설계하고, 수술용 가이드로 계획한 위치에 정밀하게 식립합니다.</p>
+              </div>
+            </article>
+
+            {/* stat ring — accuracy */}
+            <article class="bento-card b-ring reveal reveal-d1" data-glow>
+              <div class="bento-glow"></div>
+              <div class="ring" data-ring="98">
+                <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" cx="60" cy="60" r="52"/></svg>
+                <div class="ring-num"><span data-count="98">0</span><i>%</i></div>
+              </div>
+              <div class="bento-body">
+                <h4>디지털 설계 정확도</h4>
+                <p>계획 대비 식립 오차를 최소화</p>
+              </div>
+            </article>
+
+            {/* in-house lab */}
+            <article class="bento-card b-lab reveal reveal-d2" data-tilt data-glow>
+              <div class="bento-glow"></div>
+              <div class="bento-body">
+                <span class="bento-kicker"><i class="fa-solid fa-print"></i> In-house Lab</span>
+                <h3>원내 기공실</h3>
+                <p>보철물을 외부에 맡기지 않습니다. 원내에서 직접 제작해 제작 기간과 내원 횟수를 줄입니다.</p>
+                <div class="bento-chips">
+                  <span><b>2</b> 밀링기</span>
+                  <span><b>3</b> 3D 프린터</span>
+                  <span><i class="fa-solid fa-cube"></i> 구강 스캐너</span>
+                </div>
+              </div>
+            </article>
+
+            {/* plagen */}
+            <article class="bento-card b-plagen reveal reveal-d1" data-glow>
+              <div class="bento-glow"></div>
+              <div class="bento-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+              <div class="bento-body">
+                <h4>플라젠 신경치료기</h4>
+                <p>정밀 신경치료로 자연치아를 최대한 보존하는 진료를 지향합니다.</p>
+              </div>
+            </article>
+
+            {/* painless */}
+            <article class="bento-card b-pain reveal reveal-d2" data-glow>
+              <div class="bento-glow"></div>
+              <div class="bento-icon"><i class="fa-solid fa-shield-heart"></i></div>
+              <div class="bento-body">
+                <h4>무통 마취 시스템</h4>
+                <p>치료 중 통증을 최소화해, 치과가 무섭지 않은 곳을 만듭니다.</p>
+              </div>
+            </article>
+
+            {/* scan strip */}
+            <article class="bento-card b-scan reveal reveal-d3" data-tilt data-glow>
+              <div class="bento-glow"></div>
+              <div class="bento-body">
+                <span class="bento-kicker"><i class="fa-solid fa-tooth"></i> 3D Scan</span>
+                <h3>구강 스캐너 정밀 진단</h3>
+                <p>입안을 3D로 그대로 스캔해 본뜨는 불편 없이 정확하게 진단합니다.</p>
+              </div>
+              <div class="bento-dots"><span></span><span></span><span></span></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================== MARQUEE ===================== */}
+      <section class="marquee-band">
+        <div class="marquee" data-marquee>
+          <div class="marquee-track">
+            {MARQUEE.concat(MARQUEE).map((m) => (
+              <span class="mq-item"><i class="fa-solid fa-circle"></i> {m}</span>
+            ))}
           </div>
         </div>
       </section>
