@@ -16,6 +16,21 @@
     window.addEventListener('scroll', onScroll, { passive: true });
   }
 
+  /* ---- SCROLL PROGRESS fallback (browsers without animation-timeline: scroll()) ---- */
+  function initProgress() {
+    var bar = document.querySelector('.scroll-progress');
+    if (!bar) return;
+    if (CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')) return; // CSS handles it
+    function upd() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? (h.scrollTop || window.scrollY) / max : 0) + ')';
+    }
+    upd();
+    window.addEventListener('scroll', upd, { passive: true });
+    window.addEventListener('resize', upd, { passive: true });
+  }
+
   /* ---- MOBILE drawer ---- */
   function initDrawer() {
     var toggle = document.querySelector('.nav-toggle');
@@ -46,6 +61,10 @@
   /* ---- REVEAL on scroll ---- */
   function initReveal() {
     var els = document.querySelectorAll('.reveal,.reveal-up,.reveal-scale');
+    // 2026: if the browser supports CSS scroll-driven view() timelines,
+    // the reveal is handled natively in CSS — JS observer not needed.
+    var nativeScroll = CSS && CSS.supports && CSS.supports('animation-timeline: view()');
+    if (nativeScroll && !prefersReduced) return;
     if (prefersReduced || !('IntersectionObserver' in window)) {
       els.forEach(function (el) { el.classList.add('in'); });
       return;
@@ -129,15 +148,15 @@
     });
   }
 
-  /* ---- SPOTLIGHT (mouse glow) ---- */
+  /* ---- SPOTLIGHT (mouse glow) — sets @property typed --glow-x/--glow-y ---- */
   function initGlow() {
     if (prefersReduced) return;
     var cards = document.querySelectorAll('[data-glow]');
     cards.forEach(function (card) {
       card.addEventListener('pointermove', function (e) {
         var r = card.getBoundingClientRect();
-        card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
-        card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+        card.style.setProperty('--glow-x', ((e.clientX - r.left) / r.width * 100) + '%');
+        card.style.setProperty('--glow-y', ((e.clientY - r.top) / r.height * 100) + '%');
       });
     });
   }
@@ -198,7 +217,7 @@
   }
 
   function init() {
-    initHeader(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
+    initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

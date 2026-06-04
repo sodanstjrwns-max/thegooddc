@@ -66,6 +66,8 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         ))}
       </head>
       <body>
+        {/* 2026: scroll-driven reading progress (pure CSS animation-timeline: scroll) */}
+        <div class="scroll-progress" aria-hidden="true"></div>
         <Header />
         <MobileDrawer />
         <main>{children}</main>

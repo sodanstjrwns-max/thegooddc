@@ -3,10 +3,26 @@
    라이트 그레이 그라데이션 · 초미니멀 · 무채색 · 큰 제품샷.
    "세련되고 비쌈". 한 화면 = 한 메시지. 부드러운 모션.
    Pretendard 단일. 절제된 한 톤 액센트.
+   ── 2026 native web tech 적용:
+      View Transitions API · Scroll-driven Animations · @property
+      text-wrap:balance/pretty · :has() · color-mix() · content-visibility
+      Container Queries · light-dark() ready
    ============================================================ */
+
+/* ===== 2026: View Transitions API — cross-document morph (MPA) ===== */
+@view-transition { navigation: auto; }
+
+/* ===== 2026: @property — typed custom props for smooth animatable gradients/glows ===== */
+@property --glow-x { syntax: "<percentage>"; inherits: false; initial-value: 50%; }
+@property --glow-y { syntax: "<percentage>"; inherits: false; initial-value: 50%; }
+@property --grad-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --ring-pct { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --sheen { syntax: "<percentage>"; inherits: false; initial-value: -120%; }
 
 /* ---------- TOKENS ---------- */
 :root{
+  /* 2026: declare both schemes so light-dark() & UA chrome adapt */
+  color-scheme: light;
   /* base — near-white to light grey */
   --bg:#FFFFFF;
   --bg-2:#F5F5F7;        /* apple grey */
@@ -115,8 +131,62 @@ img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 ul{list-style:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none}
-h1,h2,h3,h4{line-height:1.08;letter-spacing:-.035em;font-weight:700;color:var(--ink)}
+/* 2026: text-wrap balances headlines, pretties body — no orphans, even ragging */
+h1,h2,h3,h4{line-height:1.08;letter-spacing:-.035em;font-weight:700;color:var(--ink);text-wrap:balance}
+p,.lead,blockquote{text-wrap:pretty}
 ::selection{background:var(--ink);color:#fff}
+
+/* 2026: content-visibility — skip rendering offscreen sections (faster paint) */
+.assure,.philo,.core,.digital,.doctor,.journey,.compare,.tlist,.marquee-band{
+  content-visibility:auto;contain-intrinsic-size:auto 600px;
+}
+
+/* ============================================================
+   2026 NATIVE WEB TECH
+   ============================================================ */
+
+/* ── Scroll-driven reading progress bar (animation-timeline: scroll) ── */
+.scroll-progress{
+  position:fixed;top:0;left:0;height:3px;width:100%;z-index:2000;transform-origin:0 50%;
+  transform:scaleX(0);pointer-events:none;
+  background:linear-gradient(90deg,var(--accent),color-mix(in oklab,var(--accent) 55%,#7a5aff));
+  box-shadow:0 0 12px color-mix(in oklab,var(--accent) 70%,transparent);
+}
+@supports (animation-timeline: scroll()){
+  .scroll-progress{
+    animation:sp-grow linear;
+    animation-timeline:scroll(root block);
+  }
+}
+@keyframes sp-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ── Scroll-driven reveal (pure CSS, view() timeline) — progressive enhancement ── */
+@supports (animation-timeline: view()){
+  @media (prefers-reduced-motion: no-preference){
+    .reveal{opacity:1;transform:none} /* JS class no longer required */
+    .reveal:not(.in){
+      animation:reveal-in linear both;
+      animation-timeline:view();
+      animation-range:entry 0% entry 38%;
+    }
+  }
+}
+@keyframes reveal-in{
+  from{opacity:0;transform:translateY(34px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── View Transitions API: name persistent elements so they morph across pages ── */
+@view-transition{ navigation:auto; }
+::view-transition-old(root),::view-transition-new(root){
+  animation-duration:.42s;animation-timing-function:var(--ease-out);
+}
+.site-header{view-transition-name:site-header}
+.scroll-progress{view-transition-name:scroll-progress}
+.floating-cta{view-transition-name:floating-cta}
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none !important}
+}
 
 /* ---------- LAYOUT ---------- */
 .container{max-width:1080px;margin:0 auto;padding:0 28px}
@@ -152,8 +222,13 @@ section{position:relative}
   white-space:nowrap;cursor:pointer;
 }
 .btn i{font-size:.92em}
-.btn-primary,.btn-gold,.btn-accent{background:var(--accent);color:#fff}
-.btn-primary:hover,.btn-gold:hover,.btn-accent:hover{background:var(--accent-d);transform:scale(1.03)}
+/* 2026: primary btn — sheen sweep via @property --sheen + color-mix hover tint */
+.btn-primary,.btn-gold,.btn-accent{background:var(--accent);color:#fff;position:relative;overflow:hidden;isolation:isolate}
+.btn-primary::after,.btn-gold::after,.btn-accent::after{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(105deg,transparent var(--sheen),rgba(255,255,255,.35) calc(var(--sheen) + 18%),transparent calc(var(--sheen) + 40%))}
+.btn-primary:hover,.btn-gold:hover,.btn-accent:hover{background:color-mix(in oklab,var(--accent) 82%,#000);transform:scale(1.03)}
+.btn-primary:hover::after,.btn-gold:hover::after,.btn-accent:hover::after{animation:sheen .7s ease-out}
+@keyframes sheen{from{--sheen:-120%}to{--sheen:120%}}
 .btn-ghost,.btn-outline{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--line-2)}
 .btn-ghost:hover,.btn-outline:hover{box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
 .btn-ghost.on-navy{background:transparent;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
@@ -177,6 +252,11 @@ section{position:relative}
   border-bottom:1px solid rgba(0,0,0,.06);
 }
 .site-header.scrolled .bar{padding:11px 28px}
+/* 2026: :has() — solidify header automatically while a mega-menu is open (no JS) */
+.site-header:has(.nav-top>li:hover .mega),.site-header:has(.mega:hover),.site-header:has(.nav-top>li>a:focus-visible){
+  background:rgba(255,255,255,.92);backdrop-filter:blur(22px) saturate(180%);
+  border-bottom:1px solid rgba(0,0,0,.07);
+}
 .brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .brand .logo{
   width:38px;height:38px;border-radius:11px;
@@ -309,8 +389,8 @@ section{position:relative}
 .assure-card p{color:var(--ink-soft);line-height:1.65;font-size:1rem;font-weight:400}
 /* light-card spotlight */
 .assure-card .bento-glow,.core-card .bento-glow{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .35s;pointer-events:none;
-  background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(0,113,227,.1),transparent 60%)}
-.assure-card:hover .bento-glow,.core-card:hover .bento-glow{opacity:1}
+  background:radial-gradient(340px circle at var(--glow-x) var(--glow-y),rgba(0,113,227,.1),transparent 60%)}
+.assure-card:hover .bento-glow,.core-card:hover .bento-glow,.assure-card:focus-within .bento-glow,.core-card:focus-within .bento-glow{opacity:1}
 
 /* ============================================================
    PHILOSOPHY — big quote, minimal
@@ -381,12 +461,22 @@ section{position:relative}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 24px 50px -30px rgba(0,0,0,.6);
   padding:28px;display:flex;flex-direction:column;justify-content:flex-end;
   transition:transform .35s cubic-bezier(.2,.7,.2,1),border-color .35s,box-shadow .35s;
-  transform-style:preserve-3d;will-change:transform}
+  transform-style:preserve-3d;will-change:transform;
+  /* 2026: container queries — cards adapt to their own width, not viewport */
+  container-type:inline-size}
 .bento-card:hover{border-color:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 36px 70px -34px rgba(0,0,0,.7)}
-/* mouse spotlight glow */
+/* 2026: animated conic gradient border via @property --grad-angle (only on hover/focus) */
+.bento-card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;z-index:0;opacity:0;
+  transition:opacity .4s;pointer-events:none;
+  background:conic-gradient(from var(--grad-angle),transparent 0deg,color-mix(in oklab,var(--accent) 90%,#fff) 70deg,#7a5aff 140deg,transparent 220deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+.bento-card:hover::before,.bento-card:focus-within::before{opacity:.9;animation:grad-spin 4s linear infinite}
+@keyframes grad-spin{to{--grad-angle:360deg}}
+/* mouse spotlight glow — driven by @property typed --glow-x/--glow-y for smoothness */
 .bento-glow{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .35s;pointer-events:none;
-  background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(0,113,227,.28),transparent 60%)}
-.bento-card:hover .bento-glow{opacity:1}
+  background:radial-gradient(360px circle at var(--glow-x) var(--glow-y),rgba(0,113,227,.30),transparent 60%)}
+.bento-card:hover .bento-glow,.bento-card:focus-within .bento-glow{opacity:1}
 .bento-card>*{position:relative;z-index:1}
 .bento-kicker{display:inline-flex;align-items:center;gap:7px;font-size:.74rem;font-weight:600;letter-spacing:.04em;
   text-transform:uppercase;color:#7fb4ff;margin-bottom:14px}
@@ -415,6 +505,12 @@ section{position:relative}
 .bento-dots{display:flex;gap:7px;margin-top:18px}
 .bento-dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25)}
 .bento-dots span:first-child{background:var(--accent);box-shadow:0 0 14px var(--accent)}
+/* 2026: container query — when a bento card itself is narrow, shrink its type */
+@container (max-width: 320px){
+  .bento-card h3{font-size:1.3rem}
+  .bento-card{padding:22px}
+  .b-feature .bento-body{padding:24px}
+}
 /* progress ring */
 .ring{position:relative;width:150px;height:150px}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -422,7 +518,8 @@ section{position:relative}
 .ring .ring-bg{stroke:rgba(255,255,255,.1)}
 .ring .ring-fg{stroke:url(#rg);stroke:#0071E3;stroke-dasharray:327;stroke-dashoffset:327;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.7,.2,1);
   filter:drop-shadow(0 0 8px rgba(0,113,227,.7))}
-.ring.on .ring-fg{stroke-dashoffset:var(--off,7)}
+.ring.on .ring-fg{stroke-dashoffset:var(--off,7);animation:ring-pulse 2.6s ease-in-out 1.6s infinite}
+@keyframes ring-pulse{0%,100%{filter:drop-shadow(0 0 8px rgba(0,113,227,.7))}50%{filter:drop-shadow(0 0 18px rgba(0,113,227,.95))}}
 .ring-num{position:absolute;inset:0;display:grid;place-items:center;font-size:2.5rem;font-weight:700;color:#fff;letter-spacing:-.04em}
 .ring-num i{font-size:1.2rem;font-style:normal;color:var(--on-dark-soft);margin-left:2px}
 
@@ -431,6 +528,11 @@ section{position:relative}
 .marquee{position:relative;width:100%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
 .marquee-track{display:flex;gap:0;width:max-content;animation:mq 38s linear infinite}
 .marquee:hover .marquee-track{animation-play-state:paused}
+/* 2026: scroll-driven marquee speed-up — track scrubs with page scroll for parallax feel */
+@supports (animation-timeline: scroll()){
+  .marquee-track{animation:mq 38s linear infinite,mq-scrub linear;animation-timeline:auto,scroll(root block)}
+}
+@keyframes mq-scrub{to{transform:translateX(-50%)}}
 .mq-item{display:inline-flex;align-items:center;gap:14px;padding:0 30px;font-size:1.15rem;font-weight:600;color:var(--ink-3);letter-spacing:-.02em;white-space:nowrap}
 .mq-item i{font-size:.32rem;color:var(--accent)}
 @keyframes mq{to{transform:translateX(-50%)}}
