@@ -201,6 +201,66 @@
     rings.forEach(function (el) { io.observe(el); });
   }
 
+  /* ---- MAGNETIC BUTTONS — 커서를 끌어당김 ---- */
+  function initMagnetic() {
+    if (prefersReduced || window.matchMedia('(hover: none)').matches) return;
+    var PULL = 0.32, MAXP = 14; // 끌림 비율 / 최대 px
+    document.querySelectorAll('[data-magnetic]').forEach(function (btn) {
+      var raf = null;
+      btn.addEventListener('pointermove', function (e) {
+        var r = btn.getBoundingClientRect();
+        var dx = (e.clientX - (r.left + r.width / 2)) * PULL;
+        var dy = (e.clientY - (r.top + r.height / 2)) * PULL;
+        dx = Math.max(-MAXP, Math.min(MAXP, dx));
+        dy = Math.max(-MAXP, Math.min(MAXP, dy));
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          btn.style.setProperty('--mag-x', dx.toFixed(1) + 'px');
+          btn.style.setProperty('--mag-y', dy.toFixed(1) + 'px');
+        });
+      });
+      btn.addEventListener('pointerleave', function () {
+        if (raf) cancelAnimationFrame(raf);
+        btn.style.setProperty('--mag-x', '0px');
+        btn.style.setProperty('--mag-y', '0px');
+      });
+    });
+  }
+
+  /* ---- CUSTOM GLOW CURSOR — 마우스 따라다니는 빛 ---- */
+  function initCursor() {
+    if (prefersReduced || window.matchMedia('(hover: none)').matches) return;
+    var dot = document.createElement('div');
+    dot.className = 'glow-cursor';
+    document.body.appendChild(dot);
+    var x = 0, y = 0, cx = 0, cy = 0, raf = null, shown = false;
+    function loop() {
+      cx += (x - cx) * 0.18; cy += (y - cy) * 0.18;
+      dot.style.transform = 'translate(' + cx + 'px,' + cy + 'px) translate(-50%,-50%)';
+      raf = requestAnimationFrame(loop);
+    }
+    window.addEventListener('pointermove', function (e) {
+      x = e.clientX; y = e.clientY;
+      if (!shown) { dot.classList.add('on'); shown = true; if (!raf) loop(); }
+    });
+    window.addEventListener('pointerleave', function () { dot.classList.remove('on'); });
+    // 인터랙티브 요소 위에서 커지게
+    document.querySelectorAll('a,button,[data-magnetic],[data-tilt],.bento-card,.assure-card,.core-card').forEach(function (el) {
+      el.addEventListener('pointerenter', function () { dot.classList.add('big'); });
+      el.addEventListener('pointerleave', function () { dot.classList.remove('big'); });
+    });
+  }
+
+  /* ---- FILM GRAIN overlay ---- */
+  function initGrain() {
+    if (prefersReduced) return;
+    if (document.querySelector('.grain')) return;
+    var g = document.createElement('div');
+    g.className = 'grain';
+    g.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(g);
+  }
+
   /* ---- Smooth anchors ---- */
   function initAnchors() {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
@@ -219,6 +279,7 @@
   function init() {
     initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
+    initMagnetic(); initCursor(); initGrain();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
