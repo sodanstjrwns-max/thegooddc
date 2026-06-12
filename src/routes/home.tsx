@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
+import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA } from '../data/story'
 import { speakableSchema } from '../lib/seo'
 
 const CORE_IMG: Record<string, string> = {
@@ -24,12 +25,6 @@ const STATS = [
   { n: 2015, u: '', l: '명지 지역 개원', year: true },
 ]
 
-const JOURNEY = [
-  { ic: 'phone', t: '편하게 문의', d: '전화 한 통, 또는 온라인 예약. 어떤 고민이든 부담 없이 말씀하세요.' },
-  { ic: 'cube', t: '3D 정밀 진단', d: '3D CT·구강 스캐너로 입안을 정확하게 들여다봅니다.' },
-  { ic: 'comments', t: '충분한 설명', d: '꼭 필요한 진료만, 이해하실 때까지 설명드립니다.' },
-  { ic: 'heart', t: '편안한 치료', d: '무통 마취로 두려움을 안심으로 바꿉니다.' },
-]
 
 const MARQUEE = [
   '디지털 가이드 임플란트', '투명교정', '미니쉬', '원내 기공실', '무통 마취 시스템',
@@ -68,7 +63,7 @@ export const HomePage: FC = () => {
               꼭 필요한 진료만 정확하게. 명지에서 오래 믿고 다니는 치과를 만듭니다.
             </p>
             <div class="hero-actions">
-              <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> 진료 예약하기</a>
+              <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> {STORY_CTA.reserve}</a>
               <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost btn-lg"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
             </div>
             <ul class="hero-trust">
@@ -90,6 +85,38 @@ export const HomePage: FC = () => {
               <div class="l">대학병원급 통합진료</div>
             </div>
           </aside>
+        </div>
+      </section>
+
+      {/* ===================== FABLE — 환자 1인칭 여정 스크롤텔링 (5장) ===================== */}
+      <section class="fable" id="fable-story" aria-label="환자 여정 이야기">
+        <div class="container">
+          <div class="shead center" data-index="00">
+            <span class="eyebrow center">A Patient&rsquo;s Fable</span>
+            <h2>어떤 환자의 <em>다섯 장짜리 이야기</em></h2>
+            <p>치과가 두려웠던 한 사람이 안심을 되찾기까지. 당신의 이야기일지도 모릅니다.</p>
+          </div>
+          <div class="fable-track">
+            <div class="fable-spine" aria-hidden="true"><span class="fable-spine-fill"></span></div>
+            {STORY_CHAPTERS.map((ch, i) => (
+              <article class={`fable-chapter reveal ${i % 2 === 1 ? 'alt' : ''}`} id={`fable-ch-${i + 1}`}>
+                <div class="fable-marker" aria-hidden="true">
+                  <span class="fable-no">{ch.no}</span>
+                </div>
+                <div class="fable-card" data-glow>
+                  <div class="bento-glow"></div>
+                  <span class="fable-kicker"><i class={`fa-solid fa-${ch.icon}`}></i> {ch.label}</span>
+                  <h3>{ch.title}</h3>
+                  <p class="fable-narration">{ch.narration}</p>
+                  <div class="fable-guide">
+                    <span class="fg-label"><i class="fa-solid fa-tooth"></i> 더착한치과의 답</span>
+                    <p>{ch.guide}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p class="fable-coda reveal">{STORY_CTA.heroEnd}</p>
         </div>
       </section>
 
@@ -303,20 +330,31 @@ export const HomePage: FC = () => {
         </div>
       </section>
 
-      {/* ===================== JOURNEY ===================== */}
-      <section class="journey">
+      {/* ===================== PATIENT FUNNEL — 10단계 스토리맵 ===================== */}
+      <section class="funnel" id="patient-funnel">
         <div class="container">
           <div class="shead center" data-index="04">
-            <span class="eyebrow center">Patient Journey</span>
-            <h2>처음 오신 순간부터,<br /><em>편안하게 안내</em>합니다</h2>
+            <span class="eyebrow center">Patient Funnel &mdash; 10 Steps</span>
+            <h2>처음 알게 된 순간부터<br /><em>소개하는 순간까지</em></h2>
+            <p>환자분의 여정 전체를 10단계로 설계했습니다. 어느 단계에 계시든, 그 자리에서 편안하게 시작하시면 됩니다.</p>
           </div>
-          <div class="journey-grid">
-            {JOURNEY.map((j) => (
-              <div class="journey-step reveal">
-                <span class="num"></span>
-                <div class="ico"><i class={`fa-solid fa-${j.ic}`}></i></div>
-                <h4>{j.t}</h4>
-                <p>{j.d}</p>
+
+          <div class="funnel-phases" role="tablist" aria-label="여정 단계 필터">
+            <button class="fp-tab active" data-phase="all" role="tab" aria-selected="true">전체</button>
+            {FUNNEL_PHASES.map((p) => (
+              <button class="fp-tab" data-phase={p.key} role="tab" aria-selected="false">{p.label}<small>{p.en}</small></button>
+            ))}
+          </div>
+
+          <div class="funnel-map">
+            <div class="funnel-line" aria-hidden="true"></div>
+            {PATIENT_FUNNEL.map((s, i) => (
+              <div class={`funnel-step reveal reveal-d${(i % 4) + 1}`} data-phase={s.phase}>
+                <span class="fs-num">{String(s.step).padStart(2, '0')}</span>
+                <div class="fs-ico"><i class={`fa-solid fa-${s.icon}`}></i></div>
+                <h4>{s.title}</h4>
+                <p>{s.desc}</p>
+                <span class={`fs-phase fs-${s.phase}`}>{FUNNEL_PHASES.find((p) => p.key === s.phase)!.label}</span>
               </div>
             ))}
           </div>
@@ -370,15 +408,15 @@ export const HomePage: FC = () => {
         </div>
       </section>
 
-      {/* ===================== CTA BAND ===================== */}
+      {/* ===================== CTA BAND — 서사형 ===================== */}
       <section class="cta-band">
         <div class="container inner">
-          <span class="eyebrow on-navy">Reservation</span>
-          <h2>치과가 두려우셨다면,<br />이제 <span class="gold">안심</span>하고 오세요</h2>
-          <p>전화 한 통이면 충분합니다. 어떤 고민이든 부담 없이 상담받으세요.</p>
+          <span class="eyebrow on-navy">Your First Sentence</span>
+          <h2>모든 이야기에는<br /><span class="gold">첫 문장</span>이 필요합니다</h2>
+          <p>{STORY_CTA.ctaDesc}</p>
           <div class="actions">
-            <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> 진료 예약하기</a>
-            <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost on-navy btn-lg"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+            <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> {STORY_CTA.reserve}</a>
+            <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost on-navy btn-lg"><i class="fa-solid fa-phone"></i> {STORY_CTA.call}</a>
           </div>
         </div>
       </section>

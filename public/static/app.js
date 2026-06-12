@@ -261,6 +261,44 @@
     document.body.appendChild(g);
   }
 
+  /* ---- FABLE spine fallback (no scroll-timeline support) ---- */
+  function initFableSpine() {
+    var fill = document.querySelector('.fable-spine-fill');
+    var track = document.querySelector('.fable-track');
+    if (!fill || !track) return;
+    if (CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')) return;
+    function upd() {
+      var r = track.getBoundingClientRect();
+      var vh = window.innerHeight;
+      var progress = (vh * 0.85 - r.top) / (r.height + vh * 0.5);
+      progress = Math.max(0, Math.min(1, progress));
+      fill.style.transform = 'scaleY(' + progress + ')';
+    }
+    upd();
+    window.addEventListener('scroll', upd, { passive: true });
+    window.addEventListener('resize', upd, { passive: true });
+  }
+
+  /* ---- PATIENT FUNNEL phase filter ---- */
+  function initFunnel() {
+    var tabs = document.querySelectorAll('.fp-tab');
+    var steps = document.querySelectorAll('.funnel-step');
+    if (!tabs.length || !steps.length) return;
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var phase = tab.getAttribute('data-phase');
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.classList.toggle('active', on);
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        steps.forEach(function (s) {
+          s.classList.toggle('dim', phase !== 'all' && s.getAttribute('data-phase') !== phase);
+        });
+      });
+    });
+  }
+
   /* ---- Smooth anchors ---- */
   function initAnchors() {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
@@ -279,7 +317,7 @@
   function init() {
     initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
-    initGrain();
+    initGrain(); initFableSpine(); initFunnel();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

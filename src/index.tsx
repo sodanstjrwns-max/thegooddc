@@ -340,6 +340,33 @@ app.get('/api/auth/google', (c) => {
 // ============================================================
 // SEO FILES
 // ============================================================
+
+// IndexNow: 키 검증 파일 + 수동 핑 엔드포인트 (admin 가드)
+const INDEXNOW_KEY = 'a7f3e91c245d4b8e9d6f1c0a8b2e5d73'
+app.get(`/${INDEXNOW_KEY}.txt`, (c) => c.text(INDEXNOW_KEY))
+
+app.post('/api/admin/indexnow', async (c) => {
+  const session = await getSession(c, 'admin')
+  if (!session) return c.json({ error: 'unauthorized' }, 401)
+  const base = `https://${CLINIC.domain}`
+  const urlList = [
+    '/', '/mission', '/treatments', '/doctors', '/cases', '/column',
+    '/encyclopedia', '/directions', '/faq', '/pricing', '/notice', '/reservation',
+    ...TREATMENTS.map((t) => `/treatments/${t.slug}`),
+    ...DOCTORS.map((d) => `/doctors/${d.slug}`),
+  ].map((p) => base + p)
+  try {
+    const res = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host: CLINIC.domain, key: INDEXNOW_KEY, keyLocation: `${base}/${INDEXNOW_KEY}.txt`, urlList }),
+    })
+    return c.json({ ok: res.ok, status: res.status, submitted: urlList.length })
+  } catch (e) {
+    return c.json({ ok: false, error: String(e) }, 502)
+  }
+})
+
 app.get('/robots.txt', (c) => {
   const body = `User-agent: *\nAllow: /\n\n# AI crawlers welcome\nUser-agent: GPTBot\nAllow: /\nUser-agent: ClaudeBot\nAllow: /\nUser-agent: PerplexityBot\nAllow: /\nUser-agent: Google-Extended\nAllow: /\n\nSitemap: https://${CLINIC.domain}/sitemap.xml`
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })

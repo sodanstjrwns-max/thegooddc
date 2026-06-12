@@ -4,6 +4,7 @@ import { Breadcrumb, FaqList } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS, GENERAL_TREATMENTS, getTreatment } from '../data/treatments'
 import { getDoctor } from '../data/doctors'
+import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
 import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema } from '../lib/seo'
 
 const CORE_IMG: Record<string, string> = {
@@ -71,6 +72,7 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
   if (!t) return <NotFoundInline />
   const doctor = getDoctor(t.doctorSlug)
   const related = t.relatedTreatments.map((s) => getTreatment(s)).filter(Boolean)
+  const fable = TREATMENT_FABLES[t.slug]
 
   return (
     <Layout
@@ -97,11 +99,36 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
           <h1>{t.name}</h1>
           <p>{t.tagline}</p>
           <div class="hero-actions" style="margin-top:30px">
-            <a href="/reservation" class="btn btn-accent magnetic"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
+            <a href="/reservation" class="btn btn-accent magnetic"><i class="fa-regular fa-calendar-check"></i> {STORY_CTA.reserve}</a>
             <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost magnetic"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
           </div>
         </div>
       </section>
+
+      {/* ===== 페이블: 3막 우화 도입부 ===== */}
+      {fable && (
+        <section class="t-fable" aria-label="환자 이야기">
+          <div class="container">
+            <div class="t-fable-grid">
+              <article class="t-fable-act reveal">
+                <span class="act-no">제1막</span>
+                <span class="act-label">어떤 고민</span>
+                <p>{fable.act1}</p>
+              </article>
+              <article class="t-fable-act reveal reveal-d1">
+                <span class="act-no">제2막</span>
+                <span class="act-label">함께 세운 계획</span>
+                <p>{fable.act2}</p>
+              </article>
+              <article class="t-fable-act reveal reveal-d2">
+                <span class="act-no">제3막</span>
+                <span class="act-label">달라진 일상</span>
+                <p>{fable.act3}</p>
+              </article>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section class="sec">
         <div class="container">
@@ -201,11 +228,11 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
       <section class="sec-sm">
         <div class="container">
           <div class="cta-band reveal">
-            <h2>{t.shortName}, 정확한 진단부터 시작하세요</h2>
-            <p>정밀 진단 후 개인별 맞춤 진료 계획을 안내해 드립니다.</p>
+            <h2>{t.shortName} 이야기의 첫 문장을 써보세요</h2>
+            <p>정밀 진단 후 개인별 맞춤 진료 계획을 함께 설계합니다.</p>
             <div class="hero-actions">
-              <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
-              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+              <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> {STORY_CTA.reserve}</a>
+              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {STORY_CTA.call}</a>
             </div>
           </div>
         </div>
