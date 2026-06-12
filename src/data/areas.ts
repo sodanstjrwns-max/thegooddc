@@ -13,6 +13,7 @@ export interface Area {
 // 강서구 명지오션시티 인근 + 서부산 유입 지역
 export const AREAS: Area[] = [
   { slug: 'myeongji', name: '명지', fullName: '부산광역시 강서구 명지동', desc: '명지오션시티·명지국제신도시 인근' },
+  { slug: 'gukje-newtown', name: '명지국제신도시', fullName: '부산광역시 강서구 명지국제신도시', desc: '국제신도시 생활권 — 실제 검색 빈도 높은 지명' },
   { slug: 'gangseo', name: '강서구', fullName: '부산광역시 강서구', desc: '서부산 강서구 전역' },
   { slug: 'sinho', name: '신호', fullName: '부산광역시 강서구 신호동', desc: '신호지구 인근' },
   { slug: 'noksan', name: '녹산', fullName: '부산광역시 강서구 녹산동', desc: '녹산산업단지 인근' },
@@ -27,6 +28,7 @@ export const AREA_TREATMENTS = [
   { slug: 'implant', name: '임플란트' },
   { slug: 'clear-aligner', name: '투명교정' },
   { slug: 'minish', name: '미니쉬' },
+  { slug: 'orthodontics', name: '치아교정' },
 ]
 
 // 모든 지역×진료 조합 생성
