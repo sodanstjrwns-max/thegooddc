@@ -956,7 +956,11 @@ section{position:relative}
 .fp-tab.active small{color:rgba(255,255,255,.7)}
 
 .funnel-map{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
-.funnel-line{position:absolute;top:50%;left:2%;right:2%;height:1px;background:linear-gradient(90deg,transparent,var(--line-2) 12%,var(--line-2) 88%,transparent);z-index:0;pointer-events:none}
+.funnel-line{position:absolute;top:50%;left:2%;right:2%;height:2px;z-index:0;pointer-events:none;
+  background-image:linear-gradient(90deg,var(--accent-l) 0 6px,transparent 6px 16px);background-size:16px 2px;background-repeat:repeat-x;opacity:.30;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+@media (prefers-reduced-motion: no-preference){.funnel-line{animation:funnel-flow 1.4s linear infinite}}
+@keyframes funnel-flow{to{background-position:16px 0}}
 .funnel-step{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 20px;transition:all .3s;display:flex;flex-direction:column;gap:8px}
 .funnel-step:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(20,35,55,.09);border-color:var(--accent)}
 .funnel-step.dim{opacity:.22;filter:saturate(.3)}
@@ -1077,4 +1081,117 @@ section{position:relative}
 /* ── 따뜻함 보존: doctor/marquee 등 웜 섹션의 브라스 포인트 유지 ── */
 .doctor-photo .ribbon{color:var(--accent-d)}
 .fable-coda::before{color:var(--accent)}
+
+/* ============================================================
+   VECTOR MOTION LAYER — 극한 폴리시
+   히어로 치아 블루프린트 · CTA 여정 별자리 · 마이크로 모션
+   ============================================================ */
+
+/* ── 히어로 치아 블루프린트 SVG ── */
+.htv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.htv-label{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.22em;fill:rgba(124,196,240,.45)}
+
+/* 치아 윤곽 — 스트로크 드로잉 (페이지 진입 시 그려짐) */
+.htv-tooth{stroke-dasharray:1000;stroke-dashoffset:1000;
+  filter:drop-shadow(0 0 14px rgba(74,149,214,.5)) drop-shadow(0 6px 28px rgba(30,111,184,.35));
+  animation:htv-draw 2.6s var(--ease-out) .5s forwards}
+@keyframes htv-draw{to{stroke-dashoffset:0}}
+.htv-cusp{stroke-dasharray:100;stroke-dashoffset:100;animation:htv-draw-c 1.2s var(--ease-out) 2.4s forwards}
+@keyframes htv-draw-c{to{stroke-dashoffset:0}}
+
+/* 치아 전체 — 그려진 뒤 부유 */
+.htv-float{animation:htv-float 7s ease-in-out 3.2s infinite}
+@keyframes htv-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+/* 오빗 링 — 서로 반대 방향 회전 */
+.htv-orbit{transform-origin:200px 235px;animation:htv-spin 36s linear infinite}
+.htv-orbit.rev{animation:htv-spin 26s linear infinite reverse}
+@keyframes htv-spin{to{transform:rotate(360deg)}}
+
+/* 크로스헤어 — 미세 호흡 */
+.htv-cross{animation:htv-breathe 4.5s ease-in-out infinite}
+@keyframes htv-breathe{0%,100%{opacity:.85}50%{opacity:.4}}
+
+/* 식립 타깃 — 펄스 (정밀함의 시그니처) */
+.htv-target{transform-origin:158px 330px;opacity:0;animation:htv-target-in .6s var(--ease-out) 3s forwards,htv-pulse 2.4s ease-in-out 3.6s infinite}
+@keyframes htv-target-in{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+@keyframes htv-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+/* 스캔 라인 — 위→아래 스윕 */
+.htv-scan{animation:htv-scan 5.5s var(--ease) 1.2s infinite}
+@keyframes htv-scan{0%{transform:translateY(96px);opacity:0}8%{opacity:1}72%{opacity:1}80%,100%{transform:translateY(352px);opacity:0}}
+
+/* 데이터 포인트 — 순차 블링크 */
+.htv-plus path{opacity:.15;animation:htv-blink 3.6s ease-in-out infinite}
+.htv-plus .p2{animation-delay:.9s}
+.htv-plus .p3{animation-delay:1.8s}
+.htv-plus .p4{animation-delay:2.7s}
+@keyframes htv-blink{0%,100%{opacity:.15}50%{opacity:.9}}
+
+/* 헤일로 — 느린 맥동 */
+.htv-halo{animation:htv-halo 8s ease-in-out infinite}
+@keyframes htv-halo{0%,100%{opacity:.8}50%{opacity:1}}
+
+/* ── CTA 여정 별자리 SVG ── */
+.cta-band{position:relative}
+.ctav{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.cta-band .inner{position:relative;z-index:1}
+.ctav-node{animation:ctav-twinkle 4s ease-in-out infinite}
+.ctav-node.n2{animation-delay:.8s}.ctav-node.n3{animation-delay:1.6s}
+.ctav-node.n4{animation-delay:2.4s}.ctav-node.n5{animation-delay:3.2s}
+@keyframes ctav-twinkle{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* ── 마이크로 인터랙션 극한 폴리시 ── */
+
+/* 페이블 마커 — 현재 읽는 장 부근에서 은은한 블루 링 펄스 */
+.fable-chapter:hover .fable-marker{border-color:var(--accent);box-shadow:0 0 0 6px rgba(30,111,184,.10),0 4px 14px rgba(30,111,184,.22);transition:box-shadow .4s,border-color .4s}
+.fable-marker{transition:box-shadow .4s,border-color .4s}
+
+/* 퍼널 스텝 — 호버 시 아이콘 칩 블루 반전 */
+.fs-ico{transition:background .3s,color .3s,transform .3s var(--ease-out)}
+.funnel-step:hover .fs-ico{background:var(--accent);color:#fff;transform:scale(1.08) rotate(-4deg)}
+
+/* 코어 카드 — 화살표에 블루 트랙 */
+.cc-more{position:relative}
+.cc-more::after{content:"";position:absolute;left:0;bottom:-4px;height:1.5px;width:0;background:var(--accent);transition:width .35s var(--ease-out)}
+.core-card:hover .cc-more::after{width:100%}
+
+/* 어슈어 카드 — 아이콘 리프트 + 블루 틴트 */
+.assure-card .ico{transition:transform .4s var(--ease-out),background .35s,color .35s,box-shadow .35s}
+.assure-card:hover .ico{transform:translateY(-4px);background:var(--accent-soft);color:var(--accent-d);box-shadow:0 8px 20px -8px rgba(30,111,184,.35)}
+
+/* 히어로 스탯 카드 — 부유 (시차) */
+@media (prefers-reduced-motion: no-preference){
+  .hero-stat.s1{animation:stat-float 6s ease-in-out 1s infinite}
+  .hero-stat.s2{animation:stat-float 6s ease-in-out 2.6s infinite}
+}
+@keyframes stat-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* 헤더 예약 버튼 — 은은한 어텐션 링 (8초 주기, 과하지 않게) */
+@media (prefers-reduced-motion: no-preference){
+  .header-cta .btn-nav{animation:cta-ring 8s ease-out 4s infinite}
+}
+@keyframes cta-ring{0%,92%,100%{box-shadow:0 10px 26px -10px rgba(30,111,184,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 0 0 rgba(30,111,184,.35)}96%{box-shadow:0 10px 26px -10px rgba(30,111,184,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 0 9px rgba(30,111,184,0)}}
+
+/* 마퀴 도트 — 블루/틸 교차 */
+.mq-item:nth-child(even) i{color:var(--accent-teal)}
+
+/* 컴페어 테이블 us 셀 — 호버 행 블루 워시 */
+.compare-table .row:not(.head):hover .cell.us{background:var(--accent-soft);transition:background .3s}
+.compare-table .cell.us{transition:background .3s}
+
+/* 페이블 스파인 — 채워지는 끝에 글로우 헤드 (여정의 현재 위치) */
+.fable-spine-fill{position:relative;box-shadow:0 0 12px rgba(30,111,184,.4)}
+.fable-spine-fill::after{content:"";position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;
+  background:var(--accent-teal);box-shadow:0 0 10px rgba(45,212,191,.8),0 0 22px rgba(45,212,191,.4)}
+
+/* ── reduced-motion: 벡터 모션 전부 정지, 최종 상태 고정 ── */
+@media (prefers-reduced-motion: reduce){
+  .htv-tooth,.htv-cusp{stroke-dashoffset:0;animation:none}
+  .htv-target{opacity:1;animation:none}
+  .htv-float,.htv-orbit,.htv-orbit.rev,.htv-cross,.htv-scan,.htv-plus path,.htv-halo,
+  .ctav-node,.hero-stat.s1,.hero-stat.s2,.header-cta .btn-nav{animation:none !important}
+  .htv-scan{display:none}
+  .ctav-dot{display:none}
+}
 

@@ -4,6 +4,7 @@ import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA } from '../data/story'
+import { HeroToothVector, JourneyPathVector } from '../components/vectors'
 import { speakableSchema } from '../lib/seo'
 
 const CORE_IMG: Record<string, string> = {
@@ -74,7 +75,7 @@ export const HomePage: FC = () => {
           </div>
           <aside class="hero-visual reveal reveal-d1">
             <figure class="hero-frame">
-              <span class="ph"><i class="fa-solid fa-tooth"></i></span>
+              <HeroToothVector />
             </figure>
             <div class="hero-stat s1">
               <div class="n"><span data-count="24">24</span><span class="u">년</span></div>
@@ -410,6 +411,7 @@ export const HomePage: FC = () => {
 
       {/* ===================== CTA BAND — 서사형 ===================== */}
       <section class="cta-band">
+        <JourneyPathVector />
         <div class="container inner">
           <span class="eyebrow on-navy">Your First Sentence</span>
           <h2>모든 이야기에는<br /><span class="gold">첫 문장</span>이 필요합니다</h2>
