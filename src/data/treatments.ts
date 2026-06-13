@@ -492,6 +492,13 @@ export const TREATMENTS: Treatment[] = [
   },
 ]
 
+// FAQ 증설 데이터 머지 (과목당 20개+ 달성)
+import { EXTRA_FAQS } from './faq-extra'
+for (const t of TREATMENTS) {
+  const extra = EXTRA_FAQS[t.slug]
+  if (extra) t.faq = [...t.faq, ...extra]
+}
+
 export const CORE_TREATMENTS = TREATMENTS.filter((t) => t.category === 'core')
 export const GENERAL_TREATMENTS = TREATMENTS.filter((t) => t.category === 'general')
 

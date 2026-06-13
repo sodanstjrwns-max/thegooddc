@@ -1195,3 +1195,7 @@ section{position:relative}
   .ctav-dot{display:none}
 }
 
+
+/* ============ 자동 인링크 (백과사전 연결) ============ */
+.inlink{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(30,111,184,.45);transition:all .18s ease;font-weight:600}
+.inlink:hover{color:var(--accent-d);border-bottom-style:solid;background:var(--accent-soft)}

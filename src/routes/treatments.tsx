@@ -6,6 +6,7 @@ import { TREATMENTS, CORE_TREATMENTS, GENERAL_TREATMENTS, getTreatment } from '.
 import { getDoctor } from '../data/doctors'
 import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
 import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema } from '../lib/seo'
+import { InlinkText } from '../lib/inlink'
 
 const CORE_IMG: Record<string, string> = {
   implant: '/images/core-implant.webp',
@@ -162,7 +163,7 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
               {t.sections.map((s, i) => (
                 <div id={`sec-${i}`} class="reveal">
                   <h2>{s.heading}</h2>
-                  <p>{s.body}</p>
+                  <p><InlinkText text={s.body} exclude={[t.slug]} /></p>
                 </div>
               ))}
 

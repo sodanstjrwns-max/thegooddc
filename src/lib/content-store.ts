@@ -41,6 +41,11 @@ export interface CaseItem {
   period: string
   desc: string
   modified: string
+  // R2 사진 키 (의료법: after는 로그인 게이팅)
+  photoPanoBefore?: string // 파노라마 전
+  photoPanoAfter?: string // 파노라마 후
+  photoOralBefore?: string // 구내 전
+  photoOralAfter?: string // 구내 후
 }
 
 const KV_NOTICES = 'content:notices'
@@ -251,8 +256,14 @@ export function parseBodyText(raw: string): ColumnBlock[] {
   if (!text) return []
   return text.split(/\n{2,}/).map((chunk) => {
     const lines = chunk.split('\n')
+    // 리치 마커(###, -, ![, **)가 있으면 줄바꿈 보존, 아니면 한 단락으로 합침
     if (lines.length >= 2) {
-      return { h: lines[0].trim(), p: lines.slice(1).join(' ').trim() }
+      const first = lines[0].trim()
+      const rest = lines.slice(1)
+      const hasRich = rest.some((l) => /^(###\s|-\s|!\[)/.test(l.trim()))
+      // 첫 줄 자체가 리치 마커면 소제목 없는 블록
+      if (/^(###\s|-\s|!\[)/.test(first)) return { h: '', p: lines.join('\n').trim() }
+      return { h: first, p: hasRich ? rest.join('\n').trim() : rest.join(' ').trim() }
     }
     return { h: '', p: lines[0].trim() }
   }).filter((b) => b.p || b.h)
@@ -339,6 +350,10 @@ export async function createCase(env: any, input: Partial<CaseItem>): Promise<Ca
     period: (input.period || '').toString().trim(),
     desc: (input.desc || '').toString().trim(),
     modified: today(),
+    photoPanoBefore: (input.photoPanoBefore || '').toString() || undefined,
+    photoPanoAfter: (input.photoPanoAfter || '').toString() || undefined,
+    photoOralBefore: (input.photoOralBefore || '').toString() || undefined,
+    photoOralAfter: (input.photoOralAfter || '').toString() || undefined,
   }
   await writeList(env, KV_CASES, [cs, ...list])
   return cs
@@ -359,6 +374,10 @@ export async function updateCase(env: any, id: string, input: Partial<CaseItem>)
     period: input.period !== undefined ? input.period.toString().trim() : list[idx].period,
     desc: input.desc !== undefined ? input.desc.toString().trim() : list[idx].desc,
     modified: today(),
+    photoPanoBefore: input.photoPanoBefore !== undefined && input.photoPanoBefore !== '' ? input.photoPanoBefore.toString() : list[idx].photoPanoBefore,
+    photoPanoAfter: input.photoPanoAfter !== undefined && input.photoPanoAfter !== '' ? input.photoPanoAfter.toString() : list[idx].photoPanoAfter,
+    photoOralBefore: input.photoOralBefore !== undefined && input.photoOralBefore !== '' ? input.photoOralBefore.toString() : list[idx].photoOralBefore,
+    photoOralAfter: input.photoOralAfter !== undefined && input.photoOralAfter !== '' ? input.photoOralAfter.toString() : list[idx].photoOralAfter,
   }
   list[idx] = updated
   await writeList(env, KV_CASES, list)

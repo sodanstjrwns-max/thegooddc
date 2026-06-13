@@ -9,6 +9,7 @@
 - **핵심 진료 TOP3**: 디지털 가이드 임플란트 · 투명교정 · 미니쉬(라미네이트)
 
 ## ✅ 완료된 기능
+- **🆕 1차 SEO·기능 대확장 (8종)**: ①백과사전 **508개**로 증설 ②FAQ **과목당 20개 × 12과목 = 240개** (전부 의료광고법 안전 톤) ③**자동 인링크 엔진**(`src/lib/inlink.tsx`) — 핵심 용어 20개 기반, 진료 상세 본문·칼럼 본문에서 백과사전으로 자동 링크(블록당 최대 3개, 자기 페이지 제외) ④**R2 케이스 사진 4장 업로드** — 파노라마 전/후 + 구내 전/후, 관리자 드래그앤드롭 업로드, 미업로드 사진 자동 숨김, **애프터 사진은 파일 서빙 레이어에서 로그인 게이팅**(`/files/cases-after/*` 비회원 403 — 의료법) ⑤**지역 주소 자동완성** — 부산·경남 생활권 ~100개 동 데이터, 케이스 폼 입력 시 드롭다운 ⑥**블로그 에디터** — H2/H3/굵게/목록 툴바 + 다중 사진 드래그앤드롭 R2 업로드 + 작성자 선택 + 공개 페이지 리치 렌더러(RichBody) ⑦**관리자 회원 목록**(`/admin/members`, 마케팅 동의 배지) + **예약 관리**(`/admin/reservations`) ⑧**게시물 조회수** — KV 카운터, 칼럼 상세 표시 + 관리자 목록 집계
 - **🆕 2차 설문(HWPX) 반영**: ①원장 약력 사실관계 보강(부산대 치의학박사·구강생화학교실, 최소침습·최소절개 철학) ②"믿음직한 장인" 톤으로 원장 소개·태그라인 재작성 ③임플란트 상세에 "AI가 제안하고 의사가 결정합니다" 섹션(좁은 부위·신경관 인접 접근, 절개 최소화→붓기 감소) ④환자 스토리 칼럼 3편(20년 틀니→AI 가이드 / 위치·간격의 중요성=저가 재수술 교훈 / 치과공포 극복) — 모두 의료법 안전 형식(개인차 고지 포함) ⑤케이스 시드 1건 추가
 - **🆕 페이블 레이어(스토리텔링)**: 홈 환자 1인칭 여정 스크롤텔링 5장(Ⅰ두려움→Ⅱ안내자→Ⅲ계획→Ⅳ안심→Ⅴ소개, 스크롤 연동 스파인 진행선) + 페이션트 퍼널 10단계 인터랙티브 스토리맵(내원 전/내원/내원 후 필터 탭) + 전체 12개 진료 상세에 3막 우화 도입부(고민→계획→달라진 일상) + 서사형 CTA 마이크로카피("첫 걸음 내딛기"/"먼저 이야기 듣기"/"모든 이야기에는 첫 문장이 필요합니다"). 단일 진실 공급원 `src/data/story.ts`, 의료광고법 §B 필터 유지
 - **메인 페이지**: 풀스크린 히어로, 스크롤 reveal/패럴랙스, 숫자 카운트업, 환자 퍼널 시각화
@@ -16,7 +17,7 @@
 - **의료진**: 목록 + 개별 SSR 프로필(학력·경력 사실관계 원문, 진료 인링크)
 - **비포/애프터**: 슬라이더 비교, 애프터 사진 로그인 게이팅(의료법), 진료·원장·지역 양방향 인링크
 - **원장 칼럼**: SSR 칼럼 + Article/MedicalWebPage 스키마 + 관련 진료·의료진 인링크
-- **백과사전**: 500+ 용어, 카테고리 필터, 진료 자동 인링크
+- **백과사전**: 508개 용어, 카테고리 필터, 진료 자동 인링크
 - **지역 SEO**: 9개 지역(명지국제신도시 추가) × 4진료(치아교정 추가) = 36개 조합 페이지 (`/area/[지역]-[진료]`) — 원장님 답변 기반 실검색 지명 반영
 - **인증**: 회원가입/로그인(HMAC 세션, HttpOnly Secure 쿠키 30일), 마이페이지
 - **관리자**: 비밀번호 로그인(24시간 세션), 대시보드(회원·예약·공지·칼럼·케이스 집계)
@@ -40,14 +41,17 @@
 | `/directions` `/pricing` `/faq` `/notice` `/reservation` | 안내 |
 | `/auth/login` `/auth/register` `/auth/mypage` | 회원 |
 | `/admin` `/admin/dashboard` | 관리자 로그인·대시보드 |
-| `/admin/notices` `/admin/columns` `/admin/cases` | 관리자 공지·칼럼·케이스 CRUD 화면 |
+| `/admin/notices` `/admin/columns` `/admin/cases` | 관리자 공지·칼럼·케이스 CRUD (칼럼: 에디터 툴바+드래그앤드롭 / 케이스: 사진 4장+지역 자동완성) |
+| `/admin/members` `/admin/reservations` | 관리자 회원 목록 · 예약 관리 |
+| `/files/*` | R2 파일 서빙 (`cases-after/*`는 로그인 필요 — 의료법 게이팅) |
 | `/sitemap.xml` `/robots.txt` `/llms.txt` | SEO |
 | **API (공개)** | `POST /api/auth/register` `POST /api/auth/login` `GET /api/auth/logout` `POST /api/admin/login` `POST /api/reservation` |
-| **API (admin 가드)** | `POST /api/admin/notices/{create,update,delete}` · `POST /api/admin/columns/{create,update,delete}` · `POST /api/admin/cases/{create,update,delete}` · `POST /api/admin/indexnow`(검색엔진 핑) |
+| **API (admin 가드)** | `POST /api/admin/notices/{create,update,delete}` · `POST /api/admin/columns/{create,update,delete}` · `POST /api/admin/cases/{create,update,delete}` · `POST /api/admin/upload`(R2 이미지, 8MB) · `POST /api/admin/indexnow`(검색엔진 핑) |
+| **API (공개 보조)** | `GET /api/regions?q=` 지역 자동완성 |
 
 ## 데이터 아키텍처
 - **데이터 모델**: 병원정보(clinic), 의료진(doctors), 진료+FAQ(treatments), 지역(areas), 백과사전(encyclopedia) — TypeScript 단일 진실 공급원(`src/data/`)
-- **스토리지**: Cloudflare KV — 회원·예약 + 공지(`content:notices`)·칼럼(`content:columns`)·케이스(`content:cases`) JSON 저장. KV가 비면 코드 시드(`src/lib/content-store.ts`)로 fallback → 공개 페이지가 절대 깨지지 않음. 확장 시 R2(케이스 실사진), D1(조회수) 추가 가능
+- **스토리지**: Cloudflare KV — 회원(`user:*`)·예약(`reservation:*`)·조회수(`views:*`) + 공지(`content:notices`)·칼럼(`content:columns`)·케이스(`content:cases`) JSON 저장. KV가 비면 코드 시드(`src/lib/content-store.ts`)로 fallback → 공개 페이지가 절대 깨지지 않음. **Cloudflare R2**(바인딩 `R2`, 버킷 `thegooddental-media`) — 케이스 사진(`cases-after/` 게이팅) + 블로그 이미지(`media/` 공개 캡시)
 - **세션**: Web Crypto HMAC-SHA256 서명 토큰 → HttpOnly Secure 쿠키
 
 ## 의료광고법 컴플라이언스 (§B 필터 적용)
@@ -70,12 +74,13 @@
 - **상태**: ✅ 로컬 작동 확인 (PM2 + wrangler pages dev, 전 라우트 200 / 404 정상)
 - **로컬 실행**: `npm run build && pm2 start ecosystem.config.cjs` → http://localhost:3000
 
-## 미구현 / 다음 단계
-- 히어로 비주얼 실사진 적용 (현재 그라데이션+아이콘 플레이스홀더) — 신청서 제출 사진 또는 생성 이미지로 교체 예정
-- 비포/애프터 케이스 실사진 업로드 — 현재는 텍스트 메타데이터만 관리, 사진은 R2 + 의료법 로그인 게이팅으로 추후 추가
-- Google OAuth 실연동(현재 자리표시), 조회수 실측(D1 is_bot 집계)
-- Google Ping 자동 제출 (IndexNow는 완료)
+## 미구현 / 다음 단계 (2차)
+- **GitHub 연결 + Cloudflare Pages 실배포** — 배포 경로 선택 대기(원장님 Cloudflare 계정 vs Genspark 호스팅)
+- 히어로 비주얼 실사진 적용 — 로고·원장 사진·원내 사진 수령 대기
+- 케이스 실사진 업로드(기능은 완성, 실제 사진 데이터만 필요)
+- Google OAuth 실연동(현재 자리표시), 공지·케이스 상세페이지형 조회수 확장(현재 칼럼 적용)
 - 커스텀 도메인 연결 (thegooddental.kr)
+- 패널닝: "무통" 표현 8건 순화 여부 · 소아치과 과목 추가 여부 — 원장님 확인 필요
 
 ## 디자인 컨셉
 - **"따뜻한 종이 위의 신뢰 블루" (Warm Paper × Trust Blue)** — 원장 설문 직접 반영: Q24 따뜻하고 친근한 + Q25 블루 + 믿음직한 장인 톤
@@ -87,4 +92,4 @@
 - **에디토리얼 리듬**: 섹션 인덱스 넘버(01–06)·헤어라인 디바이더·대문자 키커·스크롤 마스킹 리빌
 
 ## 최종 수정일
-2026-06-12 (디자인 슈퍼 업그레이드: 세이지→트러스트 블루 전면 교체)
+2026-06-13 (1차 SEO·기능 대확장: 백과사전 508·FAQ 240·인링크 엔진·R2 사진·지역 자동완성·블로그 에디터·회원/예약 관리·조회수)

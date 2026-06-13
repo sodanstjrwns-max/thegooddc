@@ -255,10 +255,80 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
   </AdminShell>
 )
 
-export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string }> = ({ columns, ok }) => {
+// 블로그 에디터: H태그 툴바 + 다중 이미지 드래그앤드롭 업로드 (섭션 6)
+const EDITOR_CSS = `
+.ed-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:8px;background:var(--bg-2);border:1px solid var(--line);border-bottom:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0}
+.ed-btn{padding:6px 12px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--ink-2);border-radius:6px;cursor:pointer;font-family:inherit}
+.ed-btn:hover{background:var(--accent-soft);color:var(--accent-d);border-color:var(--accent)}
+.ed-area{border-radius:0 0 var(--radius-sm) var(--radius-sm) !important;border-top:none !important}
+.ed-area.dragover{border-color:var(--accent) !important;background:var(--accent-soft) !important}
+.ed-hint2{font-size:12px;color:var(--ink-faint);margin-top:6px;line-height:1.6}
+`
+const EDITOR_JS = `
+// 에디터 툴바: 커서 위치에 마크업 삽입
+document.querySelectorAll('.ed-toolbar').forEach((bar) => {
+  const ta = bar.parentNode.querySelector('textarea');
+  const insert = (before, after, placeholder) => {
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    const sel = ta.value.slice(s, e) || placeholder;
+    ta.value = ta.value.slice(0, s) + before + sel + (after || '') + ta.value.slice(e);
+    ta.focus(); ta.selectionStart = s + before.length; ta.selectionEnd = s + before.length + sel.length;
+  };
+  bar.querySelectorAll('.ed-btn').forEach((btn) => btn.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    const cmd = btn.dataset.cmd;
+    if (cmd === 'h2') insert('\\n\\n', '\\n', '소제목을 입력하세요');
+    else if (cmd === 'h3') insert('\\n### ', '\\n', '작은 소제목');
+    else if (cmd === 'bold') insert('**', '**', '강조할 텍스트');
+    else if (cmd === 'list') insert('\\n- ', '', '목록 항목');
+    else if (cmd === 'img') bar.parentNode.querySelector('.ed-imgfile').click();
+  }));
+  // 이미지 업로드 공통 함수 (다중 파일 지원)
+  const uploadImages = async (files) => {
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      const s = ta.selectionStart;
+      const marker = '\\n![업로드 중...]\\n';
+      ta.value = ta.value.slice(0, s) + marker + ta.value.slice(s);
+      const fd = new FormData(); fd.append('file', file); fd.append('kind', 'media');
+      try {
+        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+        const j = await res.json();
+        ta.value = j.ok ? ta.value.replace(marker, '\\n![사진](' + j.url + ')\\n') : ta.value.replace(marker, '');
+        if (!j.ok) alert(j.error || '업로드 실패');
+      } catch { ta.value = ta.value.replace(marker, ''); alert('업로드 중 오류'); }
+    }
+  };
+  const imgInput = bar.parentNode.querySelector('.ed-imgfile');
+  if (imgInput) imgInput.addEventListener('change', () => { uploadImages(Array.from(imgInput.files)); imgInput.value = ''; });
+  // 드래그앤드롭
+  ta.addEventListener('dragover', (e) => { e.preventDefault(); ta.classList.add('dragover'); });
+  ta.addEventListener('dragleave', () => ta.classList.remove('dragover'));
+  ta.addEventListener('drop', (e) => {
+    e.preventDefault(); ta.classList.remove('dragover');
+    uploadImages(Array.from(e.dataTransfer.files));
+  });
+});
+`
+
+const EditorToolbar: FC = () => (
+  <>
+    <div class="ed-toolbar">
+      <button type="button" class="ed-btn" data-cmd="h2" title="소제목(H2)"><i class="fa-solid fa-heading"></i> 소제목</button>
+      <button type="button" class="ed-btn" data-cmd="h3" title="작은 소제목(H3)">H3</button>
+      <button type="button" class="ed-btn" data-cmd="bold" title="굵게"><i class="fa-solid fa-bold"></i> 굵게</button>
+      <button type="button" class="ed-btn" data-cmd="list" title="목록"><i class="fa-solid fa-list-ul"></i> 목록</button>
+      <button type="button" class="ed-btn" data-cmd="img" title="사진 삽입"><i class="fa-solid fa-image"></i> 사진</button>
+    </div>
+    <input type="file" accept="image/*" multiple class="ed-imgfile" style="display:none" />
+  </>
+)
+
+export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Record<string, number> }> = ({ columns, ok, views = {} }) => {
   const treatOpts = TREATMENTS.map((t) => ({ slug: t.slug, name: t.shortName || t.name }))
   return (
     <AdminShell active="columns" title="원장 칼럼 관리" ok={ok}>
+      <style dangerouslySetInnerHTML={{ __html: EDITOR_CSS }} />
       {/* 새 칼럼 작성 */}
       <details class="adm-detail" style="margin-bottom:26px">
         <summary><i class="fa-solid fa-plus"></i> 새 칼럼 작성</summary>
@@ -275,8 +345,9 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string }> = ({ colum
           </div>
           <div>
             <label>본문</label>
-            <textarea name="bodyText" style="min-height:200px" placeholder={'소제목\n본문 내용...\n\n다음 소제목\n다음 단락...'}></textarea>
-            <p class="adm-hint">빈 줄로 단락을 구분합니다. 각 단락의 첫 줄은 소제목, 나머지는 본문이 됩니다.</p>
+            <EditorToolbar />
+            <textarea name="bodyText" class="ed-area" style="min-height:240px" placeholder={'소제목\n본문 내용...\n\n다음 소제목\n다음 단락...'}></textarea>
+            <p class="ed-hint2">빈 줄로 단락 구분 · 단락 첫 줄 = 소제목(H2) · <code>### 텍스트</code> = H3 · <code>**텍스트**</code> = 굵게 · <code>- 항목</code> = 목록 · 사진은 툴바 버튼 또는 드래그앤드롭으로 여러 장 업로드 가능</p>
           </div>
           <div><button type="submit" class="btn btn-gold"><i class="fa-solid fa-check"></i> 발행하기</button></div>
         </form>
@@ -285,7 +356,7 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string }> = ({ colum
       {columns.length === 0 && <p style="color:var(--ink-soft)">등록된 칼럼이 없습니다.</p>}
       {columns.map((c) => (
         <div class="adm-card">
-          <div class="adm-meta"><span>{c.date}</span><span style="color:var(--ink-faint)">/column/{c.slug}</span></div>
+          <div class="adm-meta"><span>{c.date}</span><span style="color:var(--ink-faint)">/column/{c.slug}</span><span style="color:var(--accent-d);font-weight:700"><i class="fa-regular fa-eye"></i> 조회 {(views[`column:${c.slug}`] || 0).toLocaleString()}</span></div>
           <h3><a href={`/column/${c.slug}`} target="_blank" style="color:var(--ink)">{c.title} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;color:var(--ink-faint)"></i></a></h3>
           <p class="adm-body-prev">{c.excerpt}</p>
           <div class="adm-actions">
@@ -303,7 +374,7 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string }> = ({ colum
                   <div><label>작성 의료진</label><select name="author">{DOCTORS.map((d) => <option value={d.slug} selected={d.slug === c.author}>{d.name} {d.title}</option>)}</select></div>
                   <div><label>관련 진료</label><select name="related"><option value="" selected={!c.related}>선택 안 함</option>{treatOpts.map((t) => <option value={t.slug} selected={t.slug === c.related}>{t.name}</option>)}</select></div>
                 </div>
-                <div><label>본문</label><textarea name="bodyText" style="min-height:200px">{bodyToText(c.body)}</textarea><p class="adm-hint">빈 줄로 단락 구분 · 각 단락 첫 줄=소제목</p></div>
+                <div><label>본문</label><EditorToolbar /><textarea name="bodyText" class="ed-area" style="min-height:240px">{bodyToText(c.body)}</textarea><p class="ed-hint2">빈 줄 = 단락 구분 · 첫 줄 = 소제목 · ###/**/- 마크업 · 사진 드래그앤드롭 지원</p></div>
                 <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
               </form>
             </details>
@@ -314,20 +385,94 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string }> = ({ colum
           </div>
         </div>
       ))}
+      <script dangerouslySetInnerHTML={{ __html: EDITOR_JS }}></script>
     </AdminShell>
   )
 }
 
 // ============================================================
-// ADMIN — 비포/애프터 케이스 관리 (사진 없이 텍스트 메타데이터만)
+// ADMIN — 비포/애프터 케이스 관리 (사진 + 의료법 게이팅)
 // ============================================================
+const PhotoUpload: FC<{ name: string; label: string; kind: 'before' | 'after'; current?: string }> = ({ name, label, kind, current }) => (
+  <div class="pu-box" data-name={name} data-kind={kind}>
+    <label>{label} {kind === 'after' && <span style="font-size:11px;color:var(--accent-d);font-weight:700">(로그인 게이팅)</span>}</label>
+    <input type="hidden" name={name} value={current || ''} />
+    <div class="pu-drop">
+      {current ? <img src={`/files/${current}`} alt="업로드된 사진" /> : <span class="pu-hint"><i class="fa-solid fa-image"></i> 클릭 또는 드래그하여 업로드</span>}
+    </div>
+    <input type="file" accept="image/*" class="pu-file" style="display:none" />
+  </div>
+)
+
+const CASE_ADMIN_JS = `
+// 사진 업로드 (클릭/드래그앤드롭 → R2)
+document.querySelectorAll('.pu-box').forEach((box) => {
+  const drop = box.querySelector('.pu-drop');
+  const fileInput = box.querySelector('.pu-file');
+  const hidden = box.querySelector('input[type=hidden]');
+  const kind = box.dataset.kind === 'after' ? 'after' : 'media';
+  const upload = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return alert('이미지 파일만 업로드할 수 있습니다.');
+    drop.innerHTML = '<span class="pu-hint"><i class="fa-solid fa-spinner fa-spin"></i> 업로드 중...</span>';
+    const fd = new FormData(); fd.append('file', file); fd.append('kind', kind);
+    try {
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+      const j = await res.json();
+      if (j.ok) { hidden.value = j.key; drop.innerHTML = '<img src="/files/' + j.key + '" alt="업로드된 사진">'; }
+      else { alert(j.error || '업로드 실패'); drop.innerHTML = '<span class="pu-hint"><i class="fa-solid fa-image"></i> 클릭 또는 드래그하여 업로드</span>'; }
+    } catch { alert('업로드 중 오류'); drop.innerHTML = '<span class="pu-hint"><i class="fa-solid fa-image"></i> 클릭 또는 드래그하여 업로드</span>'; }
+  };
+  drop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => upload(fileInput.files[0]));
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); upload(e.dataTransfer.files[0]); });
+});
+// 지역 주소 자동완성
+document.querySelectorAll('input[data-region-ac]').forEach((input) => {
+  const wrap = document.createElement('div'); wrap.className = 'rg-ac';
+  input.parentNode.insertBefore(wrap, input.nextSibling);
+  let timer;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 1) { wrap.innerHTML = ''; return; }
+    timer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/regions?q=' + encodeURIComponent(q));
+        const j = await res.json();
+        wrap.innerHTML = (j.results || []).map((r) => '<div class="rg-item">' + r + '</div>').join('');
+        wrap.querySelectorAll('.rg-item').forEach((it) => it.addEventListener('click', () => { input.value = it.textContent; wrap.innerHTML = ''; }));
+      } catch {}
+    }, 180);
+  });
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target) && e.target !== input) wrap.innerHTML = ''; });
+});
+`
+
+const CASE_ADMIN_CSS = `
+.pu-box label{display:block;margin-bottom:5px}
+.pu-drop{border:2px dashed var(--line);border-radius:var(--radius);min-height:96px;display:grid;place-items:center;cursor:pointer;background:var(--bg);transition:all .18s;overflow:hidden;padding:6px}
+.pu-drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.pu-drop img{max-width:100%;max-height:140px;border-radius:6px;display:block}
+.pu-hint{color:var(--ink-faint);font-size:13px;font-weight:600}
+.pu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.pu-grid{grid-template-columns:1fr}}
+.rg-ac{position:relative;z-index:30}
+.rg-item{padding:9px 13px;font-size:13px;cursor:pointer;background:var(--card);border:1px solid var(--line);border-top:none;color:var(--ink-2)}
+.rg-item:first-child{border-top:1px solid var(--line);border-radius:0 0 0 0}
+.rg-item:last-child{border-radius:0 0 8px 8px}
+.rg-item:hover{background:var(--accent-soft);color:var(--accent-d)}
+`
+
 export const AdminCasesPage: FC<{ cases: CaseItem[]; ok?: string }> = ({ cases, ok }) => {
   const treatOpts = TREATMENTS.map((t) => ({ slug: t.slug, name: t.shortName || t.name }))
   const treatName = (slug: string) => treatOpts.find((t) => t.slug === slug)?.name || '미지정'
   return (
     <AdminShell active="cases" title="비포/애프터 케이스 관리" ok={ok}>
+      <style dangerouslySetInnerHTML={{ __html: CASE_ADMIN_CSS }} />
       <div class="adm-toast" style="background:var(--bg-2);color:var(--ink-soft);border-color:var(--line)">
-        <i class="fa-solid fa-circle-info"></i> 사진은 의료법 준수를 위해 추후 별도 게이팅으로 등록합니다. 여기서는 케이스 정보(텍스트)만 관리합니다.
+        <i class="fa-solid fa-circle-info"></i> 사진 4장(파노라마 전/후, 구내 전/후)을 업로드할 수 있습니다. 업로드하지 않은 사진은 사이트에 표시되지 않으며, <strong>애프터 사진은 의료법에 따라 로그인 회원에게만</strong> 보입니다.
       </div>
       {/* 새 케이스 작성 */}
       <details class="adm-detail" style="margin-bottom:26px">
@@ -343,10 +488,16 @@ export const AdminCasesPage: FC<{ cases: CaseItem[]; ok?: string }> = ({ cases, 
             <div><label>성별</label><input type="text" name="gender" placeholder="예: 남성" /></div>
           </div>
           <div class="row">
-            <div><label>거주 지역</label><input type="text" name="area" placeholder="예: 강서구 명지동" /></div>
+            <div><label>거주 지역</label><input type="text" name="area" placeholder="예: 명지 → 부산 강서구 명지동 자동완성" data-region-ac autocomplete="off" /></div>
             <div><label>치료 기간</label><input type="text" name="period" placeholder="예: 약 3개월" /></div>
           </div>
           <div><label>케이스 설명</label><textarea name="desc" placeholder="치료 내용을 간단히 설명하세요"></textarea></div>
+          <div class="pu-grid">
+            <PhotoUpload name="photoPanoBefore" label="파노라마 사진 (전)" kind="before" />
+            <PhotoUpload name="photoPanoAfter" label="파노라마 사진 (후)" kind="after" />
+            <PhotoUpload name="photoOralBefore" label="구내 사진 (전)" kind="before" />
+            <PhotoUpload name="photoOralAfter" label="구내 사진 (후)" kind="after" />
+          </div>
           <div><button type="submit" class="btn btn-gold"><i class="fa-solid fa-check"></i> 등록하기</button></div>
         </form>
       </details>
@@ -377,10 +528,16 @@ export const AdminCasesPage: FC<{ cases: CaseItem[]; ok?: string }> = ({ cases, 
                   <div><label>성별</label><input type="text" name="gender" value={cs.gender} /></div>
                 </div>
                 <div class="row">
-                  <div><label>거주 지역</label><input type="text" name="area" value={cs.area} /></div>
+                  <div><label>거주 지역</label><input type="text" name="area" value={cs.area} data-region-ac autocomplete="off" /></div>
                   <div><label>치료 기간</label><input type="text" name="period" value={cs.period} /></div>
                 </div>
                 <div><label>케이스 설명</label><textarea name="desc">{cs.desc}</textarea></div>
+                <div class="pu-grid">
+                  <PhotoUpload name="photoPanoBefore" label="파노라마 (전)" kind="before" current={cs.photoPanoBefore} />
+                  <PhotoUpload name="photoPanoAfter" label="파노라마 (후)" kind="after" current={cs.photoPanoAfter} />
+                  <PhotoUpload name="photoOralBefore" label="구내 (전)" kind="before" current={cs.photoOralBefore} />
+                  <PhotoUpload name="photoOralAfter" label="구내 (후)" kind="after" current={cs.photoOralAfter} />
+                </div>
                 <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
               </form>
             </details>
@@ -391,6 +548,86 @@ export const AdminCasesPage: FC<{ cases: CaseItem[]; ok?: string }> = ({ cases, 
           </div>
         </div>
       ))}
+      <script dangerouslySetInnerHTML={{ __html: CASE_ADMIN_JS }}></script>
     </AdminShell>
   )
 }
+
+// ============================================================
+// ADMIN — 회원 목록 (섹션 7)
+// ============================================================
+export const AdminMembersPage: FC<{ members: { name: string; email: string; phone: string; marketing: boolean; createdAt: number }[] }> = ({ members }) => (
+  <Layout title="회원 관리 | 관리자" description="관리자 전용" path="/admin/members">
+    <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS + `
+.mem-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;font-size:14px}
+.mem-table th{background:var(--bg-2);text-align:left;padding:12px 16px;font-size:13px;color:var(--ink-2);border-bottom:1px solid var(--line)}
+.mem-table td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.mem-table tr:last-child td{border-bottom:none}
+.mk-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px}
+.mk-yes{background:var(--accent-soft);color:var(--accent-d)}
+.mk-no{background:var(--bg-2);color:var(--ink-faint)}
+@media(max-width:720px){.mem-table th:nth-child(4),.mem-table td:nth-child(4){display:none}}
+` }} />
+    <section class="page-hero" style="padding:120px 0 40px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-users"></i> ADMIN</div><h1>회원 관리</h1></div></section>
+    <section class="sec">
+      <div class="container adm-wrap">
+        <div class="adm-bar">
+          <div class="chip-row">
+            <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
+            <span class="chip" style="background:var(--accent);color:#fff;border-color:var(--accent)"><i class="fa-solid fa-users"></i> 회원 {members.length}명</span>
+          </div>
+        </div>
+        {members.length === 0 ? (
+          <p style="color:var(--ink-soft)">가입한 회원이 없습니다.</p>
+        ) : (
+          <table class="mem-table">
+            <thead><tr><th>이름</th><th>이메일</th><th>연락처</th><th>마케팅 수신</th><th>가입일</th></tr></thead>
+            <tbody>
+              {members.map((m) => (
+                <tr>
+                  <td style="font-weight:700;color:var(--ink)">{m.name}</td>
+                  <td>{m.email}</td>
+                  <td>{m.phone}</td>
+                  <td>{m.marketing ? <span class="mk-badge mk-yes">동의</span> : <span class="mk-badge mk-no">미동의</span>}</td>
+                  <td>{m.createdAt ? new Date(m.createdAt).toISOString().slice(0, 10) : '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <p class="adm-hint" style="margin-top:14px"><i class="fa-solid fa-shield-halved"></i> 회원 개인정보는 개인정보처리방침에 따라 관리되며, 비밀번호는 해시 처리되어 열람할 수 없습니다.</p>
+      </div>
+    </section>
+  </Layout>
+)
+
+// ============================================================
+// ADMIN — 예약 목록
+// ============================================================
+export const AdminReservationsPage: FC<{ items: any[] }> = ({ items }) => (
+  <Layout title="예약 관리 | 관리자" description="관리자 전용" path="/admin/reservations">
+    <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
+    <section class="page-hero" style="padding:120px 0 40px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-regular fa-calendar-check"></i> ADMIN</div><h1>예약 관리</h1></div></section>
+    <section class="sec">
+      <div class="container adm-wrap">
+        <div class="adm-bar">
+          <div class="chip-row">
+            <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
+            <span class="chip" style="background:var(--accent);color:#fff;border-color:var(--accent)"><i class="fa-regular fa-calendar-check"></i> 예약 신청 {items.length}건</span>
+          </div>
+        </div>
+        {items.length === 0 && <p style="color:var(--ink-soft)">접수된 예약 신청이 없습니다.</p>}
+        {items.map((r) => (
+          <div class="adm-card">
+            <div class="adm-meta">
+              <span class="adm-pin">{r.status === 'new' ? '신규' : r.status}</span>
+              <span>{r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 16).replace('T', ' ') : '-'}</span>
+            </div>
+            <h3>{r.name} <span style="font-weight:400;font-size:14px;color:var(--ink-soft)">· {r.phone}</span></h3>
+            <p class="adm-body-prev">희망 진료: {r.treatment || '-'} · 희망 날짜: {r.date || '-'}{r.message ? `\n문의: ${r.message}` : ''}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </Layout>
+)

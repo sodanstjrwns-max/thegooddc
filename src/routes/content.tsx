@@ -6,6 +6,7 @@ import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
 import { DOCTORS, getDoctor } from '../data/doctors'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, speakableSchema } from '../lib/seo'
+import { InlinkText } from '../lib/inlink'
 import type { Column } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES } from '../lib/content-store'
 import type { CaseItem } from '../lib/content-store'
@@ -50,11 +51,19 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
             const dr = getDoctor(cs.doctor)
             return (
               <div class="card reveal" style="overflow:hidden">
-                {/* Before/After slider */}
+                {/* Before/After slider — 업로드된 사진 우선, 없으면 플레이스홀더 */}
                 <div class="ba-slider">
-                  <div style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#114A7E,#1E6FB8);color:rgba(255,255,255,0.7);font-size:14px;font-weight:700">진료 전 (Before)</div>
+                  {cs.photoPanoBefore || cs.photoOralBefore ? (
+                    <img src={`/files/${cs.photoPanoBefore || cs.photoOralBefore}`} alt={`${cs.title} 진료 전`} loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+                  ) : (
+                    <div style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#114A7E,#1E6FB8);color:rgba(255,255,255,0.7);font-size:14px;font-weight:700">진료 전 (Before)</div>
+                  )}
                   {loggedIn ? (
-                    <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#1E6FB8,#2DD4BF);color:#fff;font-size:14px;font-weight:700;clip-path:inset(0 0 0 50%)">진료 후 (After)</div>
+                    cs.photoPanoAfter || cs.photoOralAfter ? (
+                      <img src={`/files/${cs.photoPanoAfter || cs.photoOralAfter}`} alt={`${cs.title} 진료 후`} loading="lazy" class="ba-after" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 50%)" />
+                    ) : (
+                      <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#1E6FB8,#2DD4BF);color:#fff;font-size:14px;font-weight:700;clip-path:inset(0 0 0 50%)">진료 후 (After)</div>
+                    )
                   ) : (
                     <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:rgba(255,255,255,0.8);font-size:13px;font-weight:700;clip-path:inset(0 0 0 50%);text-align:center;padding:20px">
                       <span><i class="fa-solid fa-lock" style="display:block;font-size:24px;margin-bottom:8px"></i>로그인 후<br />열람 가능</span>
@@ -64,6 +73,30 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
                   <span class="ba-label before">Before</span>
                   <span class="ba-label after">After</span>
                 </div>
+                {/* 추가 사진 그리드 (업로드된 것만 노출, 애프터는 로그인 게이팅) */}
+                {(() => {
+                  const photos: { key?: string; label: string; after: boolean }[] = [
+                    { key: cs.photoPanoBefore, label: '파노라마 (전)', after: false },
+                    { key: cs.photoPanoAfter, label: '파노라마 (후)', after: true },
+                    { key: cs.photoOralBefore, label: '구내 (전)', after: false },
+                    { key: cs.photoOralAfter, label: '구내 (후)', after: true },
+                  ].filter((p) => p.key)
+                  if (photos.length === 0) return null
+                  return (
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;padding:10px 14px 0">
+                      {photos.map((p) => (
+                        <figure style="margin:0">
+                          {p.after && !loggedIn ? (
+                            <div style="aspect-ratio:4/3;border-radius:8px;background:var(--bg-2);display:grid;place-items:center;color:var(--ink-faint);font-size:11px;font-weight:700;text-align:center"><span><i class="fa-solid fa-lock"></i><br />로그인 필요</span></div>
+                          ) : (
+                            <img src={`/files/${p.key}`} alt={`${cs.title} ${p.label}`} loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px" />
+                          )}
+                          <figcaption style="font-size:11px;color:var(--ink-faint);text-align:center;margin-top:3px">{p.label}</figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  )
+                })()}
                 <div style="padding:22px 24px">
                   <h3 style="font-size:18px;margin-bottom:8px">{cs.title}</h3>
                   <p style="color:var(--ink-soft);font-size:14px;margin:0 0 14px;line-height:1.6">{cs.desc}</p>
@@ -129,7 +162,37 @@ export const ColumnListPage: FC<{ columns?: Column[] }> = ({ columns = SEED_COLU
   </Layout>
 )
 
-export const ColumnDetailPage: FC<{ slug: string; column?: Column | null }> = ({ slug, column }) => {
+// 리치 본문 렌더러: ### → H3, **x** → <strong>, - → <ul>, ![alt](url) → <img>, 일반 줄 → <p>+인링크
+const RichBody: FC<{ text: string }> = ({ text }) => {
+  const lines = text.split('\n')
+  const out: any[] = []
+  let listBuf: string[] = []
+  const renderInline = (s: string) => {
+    // **bold** 처리 후 인링크
+    const parts = s.split(/\*\*(.+?)\*\*/g)
+    return parts.map((p, i) => (i % 2 === 1 ? <strong>{p}</strong> : <InlinkText text={p} max={2} />))
+  }
+  const flushList = () => {
+    if (listBuf.length) {
+      out.push(<ul>{listBuf.map((li) => <li>{renderInline(li)}</li>)}</ul>)
+      listBuf = []
+    }
+  }
+  for (const raw of lines) {
+    const line = raw.trim()
+    if (!line) { flushList(); continue }
+    const img = line.match(/^!\[(.*?)\]\((.*?)\)$/)
+    if (img) { flushList(); out.push(<img src={img[2]} alt={img[1] || '본문 이미지'} style="max-width:100%;border-radius:12px;margin:8px 0" loading="lazy" />); continue }
+    if (line.startsWith('### ')) { flushList(); out.push(<h3>{line.slice(4)}</h3>); continue }
+    if (line.startsWith('- ')) { listBuf.push(line.slice(2)); continue }
+    flushList()
+    out.push(<p>{renderInline(line)}</p>)
+  }
+  flushList()
+  return <>{out}</>
+}
+
+export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number }> = ({ slug, column, views = 0 }) => {
   const c = column ?? SEED_COLUMNS.find((x) => x.slug === slug)
   if (!c) {
     return (
@@ -155,7 +218,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null }> = ({
     >
       <section class="page-hero">
         <div class="container ph-inner">
-          <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> COLUMN · {c.date}</div>
+          <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> COLUMN · {c.date}{views > 0 && <span style="opacity:.75"> · 조회 {views.toLocaleString()}</span>}</div>
           <h1>{c.title}</h1>
         </div>
       </section>
@@ -169,7 +232,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null }> = ({
               <div style="font-size:13px;color:var(--ink-soft)">{dr.license}</div>
             </div>
           </div>
-          {c.body.map((b) => (<><h2>{b.h}</h2><p>{b.p}</p></>))}
+          {c.body.map((b) => (<>{b.h && <h2>{b.h}</h2>}<RichBody text={b.p} /></>))}
           <div class="related-box">
             <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 작성 의료진</h3>
             <div class="chip-row">

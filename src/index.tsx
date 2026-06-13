@@ -5,6 +5,7 @@ import { TREATMENTS } from './data/treatments'
 import { DOCTORS } from './data/doctors'
 import { TERMS } from './data/encyclopedia'
 import { getAreaCombinations, AREAS } from './data/areas'
+import { searchRegions } from './data/regions'
 import {
   signSession, verifySession, hashPassword,
   parseCookies, cookieString, clearCookie, type SessionPayload,
@@ -17,7 +18,7 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage } from './routes/area'
-import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage } from './routes/auth'
+import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
@@ -26,6 +27,7 @@ import {
 
 type Bindings = {
   KV?: KVNamespace
+  R2?: R2Bucket
   ADMIN_PASSWORD?: string
   ADMIN_SESSION_SECRET?: string
   SESSION_SECRET?: string
@@ -64,7 +66,11 @@ app.get('/pricing', (c) => c.html(<PricingPage />))
 app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
 app.get('/column', async (c) => c.html(<ColumnListPage columns={await listColumns(c.env)} />))
-app.get('/column/:slug', async (c) => c.html(<ColumnDetailPage slug={c.req.param('slug')} column={await getColumn(c.env, c.req.param('slug'))} />))
+app.get('/column/:slug', async (c) => {
+  const slug = c.req.param('slug')
+  const views = await bumpView(c.env, `column:${slug}`)
+  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} />)
+})
 app.get('/encyclopedia', (c) => c.html(<EncyclopediaListPage category={c.req.query('cat')} />))
 app.get('/encyclopedia/:slug', (c) => c.html(<EncyclopediaDetailPage slug={c.req.param('slug')} />))
 
@@ -126,12 +132,49 @@ app.get('/admin/notices', async (c) => {
 app.get('/admin/columns', async (c) => {
   const s = await getSession(c, 'admin')
   if (!s) return c.redirect('/admin')
-  return c.html(<AdminColumnsPage columns={await listColumns(c.env)} ok={c.req.query('ok')} />)
+  const columns = await listColumns(c.env)
+  const views = await getViews(c.env, columns.map((x) => `column:${x.slug}`))
+  return c.html(<AdminColumnsPage columns={columns} ok={c.req.query('ok')} views={views} />)
 })
 app.get('/admin/cases', async (c) => {
   const s = await getSession(c, 'admin')
   if (!s) return c.redirect('/admin')
   return c.html(<AdminCasesPage cases={await listCases(c.env)} ok={c.req.query('ok')} />)
+})
+// 관리자 회원 목록
+app.get('/admin/members', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  const members: any[] = []
+  if (c.env.KV) {
+    const list = await c.env.KV.list({ prefix: 'user:' })
+    for (const k of list.keys) {
+      const raw = await c.env.KV.get(k.name)
+      if (raw) {
+        try {
+          const u = JSON.parse(raw)
+          members.push({ name: u.name || '-', email: u.email || k.name.slice(5), phone: u.phone || '-', marketing: !!u.marketing, createdAt: u.createdAt || 0 })
+        } catch {}
+      }
+    }
+    members.sort((a, b) => b.createdAt - a.createdAt)
+  }
+  return c.html(<AdminMembersPage members={members} />)
+})
+// 관리자 예약 목록
+app.get('/admin/reservations', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  const items: any[] = []
+  if (c.env.KV) {
+    const list = await c.env.KV.list({ prefix: 'reservation:' })
+    for (const k of list.keys) {
+      const raw = await c.env.KV.get(k.name)
+      if (raw) { try { items.push({ key: k.name, ...JSON.parse(raw) }) } catch {} }
+    }
+    items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+  }
+  return c.html(<AdminReservationsPage items={items} />)
 })
 
 // Legal pages
@@ -280,6 +323,10 @@ app.post('/api/admin/cases/create', async (c) => {
     area: String(f.area || ''),
     period: String(f.period || ''),
     desc: String(f.desc || ''),
+    photoPanoBefore: String(f.photoPanoBefore || ''),
+    photoPanoAfter: String(f.photoPanoAfter || ''),
+    photoOralBefore: String(f.photoOralBefore || ''),
+    photoOralAfter: String(f.photoOralAfter || ''),
   })
   return c.redirect('/admin/cases?ok=created')
 })
@@ -295,6 +342,10 @@ app.post('/api/admin/cases/update', async (c) => {
     area: String(f.area || ''),
     period: String(f.period || ''),
     desc: String(f.desc || ''),
+    photoPanoBefore: String(f.photoPanoBefore || ''),
+    photoPanoAfter: String(f.photoPanoAfter || ''),
+    photoOralBefore: String(f.photoOralBefore || ''),
+    photoOralAfter: String(f.photoOralAfter || ''),
   })
   return c.redirect('/admin/cases?ok=updated')
 })
@@ -303,6 +354,78 @@ app.post('/api/admin/cases/delete', async (c) => {
   const f = await c.req.parseBody()
   await deleteCase(c.env, String(f.id || ''))
   return c.redirect('/admin/cases?ok=deleted')
+})
+
+// ============================================================
+// 조회수 (KV 카운터)
+// ============================================================
+async function bumpView(env: Bindings, key: string): Promise<number> {
+  if (!env.KV) return 0
+  try {
+    const cur = parseInt((await env.KV.get(`views:${key}`)) || '0', 10) || 0
+    const next = cur + 1
+    await env.KV.put(`views:${key}`, String(next))
+    return next
+  } catch { return 0 }
+}
+async function getViews(env: Bindings, keys: string[]): Promise<Record<string, number>> {
+  const out: Record<string, number> = {}
+  if (!env.KV) return out
+  await Promise.all(keys.map(async (k) => {
+    out[k] = parseInt((await env.KV!.get(`views:${k}`)) || '0', 10) || 0
+  }))
+  return out
+}
+
+// ============================================================
+// 지역 주소 자동완성 API
+// ============================================================
+app.get('/api/regions', (c) => {
+  const q = c.req.query('q') || ''
+  return c.json({ results: searchRegions(q) })
+})
+
+// ============================================================
+// R2 파일 업로드 / 서빙 (의료법: after 사진 로그인 게이팅)
+// ============================================================
+app.post('/api/admin/upload', async (c) => {
+  if (!(await requireAdmin(c))) return c.json({ ok: false, error: '관리자 권한이 필요합니다.' }, 401)
+  if (!c.env.R2) return c.json({ ok: false, error: 'R2 스토리지가 설정되지 않았습니다.' }, 500)
+  try {
+    const form = await c.req.parseBody()
+    const file = form.file as File
+    const kind = String(form.kind || 'media') // 'after' = 로그인 게이팅 대상
+    if (!file || typeof file === 'string') return c.json({ ok: false, error: '파일이 없습니다.' }, 400)
+    if (!/^image\//.test(file.type)) return c.json({ ok: false, error: '이미지 파일만 업로드할 수 있습니다.' }, 400)
+    if (file.size > 8 * 1024 * 1024) return c.json({ ok: false, error: '8MB 이하 이미지만 업로드할 수 있습니다.' }, 400)
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+    const prefix = kind === 'after' ? 'cases-after' : 'media'
+    const key = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    await c.env.R2.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } })
+    return c.json({ ok: true, key, url: `/files/${key}` })
+  } catch (e) {
+    return c.json({ ok: false, error: '업로드 중 오류가 발생했습니다.' }, 500)
+  }
+})
+
+app.get('/files/*', async (c) => {
+  if (!c.env.R2) return c.notFound()
+  const key = c.req.path.replace(/^\/files\//, '')
+  if (!key) return c.notFound()
+  // 의료법 게이팅: 애프터 사진은 회원/관리자만
+  if (key.startsWith('cases-after/')) {
+    const member = await getSession(c, 'member')
+    const admin = await getSession(c, 'admin')
+    if (!member && !admin) return c.text('로그인 후 열람할 수 있습니다.', 403)
+  }
+  const obj = await c.env.R2.get(key)
+  if (!obj) return c.notFound()
+  return new Response(obj.body as any, {
+    headers: {
+      'Content-Type': obj.httpMetadata?.contentType || 'application/octet-stream',
+      'Cache-Control': key.startsWith('cases-after/') ? 'private, max-age=300' : 'public, max-age=31536000, immutable',
+    },
+  })
 })
 
 app.post('/api/reservation', async (c) => {
