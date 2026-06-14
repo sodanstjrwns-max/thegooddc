@@ -19,7 +19,7 @@ const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/di
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
   const url = canonical(path)
-  const img = ogImage ? canonical(ogImage) : canonical('/images/digital-system.webp')
+  const img = ogImage ? canonical(ogImage) : canonical('/images/og-default.jpg')
   const allSchemas = [dentistSchema(), organizationSchema(), ...schemas]
 
   return (
@@ -41,6 +41,9 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <meta property="og:description" content={description} />
         <meta property="og:url" content={url} />
         <meta property="og:image" content={img} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={title} />
         <meta property="og:locale" content="ko_KR" />
 
         {/* Twitter */}
@@ -49,8 +52,11 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={img} />
 
-        {/* Favicon */}
+        {/* Favicon / Touch icons */}
         <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
         <meta name="theme-color" content="#FBFAF6" />
 
         {/* Fonts & Icons */}
@@ -177,6 +183,10 @@ const Footer: FC = () => (
             <a href={`tel:${CLINIC.phoneRaw}`} aria-label="전화"><i class="fa-solid fa-phone"></i></a>
             <a href="/directions" aria-label="오시는 길"><i class="fa-solid fa-location-dot"></i></a>
             <a href="/reservation" aria-label="예약"><i class="fa-regular fa-calendar-check"></i></a>
+            {CLINIC.sns.instagram && <a href={CLINIC.sns.instagram} target="_blank" rel="noopener" aria-label="인스타그램"><i class="fa-brands fa-instagram"></i></a>}
+            {CLINIC.sns.youtube && <a href={CLINIC.sns.youtube} target="_blank" rel="noopener" aria-label="유튜브"><i class="fa-brands fa-youtube"></i></a>}
+            {CLINIC.sns.blog && <a href={CLINIC.sns.blog} target="_blank" rel="noopener" aria-label="블로그"><i class="fa-solid fa-blog"></i></a>}
+            {CLINIC.sns.kakao && <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" aria-label="카카오톡 채널"><i class="fa-solid fa-comment"></i></a>}
           </div>
         </div>
         <div class="footer-col">
@@ -203,7 +213,10 @@ const Footer: FC = () => (
       </div>
       <div class="footer-bottom">
         <div>
-          상호: {CLINIC.businessName} &nbsp;|&nbsp; 대표자: {CLINIC.director} &nbsp;|&nbsp; 대표전화: {CLINIC.phone} &nbsp;|&nbsp; 개원: {CLINIC.openedYear}년
+          상호: {CLINIC.businessName} &nbsp;|&nbsp; 대표자: {CLINIC.director}
+          {CLINIC.businessRegNo && <> &nbsp;|&nbsp; 사업자등록번호: {CLINIC.businessRegNo}</>}
+          &nbsp;|&nbsp; 대표전화: {CLINIC.phone} &nbsp;|&nbsp; 개원: {CLINIC.openedYear}년
+          <br />주소: {CLINIC.address} &nbsp;|&nbsp; 개인정보보호책임자: {CLINIC.privacyOfficer}
         </div>
         <div class="links">
           <a href="/privacy">개인정보처리방침</a>

@@ -17,6 +17,10 @@ export const CLINIC = {
   cohort: '8기',
   openedYear: 2015,
   businessName: '더착한치과의원',
+  // 사업자정보 (실값 수령 후 교체 — 빈 값이면 푸터에서 자동 숨김)
+  businessRegNo: '', // 예: '123-45-67890'
+  medInstitutionNo: '', // 요양기관기호(선택)
+  privacyOfficer: '황우석', // 개인정보보호책임자
 
   // 주소 (섹션 2)
   address: '부산 강서구 명지오션시티4로 59, 스타빌딩 601·602호',

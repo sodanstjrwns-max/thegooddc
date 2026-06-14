@@ -14,7 +14,7 @@ const CORE_IMG: Record<string, string> = {
 }
 
 const ASSURE = [
-  { ic: 'face-smile', t: '아프지 않게', d: '무통 마취 시스템으로 치료 중 통증을 최소화합니다. 치과가 무섭지 않은 곳을 만듭니다.' },
+  { ic: 'face-smile', t: '아프지 않게', d: '편안한 마취 시스템으로 치료 중 통증을 최소화합니다. 치과가 무섭지 않은 곳을 만듭니다.' },
   { ic: 'handshake-angle', t: '과잉진료 없이', d: '꼭 필요한 진료만, 충분히 설명드린 뒤에 시작합니다. 부담 없이 상담부터 받으세요.' },
   { ic: 'crosshairs', t: '정확하고 빠르게', d: '디지털 가이드·AI 진단으로 한 번에 정확하게, 원내 기공실로 기다림 없이 빠르게.' },
 ]
@@ -28,7 +28,7 @@ const STATS = [
 
 
 const MARQUEE = [
-  '디지털 가이드 임플란트', '투명교정', '미니쉬', '원내 기공실', '무통 마취 시스템',
+  '디지털 가이드 임플란트', '투명교정', '미니쉬', '원내 기공실', '편안한 마취 시스템',
   '통합치의학 전문의', '치의학박사', '3D CT 정밀 진단', '구강 스캐너', '24년 임상 경력',
   '과잉진료 없는 진료', '10개 진료과 통합',
 ]
@@ -36,7 +36,7 @@ const MARQUEE = [
 const COMPARE = [
   { label: '진료 설계', us: '3D CT · AI 디지털 가이드', them: '경험·감에 의존' },
   { label: '보철물 제작', us: '원내 기공실 (밀링기·3D프린터)', them: '외부 기공소 위탁' },
-  { label: '통증 관리', us: '무통 마취 시스템', them: '일반 마취' },
+  { label: '통증 관리', us: '편안한 마취 시스템', them: '일반 마취' },
   { label: '진료 범위', us: '10개 진료과 통합 진료', them: '일부 과목만' },
   { label: '상담 방식', us: '꼭 필요한 진료만 설명', them: '획일적 안내' },
 ]
@@ -46,7 +46,8 @@ export const HomePage: FC = () => {
   return (
     <Layout
       title="더착한치과 | 강서구 명지 임플란트·투명교정·미니쉬 치과"
-      description="부산 강서구 명지 더착한치과. 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 무통 마취·과잉진료 없는 진료."
+      description="부산 강서구 명지 더착한치과. 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만."
+      path="/"
       schemas={[speakableSchema()]}
     >
       {/* ===================== HERO — editorial asymmetric ===================== */}
@@ -68,7 +69,7 @@ export const HomePage: FC = () => {
               <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost btn-lg"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
             </div>
             <ul class="hero-trust">
-              <li class="tc"><i class="fa-solid fa-check"></i><span>무통 마취 시스템</span></li>
+              <li class="tc"><i class="fa-solid fa-check"></i><span>편안한 마취 시스템</span></li>
               <li class="tc"><i class="fa-solid fa-check"></i><span>과잉진료 없는 진료</span></li>
               <li class="tc"><i class="fa-solid fa-check"></i><span>원내 기공실 보유</span></li>
             </ul>
@@ -278,7 +279,7 @@ export const HomePage: FC = () => {
               <div class="bento-glow"></div>
               <div class="bento-icon"><i class="fa-solid fa-shield-heart"></i></div>
               <div class="bento-body">
-                <h4>무통 마취 시스템</h4>
+                <h4>편안한 마취 시스템</h4>
                 <p>치료 중 통증을 최소화해, 치과가 무섭지 않은 곳을 만듭니다.</p>
               </div>
             </article>

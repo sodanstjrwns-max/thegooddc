@@ -44,7 +44,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     label: 'The Calm',
     title: '두려움이 녹다',
     narration: '"마취가 끝난 줄도 몰랐습니다. \'이 정도였으면 진작 올걸\' — 치료 의자에서 그런 생각을 하게 될 줄은 몰랐습니다."',
-    guide: '무통 마취 시스템과 원내 기공실. 통증은 줄이고 기다림도 줄여, 치과에 오는 일 자체를 가볍게 만듭니다.',
+    guide: '편안한 마취 시스템과 원내 기공실. 통증은 줄이고 기다림도 줄여, 치과에 오는 일 자체를 가볍게 만듭니다.',
     icon: 'feather',
   },
   {
@@ -74,7 +74,7 @@ export const PATIENT_FUNNEL: FunnelStep[] = [
   { step: 5,  phase: 'visit',  title: '첫 만남',   desc: '환영받는 첫인사. 불안한 마음부터 먼저 듣습니다.', icon: 'door-open' },
   { step: 6,  phase: 'visit',  title: '정밀 진단', desc: '3D CT·구강 스캐너로 입안을 정확히 들여다봅니다.', icon: 'cube' },
   { step: 7,  phase: 'visit',  title: '설명·동의', desc: '꼭 필요한 진료만, 이해되실 때까지 설명드립니다.', icon: 'comments' },
-  { step: 8,  phase: 'visit',  title: '편안한 치료', desc: '무통 마취와 원내 기공실로 통증도 기다림도 줄입니다.', icon: 'heart' },
+  { step: 8,  phase: 'visit',  title: '편안한 치료', desc: '편안한 마취와 원내 기공실로 통증도 기다림도 줄입니다.', icon: 'heart' },
   { step: 9,  phase: 'after',  title: '회복·관리', desc: '치료 후 주의사항 안내와 정기검진으로 결과를 지킵니다.', icon: 'arrows-rotate' },
   { step: 10, phase: 'after',  title: '소개',     desc: '가족과 지인에게 권하는 치과가 됩니다 — 이야기의 완성.', icon: 'people-group' },
 ]
