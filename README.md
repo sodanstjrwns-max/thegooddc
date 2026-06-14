@@ -74,17 +74,47 @@
 - **기술 스택**: Hono v4 (TS, SSR) + Vite + Vanilla JS + Tailwind CDN + Pretendard + Font Awesome
 - **바인딩**: KV `4b7e7d15ad334a01a7c162043a51bec2` (회원·예약·콘텐츠·조회수) / R2 `thegooddental-media` (사진)
 - **환경변수(Secrets, 설정완료)**: `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `SESSION_SECRET` · (미설정) `RESEND_API_KEY`, `NOTIFICATION_EMAIL`(예약 이메일 알림용)
-- **상태**: ✅ 실배포 완료 — KV 작동 검증(회원가입/예약 ok), 관리자 로그인 검증, 전 라우트 200
-- **재배포**: `npm run build && npx wrangler pages deploy dist --project-name thegooddental`
+- **상태**: ✅ 실배포 완료 — KV 작동 검증(회원가입/예약 ok), 관리자 로그인 검증, 전 라우트 200, 이탤릭 0·"무통" 0(의료광고법 안전), OG·파비콘 라이브
+- **GitHub 저장소**: https://github.com/sodanstjrwns-max/thegooddc (branch `main`)
+- **재배포(현재 운영 방식)**: AI 에이전트가 코드 변경 시 `npm run build && npx wrangler pages deploy dist --project-name thegooddental --branch main`로 즉시 라이브 반영
 - **로컬 실행**: `npm run build && pm2 start ecosystem.config.cjs` → http://localhost:3000
 
-## 미구현 / 다음 단계 (2차)
-- **GitHub 연결 + Cloudflare Pages 실배포** — 배포 경로 선택 대기(원장님 Cloudflare 계정 vs Genspark 호스팅)
-- 히어로 비주얼 실사진 적용 — 로고·원장 사진·원내 사진 수령 대기
+### 🔁 영구 자동배포 켜는 법 (원장님 클릭 1회면 끝, 둘 중 택1)
+> 참고: GitHub App 보안정책상 봇(에이전트)은 `.github/workflows/` 파일을 push할 수 없어
+> 이 마지막 한 단계만 사람 손이 필요합니다. 그 전까지는 에이전트가 직접 배포로 빈틈없이 메꿉니다.
+
+**방법 A — Cloudflare가 GitHub 직접 감시 (추천 · 제일 쉬움)**
+1. https://dash.cloudflare.com → **Workers & Pages → `thegooddental`**
+2. **Settings → Builds & deployments → Connect to Git**
+3. 저장소 `sodanstjrwns-max/thegooddc` 선택, branch `main`
+4. Build command: `npm run build` / Output directory: `dist`
+→ 이후 push만 하면 CF가 알아서 빌드·배포. 워크플로 파일·비밀키 불필요.
+
+**방법 B — GitHub Actions (워크플로 파일은 이미 준비됨: `.deploy-templates/deploy.yml`)**
+1. GitHub 저장소 → **Add file → Create new file** → 파일명에 `.github/workflows/deploy.yml` 입력
+2. `.deploy-templates/deploy.yml` 내용 복붙 → Commit
+3. 저장소 **Settings → Secrets and variables → Actions**에 추가:
+   - `CLOUDFLARE_API_TOKEN` (CF API 토큰)
+   - `CLOUDFLARE_ACCOUNT_ID` = `62bec8960d128134b71384fc82cc0d5e`
+
+### 🌐 커스텀 도메인 thegooddc.kr (CF 세팅 완료, 네임서버만 변경하면 자동 활성)
+- CF 존·DNS(CNAME @/www)·Pages 도메인 연결 **전부 완료**, 상태 `pending`(네임서버 대기)
+- **원장님 1회 작업**: 도메인 산 곳(가비아/후이즈 등) 로그인 → 네임서버를 아래로 변경
+  - `alan.ns.cloudflare.com`
+  - `samara.ns.cloudflare.com`
+- 변경 후 수십분~수시간 내 자동으로 `active` 전환 → https://thegooddc.kr 라이브
+
+## 원장님이 주셔야 채울 수 있는 실데이터 (현재 빈 값은 화면에서 자동 숨김 처리됨)
+- 사업자등록번호(`businessRegNo`), 요양기관기호(선택)
+- SNS 주소(인스타/블로그/유튜브/카카오 — 푸터 아이콘에 자동 노출)
+- Google Analytics 4 측정 ID(`G-XXXX`), GTM ID(선택)
+- 로고·원장·원내 실사진, 비포/애프터 실제 케이스 사진
+- (예약 이메일 알림 원하면) `RESEND_API_KEY`, `NOTIFICATION_EMAIL`
+
+## 미구현 / 다음 단계 (선택)
+- 히어로 비주얼 실사진 적용 — 로고·원장 사진·원내 사진 수령 시
 - 케이스 실사진 업로드(기능은 완성, 실제 사진 데이터만 필요)
-- Google OAuth 실연동(현재 자리표시), 공지·케이스 상세페이지형 조회수 확장(현재 칼럼 적용)
-- 커스텀 도메인 연결 (thegooddental.kr)
-- 패널닝: "무통" 표현 8건 순화 여부 · 소아치과 과목 추가 여부 — 원장님 확인 필요
+- Google OAuth 실연동(현재 자리표시), 공지·케이스 상세형 조회수 확장(현재 칼럼 적용)
 
 ## 디자인 컨셉
 - **"따뜻한 종이 위의 신뢰 블루" (Warm Paper × Trust Blue)** — 원장 설문 직접 반영: Q24 따뜻하고 친근한 + Q25 블루 + 믿음직한 장인 톤
@@ -96,4 +126,5 @@
 - **에디토리얼 리듬**: 섹션 인덱스 넘버(01–06)·헤어라인 디바이더·대문자 키커·스크롤 마스킹 리빌
 
 ## 최종 수정일
+2026-06-14 (실배포 검증 완료: 이탤릭 0·"무통" 0·OG/파비콘 라이브·전 라우트 200·회원가입/예약/관리자 API 검증 / 자동배포 가이드 A·B 완비 / thegooddc.kr 도메인 CF세팅 완료·네임서버 대기)
 2026-06-13 (1차 SEO·기능 대확장: 백과사전 508·FAQ 240·인링크 엔진·R2 사진·지역 자동완성·블로그 에디터·회원/예약 관리·조회수)
