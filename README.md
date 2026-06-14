@@ -68,10 +68,14 @@
 4. 관리자는 `/admin` (기본 비밀번호: 환경변수 `ADMIN_PASSWORD`)
 
 ## 배포
-- **플랫폼**: Cloudflare Pages + Workers
+- **플랫폼**: Cloudflare Pages + Workers (원장님 본인 CF 계정: sodanstjrwns@gmail.com)
+- **프로덕션 URL**: https://thegooddental.pages.dev
+- **CF 프로젝트명**: `thegooddental`
 - **기술 스택**: Hono v4 (TS, SSR) + Vite + Vanilla JS + Tailwind CDN + Pretendard + Font Awesome
-- **환경변수(Secrets)**: `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `SESSION_SECRET`, `RESEND_API_KEY`, `NOTIFICATION_EMAIL`, (선택) `GOOGLE_CLIENT_ID/SECRET`
-- **상태**: ✅ 로컬 작동 확인 (PM2 + wrangler pages dev, 전 라우트 200 / 404 정상)
+- **바인딩**: KV `4b7e7d15ad334a01a7c162043a51bec2` (회원·예약·콘텐츠·조회수) / R2 `thegooddental-media` (사진)
+- **환경변수(Secrets, 설정완료)**: `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `SESSION_SECRET` · (미설정) `RESEND_API_KEY`, `NOTIFICATION_EMAIL`(예약 이메일 알림용)
+- **상태**: ✅ 실배포 완료 — KV 작동 검증(회원가입/예약 ok), 관리자 로그인 검증, 전 라우트 200
+- **재배포**: `npm run build && npx wrangler pages deploy dist --project-name thegooddental`
 - **로컬 실행**: `npm run build && pm2 start ecosystem.config.cjs` → http://localhost:3000
 
 ## 미구현 / 다음 단계 (2차)
