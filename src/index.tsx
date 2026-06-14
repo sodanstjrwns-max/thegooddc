@@ -441,7 +441,7 @@ app.post('/api/reservation', async (c) => {
           method: 'POST',
           headers: { Authorization: `Bearer ${c.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: 'noreply@thegooddental.kr',
+            from: 'noreply@thegooddc.kr',
             to: c.env.NOTIFICATION_EMAIL,
             subject: `[더착한치과] 새 예약 신청 - ${data.name}`,
             text: `이름: ${data.name}\n연락처: ${data.phone}\n진료: ${data.treatment || '-'}\n날짜: ${data.date || '-'}\n내용: ${data.message || '-'}`,

@@ -94,7 +94,7 @@ export const CLINIC = {
     gtm: 'GTM-XXXXXXX',
   },
 
-  domain: 'thegooddental.kr',
+  domain: 'thegooddc.kr',
 } as const
 
 export type Clinic = typeof CLINIC
