@@ -1,7 +1,7 @@
 import type { FC, PropsWithChildren } from 'hono/jsx'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
-import { canonical, dentistSchema, organizationSchema } from '../lib/seo'
+import { canonical, dentistSchema, organizationSchema, medicalClinicSchema, webSiteSchema } from '../lib/seo'
 
 interface LayoutProps {
   title: string
@@ -20,7 +20,9 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
   const url = canonical(path)
   const img = ogImage ? canonical(ogImage) : canonical('/images/og-default.jpg')
-  const allSchemas = [dentistSchema(), organizationSchema(), ...schemas]
+  // 전역 기반 스키마: WebSite(SearchAction) + MedicalClinic(NAP·@id 정의) + Dentist + Organization
+  // medicalClinicSchema가 #medicalclinic @id를 정의 → 각 페이지 procedure/review의 provider 참조 해소
+  const allSchemas = [webSiteSchema(), medicalClinicSchema(), dentistSchema(), organizationSchema(), ...schemas]
 
   return (
     <html lang="ko">

@@ -735,6 +735,8 @@ section{position:relative}
 .detail-body p{color:var(--ink-3);line-height:1.8;margin-bottom:14px}
 .aeo-answer{background:var(--bg-2);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px 28px;margin-bottom:28px}
 .aeo-answer p{margin:0;color:var(--ink-2);font-weight:400}
+.aeo-tldr{display:inline-block;color:var(--accent);font-weight:700;margin-right:6px}
+.aeo-qa-block h2{scroll-margin-top:100px}
 
 .sub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:8px 0 20px}
 .sub-card{background:var(--bg-2);border-radius:var(--radius);padding:26px;transition:transform .3s,background .3s}

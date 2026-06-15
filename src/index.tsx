@@ -3,7 +3,7 @@ import { cors } from 'hono/cors'
 import { CLINIC } from './data/clinic'
 import { TREATMENTS } from './data/treatments'
 import { DOCTORS } from './data/doctors'
-import { TERMS } from './data/encyclopedia'
+import { TERMS, DETAILED_TERMS } from './data/encyclopedia'
 import { getAreaCombinations, AREAS } from './data/areas'
 import { searchRegions } from './data/regions'
 import {
@@ -491,79 +491,297 @@ app.post('/api/admin/indexnow', async (c) => {
 })
 
 app.get('/robots.txt', (c) => {
-  const body = `User-agent: *\nAllow: /\n\n# AI crawlers welcome\nUser-agent: GPTBot\nAllow: /\nUser-agent: ClaudeBot\nAllow: /\nUser-agent: PerplexityBot\nAllow: /\nUser-agent: Google-Extended\nAllow: /\n\nSitemap: https://${CLINIC.domain}/sitemap.xml`
+  const d = CLINIC.domain
+  const body = `User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth/mypage
+Disallow: /api/
+Disallow: /seo-health
+
+# AI crawlers welcome (AEO)
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Bingbot
+Allow: /
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://${d}/sitemap.xml
+Sitemap: https://${d}/sitemap-encyclopedia.xml`
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 
+// 🚀 Sitemap Index — 검색엔진이 분할된 사이트맵을 한번에 발견
 app.get('/sitemap.xml', (c) => {
   const base = `https://${CLINIC.domain}`
   const now = new Date().toISOString().slice(0, 10)
-  const urls: { loc: string; pri: string }[] = [
+  const maps = ['sitemap-main.xml', 'sitemap-treatments.xml', 'sitemap-content.xml', 'sitemap-encyclopedia.xml', 'sitemap-areas.xml']
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${maps
+    .map((m) => `  <sitemap><loc>${base}/${m}</loc><lastmod>${now}</lastmod></sitemap>`)
+    .join('\n')}\n</sitemapindex>`
+  return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+})
+
+function urlsetXml(base: string, urls: { loc: string; pri: string; lastmod?: string }[]) {
+  const now = new Date().toISOString().slice(0, 10)
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+    .map((u) => `  <url><loc>${base}${u.loc}</loc><lastmod>${u.lastmod || now}</lastmod><priority>${u.pri}</priority></url>`)
+    .join('\n')}\n</urlset>`
+}
+
+// 메인 페이지군
+app.get('/sitemap-main.xml', (c) => {
+  const base = `https://${CLINIC.domain}`
+  const urls = [
     { loc: '/', pri: '1.0' },
     { loc: '/mission', pri: '0.8' },
     { loc: '/treatments', pri: '0.9' },
     { loc: '/doctors', pri: '0.8' },
     { loc: '/cases', pri: '0.7' },
     { loc: '/column', pri: '0.7' },
-    { loc: '/encyclopedia', pri: '0.6' },
+    { loc: '/encyclopedia', pri: '0.7' },
     { loc: '/directions', pri: '0.7' },
-    { loc: '/faq', pri: '0.7' },
+    { loc: '/faq', pri: '0.8' },
     { loc: '/pricing', pri: '0.6' },
     { loc: '/notice', pri: '0.5' },
     { loc: '/reservation', pri: '0.8' },
   ]
-  TREATMENTS.forEach((t) => urls.push({ loc: `/treatments/${t.slug}`, pri: t.category === 'core' ? '0.9' : '0.7' }))
-  DOCTORS.forEach((d) => urls.push({ loc: `/doctors/${d.slug}`, pri: '0.8' }))
-  getAreaCombinations().forEach((combo) => urls.push({ loc: combo.url, pri: '0.6' }))
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
-    .map((u) => `  <url><loc>${base}${u.loc}</loc><lastmod>${now}</lastmod><priority>${u.pri}</priority></url>`)
-    .join('\n')}\n</urlset>`
-  return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+  return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
 })
 
+// 진료 + 의료진
+app.get('/sitemap-treatments.xml', (c) => {
+  const base = `https://${CLINIC.domain}`
+  const urls: { loc: string; pri: string }[] = []
+  TREATMENTS.forEach((t) => urls.push({ loc: `/treatments/${t.slug}`, pri: t.category === 'core' ? '0.9' : '0.7' }))
+  DOCTORS.forEach((d) => urls.push({ loc: `/doctors/${d.slug}`, pri: '0.8' }))
+  return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+})
+
+// 칼럼 + 공지 (KV 동적 콘텐츠)
+app.get('/sitemap-content.xml', async (c) => {
+  const base = `https://${CLINIC.domain}`
+  const urls: { loc: string; pri: string; lastmod?: string }[] = []
+  try {
+    const columns = await listColumns(c.env)
+    columns.forEach((col: any) => {
+      if (col.published === false) return
+      urls.push({
+        loc: `/column/${col.slug}`,
+        pri: '0.7',
+        lastmod: (col.updatedAt || col.createdAt || '').slice(0, 10) || undefined,
+      })
+    })
+  } catch {}
+  try {
+    const notices = await listNotices(c.env)
+    notices.forEach((n: any) => {
+      if (n.id) urls.push({ loc: `/notice`, pri: '0.5', lastmod: (n.createdAt || '').slice(0, 10) || undefined })
+    })
+  } catch {}
+  return c.text(urlsetXml(base, urls.length ? urls : [{ loc: '/column', pri: '0.7' }]), 200, {
+    'Content-Type': 'application/xml; charset=utf-8',
+  })
+})
+
+// 백과사전 — 상세 200개는 우선순위 높임
 app.get('/sitemap-encyclopedia.xml', (c) => {
   const base = `https://${CLINIC.domain}`
-  const now = new Date().toISOString().slice(0, 10)
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${TERMS.map(
-    (t) => `  <url><loc>${base}/encyclopedia/${t.slug}</loc><lastmod>${now}</lastmod><priority>0.4</priority></url>`
-  ).join('\n')}\n</urlset>`
-  return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+  const detailSlugs = new Set(DETAILED_TERMS.map((t) => t.slug))
+  const urls = TERMS.map((t) => ({
+    loc: `/encyclopedia/${t.slug}`,
+    pri: detailSlugs.has(t.slug) ? '0.6' : '0.4',
+  }))
+  return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+})
+
+// 지역×진료 조합
+app.get('/sitemap-areas.xml', (c) => {
+  const base = `https://${CLINIC.domain}`
+  const urls = getAreaCombinations().map((combo) => ({ loc: combo.url, pri: '0.6' }))
+  return c.text(urlsetXml(base, urls.length ? urls : [{ loc: '/directions', pri: '0.7' }]), 200, {
+    'Content-Type': 'application/xml; charset=utf-8',
+  })
+})
+
+// ===== SEO·AEO 자동 진단 엔드포인트 =====
+// 정적 데이터 기반으로 sitemap 누락·메타·스키마·AEO 자산을 점검해 JSON 리포트 반환
+app.get('/seo-health', async (c) => {
+  const base = `https://${CLINIC.domain}`
+  const checks: { name: string; ok: boolean; detail: string; weight?: 'critical' | 'recommended' }[] = []
+  const add = (name: string, ok: boolean, detail: string, weight: 'critical' | 'recommended' = 'critical') => checks.push({ name, ok, detail, weight })
+
+  // 1) 콘텐츠 수량 점검
+  add('진료 페이지', TREATMENTS.length > 0, `${TREATMENTS.length}개 진료 (핵심 ${TREATMENTS.filter(t => t.category === 'core').length})`)
+  add('의료진 페이지', DOCTORS.length > 0, `${DOCTORS.length}명`)
+  add('백과사전 전체', TERMS.length > 0, `${TERMS.length}개 용어`)
+  add('백과사전 상세(본문)', DETAILED_TERMS.length >= 200, `${DETAILED_TERMS.length}개 상세 (목표 200)`)
+  add('지역×진료 조합', getAreaCombinations().length > 0, `${getAreaCombinations().length}개 (지역 ${AREAS.length})`)
+
+  // 2) 진료 데이터 품질 (AEO 핵심: qa/summary/faq 누락 탐지)
+  const noQa = TREATMENTS.filter(t => !t.qa || t.qa.length === 0).map(t => t.slug)
+  const noSummary = TREATMENTS.filter(t => !t.summary || t.summary.length < 50).map(t => t.slug)
+  const noFaq = TREATMENTS.filter(t => !t.faq || t.faq.length === 0).map(t => t.slug)
+  add('진료 직답(qa) 보유', noQa.length === 0, noQa.length ? `누락: ${noQa.join(', ')}` : '전체 보유')
+  add('진료 메타 description(summary)', noSummary.length === 0, noSummary.length ? `부족: ${noSummary.join(', ')}` : '전체 50자+ 보유')
+  add('진료 FAQ 보유', noFaq.length === 0, noFaq.length ? `누락: ${noFaq.join(', ')}` : '전체 보유')
+
+  // 3) 백과사전 상세 품질 점검
+  const detailNoBody = DETAILED_TERMS.filter((t: any) => !t.body || t.body.length === 0).map((t: any) => t.slug)
+  const detailNoFaq = DETAILED_TERMS.filter((t: any) => !t.qa || t.qa.length === 0).length
+  add('백과사전 상세 본문', detailNoBody.length === 0, detailNoBody.length ? `본문 누락 ${detailNoBody.length}개` : '전체 본문 보유')
+  // FAQ는 향후 보강 권장 항목 — 점수에는 미반영, 현황만 표기
+  add('백과사전 상세 FAQ(권장·향후보강)', detailNoFaq === 0, `FAQ 보유 ${DETAILED_TERMS.length - detailNoFaq}/${DETAILED_TERMS.length}`, 'recommended')
+
+  // 4) 핵심 SEO·AEO 자산 라이브 점검 (self-fetch)
+  const assets = [
+    { path: '/robots.txt', type: 'text/plain', must: 'Sitemap:' },
+    { path: '/sitemap.xml', type: 'xml', must: 'sitemapindex' },
+    { path: '/sitemap-main.xml', type: 'xml', must: '<urlset' },
+    { path: '/sitemap-treatments.xml', type: 'xml', must: '<urlset' },
+    { path: '/sitemap-content.xml', type: 'xml', must: '<urlset' },
+    { path: '/sitemap-encyclopedia.xml', type: 'xml', must: '<urlset' },
+    { path: '/sitemap-areas.xml', type: 'xml', must: '<urlset' },
+    { path: '/llms.txt', type: 'text/plain', must: '병원 정보' },
+    { path: '/llms-full.txt', type: 'text/plain', must: '병원' },
+  ]
+  const origin = new URL(c.req.url).origin
+  for (const a of assets) {
+    try {
+      const r = await fetch(`${origin}${a.path}`)
+      const txt = await r.text()
+      const ok = r.ok && txt.includes(a.must)
+      add(`자산 ${a.path}`, ok, ok ? `HTTP ${r.status}, ${txt.length.toLocaleString()}자` : `HTTP ${r.status}, '${a.must}' 누락`)
+    } catch (e: any) {
+      add(`자산 ${a.path}`, false, `fetch 실패: ${e?.message || e}`)
+    }
+  }
+
+  // 5) 홈페이지 스키마·메타 점검
+  try {
+    const r = await fetch(`${origin}/`)
+    const html = await r.text()
+    add('홈 canonical', html.includes('rel="canonical"'), html.includes('rel="canonical"') ? '있음' : '누락')
+    add('홈 OG 태그', html.includes('property="og:title"'), html.includes('property="og:image"') ? 'OG+이미지 있음' : '부분')
+    add('홈 JSON-LD WebSite', html.includes('"@type":"WebSite"') || html.includes('"WebSite"'), 'SearchAction')
+    add('홈 JSON-LD MedicalClinic', html.includes('MedicalClinic'), '#medicalclinic @id')
+    add('홈 JSON-LD Dentist', html.includes('"Dentist"'), '')
+  } catch (e: any) {
+    add('홈 점검', false, `fetch 실패: ${e?.message || e}`)
+  }
+
+  // 점수는 critical 항목 기준, 권장 항목은 별도 표기
+  const critical = checks.filter(c => c.weight !== 'recommended')
+  const passed = critical.filter(c => c.ok).length
+  const total = critical.length
+  const score = Math.round((passed / total) * 100)
+  const recommended = checks.filter(c => c.weight === 'recommended')
+  const recPassed = recommended.filter(c => c.ok).length
+
+  // ?format=html 이면 사람이 보기 좋은 표, 기본은 JSON
+  if (c.req.query('format') === 'html') {
+    const icon = (ck: typeof checks[number]) => ck.ok ? '✅' : (ck.weight === 'recommended' ? '⚠️' : '❌')
+    const rows = checks.map(ck => `<tr class="${ck.ok ? 'ok' : (ck.weight === 'recommended' ? 'warn' : 'ng')}"><td>${icon(ck)}</td><td>${ck.name}</td><td>${ck.detail}</td></tr>`).join('')
+    return c.html(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>SEO Health · ${CLINIC.name}</title><meta name="robots" content="noindex"><style>body{font-family:system-ui,sans-serif;max-width:860px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:22px}.score{font-size:48px;font-weight:800;color:${score >= 90 ? '#1a7f37' : score >= 70 ? '#bf8700' : '#cf222e'}}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px}td{padding:8px 10px;border-bottom:1px solid #eee}tr.ng{background:#fff5f5}tr.warn{background:#fffbe6}.muted{color:#888;font-size:13px}</style></head><body><h1>SEO·AEO 슈퍼머신 자가진단</h1><div class="score">${score}점</div><p class="muted">필수 ${passed}/${total} 통과 · 권장 ${recPassed}/${recommended.length} · ${base} · ${new Date().toISOString().slice(0,19)}Z</p><table><thead><tr><td></td><td>항목</td><td>상세</td></tr></thead><tbody>${rows}</tbody></table></body></html>`)
+  }
+
+  return c.json({
+    site: CLINIC.name,
+    base,
+    score,
+    passed,
+    total,
+    recommended: `${recPassed}/${recommended.length}`,
+    checkedAt: new Date().toISOString(),
+    checks,
+  })
 })
 
 app.get('/llms.txt', (c) => {
+  const d = CLINIC.domain
   const body = `# ${CLINIC.name} (${CLINIC.nameEn})
 
 > ${CLINIC.philosophy.mission} 부산 강서구 명지의 통합치의학과 전문의 치과입니다.
 
+이 파일은 AI 검색·답변 엔진(ChatGPT, Perplexity, Claude, Gemini 등)이 ${CLINIC.name}의 핵심 정보를 정확히 인용하도록 돕기 위해 제공됩니다.
+
 ## 병원 정보
+- 정식명칭: ${CLINIC.name} (${CLINIC.nameEn})
 - 위치: ${CLINIC.address}
 - 전화: ${CLINIC.phone}
 - 진료시간: ${CLINIC.hoursNote}
-- 대표원장: ${CLINIC.director} (치의학박사, 통합치의학과 전문의, 24년 임상경험)
+- 대표원장: ${CLINIC.director} ${CLINIC.directorTitle} (치의학박사, 통합치의학과 전문의)
+- 진료지역: 부산 강서구 명지, 부산 강서구, 김해, 창원 생활권
+- 공식 웹사이트: https://${d}
 
 ## 핵심 진료
-${TREATMENTS.filter((t) => t.category === 'core').map((t) => `- ${t.name}: ${t.tagline} → https://${CLINIC.domain}/treatments/${t.slug}`).join('\n')}
+${TREATMENTS.filter((t) => t.category === 'core').map((t) => `- ${t.name}: ${t.tagline} → https://${d}/treatments/${t.slug}`).join('\n')}
 
-## 전체 진료
-${TREATMENTS.filter((t) => t.category === 'general').map((t) => `- ${t.name} → https://${CLINIC.domain}/treatments/${t.slug}`).join('\n')}
+## 일반 진료
+${TREATMENTS.filter((t) => t.category !== 'core').map((t) => `- ${t.name} → https://${d}/treatments/${t.slug}`).join('\n')}
+
+## 의료진
+${DOCTORS.map((doc: any) => `- ${doc.name} ${doc.title || ''} (${doc.license || ''}) → https://${d}/doctors/${doc.slug}`).join('\n')}
+
+## 치과 용어 백과사전 (상세 ${DETAILED_TERMS.length}개)
+환자가 자주 검색하는 치과 용어를 각 약 1,000자로 정확하게 설명합니다.
+${DETAILED_TERMS.map((t) => `- ${t.term}: ${t.def} → https://${d}/encyclopedia/${t.slug}`).join('\n')}
 
 ## 주요 페이지
-- 병원소개: https://${CLINIC.domain}/mission
-- 의료진: https://${CLINIC.domain}/doctors
-- 비포/애프터: https://${CLINIC.domain}/cases
-- 자주 묻는 질문: https://${CLINIC.domain}/faq
-- 진료 예약: https://${CLINIC.domain}/reservation
+- 병원소개: https://${d}/mission
+- 의료진: https://${d}/doctors
+- 비포/애프터: https://${d}/cases
+- 자주 묻는 질문: https://${d}/faq
+- 진료비 안내: https://${d}/pricing
+- 오시는 길: https://${d}/directions
+- 진료 예약: https://${d}/reservation
+- 전체 상세 정보: https://${d}/llms-full.txt
+
+## 안내
+홈페이지의 의료 정보는 일반적인 안내이며, 정확한 진단과 치료는 반드시 내원 상담을 통해 이루어집니다. 치료 결과에는 개인차가 있습니다.
 `
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 
 app.get('/llms-full.txt', (c) => {
-  let body = `# ${CLINIC.name} 전체 정보\n\n${CLINIC.philosophy.story}\n\n`
+  const d = CLINIC.domain
+  let body = `# ${CLINIC.name} 전체 정보 (AI 인용용 풀텍스트)\n\n`
+  body += `${CLINIC.philosophy?.story || ''}\n\n`
+  body += `## 병원 개요\n- 명칭: ${CLINIC.name} (${CLINIC.nameEn})\n- 주소: ${CLINIC.address}\n- 전화: ${CLINIC.phone}\n- 진료시간: ${CLINIC.hoursNote}\n- 대표원장: ${CLINIC.director} ${CLINIC.directorTitle}\n\n`
+
+  body += `# 진료 안내\n\n`
   TREATMENTS.forEach((t) => {
-    body += `## ${t.name}\n${t.tagline}\n${t.summary}\n`
-    t.qa.forEach((qa) => { body += `Q: ${qa.question}\nA: ${qa.answer}\n` })
+    body += `## ${t.name}\n${t.tagline || ''}\n${t.summary || ''}\nURL: https://${d}/treatments/${t.slug}\n`
+    ;(t.qa || []).forEach((qa: any) => { body += `Q: ${qa.question}\nA: ${qa.answer}\n` })
     body += '\n'
   })
+
+  body += `# 치과 용어 백과사전 (상세 ${DETAILED_TERMS.length}개)\n\n`
+  DETAILED_TERMS.forEach((t) => {
+    body += `## ${t.term}${t.reading ? ` (${t.reading})` : ''}\n`
+    body += `분류: ${t.category}\n`
+    body += `정의: ${t.def}\n`
+    if (t.body && t.body.length) body += `${t.body.join('\n')}\n`
+    if (t.qa && t.qa.length) t.qa.forEach((qa: any) => { body += `Q: ${qa.q}\nA: ${qa.a}\n` })
+    body += `URL: https://${d}/encyclopedia/${t.slug}\n\n`
+  })
+
+  body += `\n---\n홈페이지의 의료 정보는 일반적인 안내이며, 정확한 진단과 치료는 반드시 내원 상담을 통해 이루어집니다. 치료 결과에는 개인차가 있습니다.\n`
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 

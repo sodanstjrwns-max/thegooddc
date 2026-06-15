@@ -5,13 +5,35 @@ import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS, GENERAL_TREATMENTS, getTreatment } from '../data/treatments'
 import { getDoctor } from '../data/doctors'
 import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
-import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema } from '../lib/seo'
+import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedureRichSchema, howToSchema, qaPageSchema, imageObjectSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
 
 const CORE_IMG: Record<string, string> = {
   implant: '/images/core-implant.webp',
   'clear-aligner': '/images/core-aligner.webp',
   minish: '/images/core-minish.webp',
+}
+
+// 진료별 임상 메타데이터 (procedureRichSchema 강화용 — AI가 깊게 인용)
+const PROC_META: Record<string, { bodyLocation?: string; preparation?: string; followup?: string; howPerformed?: string }> = {
+  implant: {
+    bodyLocation: '상·하악 치조골',
+    preparation: '3D CT 촬영과 구강 스캔으로 골량·신경 위치를 분석하고, 디지털 가이드를 제작합니다.',
+    followup: '식립 후 정기 검진으로 골유착 상태를 확인하며, 보철 장착 후에도 주기적 관리를 권장합니다.',
+    howPerformed: '디지털 가이드를 이용해 계획된 위치에 임플란트 픽스처를 식립하고, 골유착 후 지대주와 보철을 연결합니다.',
+  },
+  'clear-aligner': {
+    bodyLocation: '치열 전체',
+    preparation: '디지털 스캔으로 치아 배열을 분석하고, 시뮬레이션으로 이동 경로를 설계합니다.',
+    followup: '교정 종료 후 유지장치(리테이너)를 착용해 안정화하며 정기적으로 경과를 확인합니다.',
+    howPerformed: '단계별 투명 장치를 순차 교체하며 치아를 계획된 위치로 점진적으로 이동시킵니다.',
+  },
+  minish: {
+    bodyLocation: '전치부·구치부 치아 표면',
+    preparation: '심미 분석과 모의 제작(목업)으로 형태와 색조를 사전에 디자인합니다.',
+    followup: '부착 후 교합을 점검하고, 정기 검진으로 변연 적합도를 관리합니다.',
+    howPerformed: '최소 삭제 후 정밀 제작된 세라믹을 치아 표면에 접착해 형태와 색을 개선합니다.',
+  },
 }
 
 // ===== 진료 목록 페이지 =====
@@ -74,6 +96,35 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
   const doctor = getDoctor(t.doctorSlug)
   const related = t.relatedTreatments.map((s) => getTreatment(s)).filter(Boolean)
   const fable = TREATMENT_FABLES[t.slug]
+  const meta = PROC_META[t.slug]
+  const heroImg = CORE_IMG[t.slug]
+
+  // AEO: 진료 과정(섹션)을 HowTo로 구조화 — AI가 "어떻게 진행되나요?"에 단계 인용
+  const howToSteps = t.sections.slice(0, 6).map((s) => ({ name: s.heading, text: s.body.slice(0, 280) }))
+
+  const richSchemas: object[] = [
+    breadcrumbSchema([
+      { name: '홈', path: '/' },
+      { name: '진료안내', path: '/treatments' },
+      { name: t.shortName, path: `/treatments/${t.slug}` },
+    ]),
+    // 강화 MedicalProcedure(임상 메타 포함) + 기존 procedureSchema 병행
+    procedureRichSchema({ name: t.name, slug: t.slug, summary: t.summary, ...meta }),
+    faqSchema(t.faq),
+    speakableSchema(),
+  ]
+  // 대표 질문 1개를 QAPage로 강조 (직답 인용 가능성↑)
+  if (t.qa.length > 0) {
+    richSchemas.push(qaPageSchema({ question: t.qa[0].question, answer: t.qa[0].answer }))
+  }
+  // 과정형 섹션이 2개 이상이면 HowTo 추가
+  if (howToSteps.length >= 2) {
+    richSchemas.push(howToSchema({ name: `${t.shortName} 진료 과정`, description: t.summary, steps: howToSteps }))
+  }
+  // 대표 이미지가 있으면 ImageObject
+  if (heroImg) {
+    richSchemas.push(imageObjectSchema({ url: heroImg, caption: `${CLINIC.name} ${t.name}` }))
+  }
 
   return (
     <Layout
@@ -81,16 +132,8 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
       description={t.summary}
       path={`/treatments/${t.slug}`}
       keywords={t.keywords}
-      schemas={[
-        breadcrumbSchema([
-          { name: '홈', path: '/' },
-          { name: '진료안내', path: '/treatments' },
-          { name: t.shortName, path: `/treatments/${t.slug}` },
-        ]),
-        procedureSchema(t),
-        faqSchema(t.faq),
-        speakableSchema(),
-      ]}
+      ogImage={heroImg}
+      schemas={richSchemas}
     >
       <section class="page-hero has-img">
         <div class="bg" data-parallax="0.12" style={`background-image:url('${CORE_IMG[t.slug] || '/images/hero.webp'}')`}></div>
@@ -147,13 +190,13 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
             </aside>
 
             <div class="article-body" style="margin:0">
-              {/* AEO: 질문형 H2 + 직답 */}
+              {/* AEO: 질문형 H2 + 직답 (AI 답변 엔진이 그대로 인용하기 좋은 형태) */}
               {t.qa.length > 0 && (
-                <div id="qa">
+                <div id="qa" class="aeo-qa-block">
                   {t.qa.map((qa) => (
                     <>
                       <h2>{qa.question}</h2>
-                      <p class="aeo-answer">{qa.answer}</p>
+                      <p class="aeo-answer"><strong class="aeo-tldr">한줄답:</strong> {qa.answer}</p>
                     </>
                   ))}
                 </div>

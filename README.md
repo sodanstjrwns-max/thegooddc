@@ -24,7 +24,7 @@
 - **관리자 콘텐츠 CRUD**: 공지사항·원장 칼럼·비포/애프터 케이스 작성/수정/삭제 (KV 저장, 코드 시드 fallback). 칼럼은 본문 단락 자동 파싱·자동 slug 생성. 케이스는 사진 없이 텍스트 메타데이터(진료분야·의료진·연령·성별·지역·기간·설명)만 관리(사진은 의료법 게이팅으로 추후). 모든 변경이 공개 페이지에 즉시 반영
 - **예약**: 폼 → KV 저장 + Resend 이메일 알림(설정 시)
 - **안내 페이지**: 미션, 오시는 길(지도/교통), 비용 안내, 통합 FAQ, 공지사항
-- **SEO/AEO**: 전 페이지 메타·canonical·OG, JSON-LD(Dentist/LocalBusiness/Person/MedicalProcedure/FAQPage/BreadcrumbList/Article/City/Speakable), sitemap.xml + sitemap-encyclopedia.xml, robots.txt(AI 크롤러 허용), llms.txt / llms-full.txt, IndexNow(키 검증 파일 + `POST /api/admin/indexnow` 핑), `_headers`(캐시·보안 헤더) / `_redirects`
+- **🚀 SEO·AEO 슈퍼머신**: 전 페이지 메타·canonical·OG, **JSON-LD 22종**(Dentist/MedicalOrganization/Person/MedicalProcedure(+임상 메타 강화판)/FAQPage/QAPage/HowTo/BreadcrumbList/Article/City/Speakable/**WebSite+SearchAction**/**MedicalClinic(NAP·@id)**/AggregateRating/Review/ImageObject/DefinedTerm 등) — `medicalClinicSchema`·`webSiteSchema`를 Layout 전역에 주입해 모든 페이지가 병원 NAP·검색박스 구조화. **sitemap-index 패턴**(`/sitemap.xml` → main·treatments·content·encyclopedia·areas 5분할, 칼럼/공지 KV 동적 포함), robots.txt(AI 크롤러 10종 허용 + admin/api/seo-health 차단), **llms.txt(2.2만자: 백과사전 200·의료진·진료 전체) / llms-full.txt(14만자: 상세 용어 본문 임베드)**, IndexNow, **`.aeo-answer`·`.aeo-tldr` 직답 블록**(진료·지역 페이지), **`/seo-health` 자가진단 엔드포인트**(필수 23항목 자동 점검, `?format=html` 리포트) — 현재 **100점**
 - **404**: 커스텀 페이지
 
 ## 기능 진입 URI
@@ -44,7 +44,9 @@
 | `/admin/notices` `/admin/columns` `/admin/cases` | 관리자 공지·칼럼·케이스 CRUD (칼럼: 에디터 툴바+드래그앤드롭 / 케이스: 사진 4장+지역 자동완성) |
 | `/admin/members` `/admin/reservations` | 관리자 회원 목록 · 예약 관리 |
 | `/files/*` | R2 파일 서빙 (`cases-after/*`는 로그인 필요 — 의료법 게이팅) |
-| `/sitemap.xml` `/robots.txt` `/llms.txt` | SEO |
+| `/sitemap.xml`(인덱스) `/sitemap-{main,treatments,content,encyclopedia,areas}.xml` | 분할 사이트맵 |
+| `/robots.txt` `/llms.txt` `/llms-full.txt` | SEO·AEO 자산 |
+| `/seo-health` (`?format=html`) | SEO·AEO 자가진단 (noindex, 필수 23항목 100점) |
 | **API (공개)** | `POST /api/auth/register` `POST /api/auth/login` `GET /api/auth/logout` `POST /api/admin/login` `POST /api/reservation` |
 | **API (admin 가드)** | `POST /api/admin/notices/{create,update,delete}` · `POST /api/admin/columns/{create,update,delete}` · `POST /api/admin/cases/{create,update,delete}` · `POST /api/admin/upload`(R2 이미지, 8MB) · `POST /api/admin/indexnow`(검색엔진 핑) |
 | **API (공개 보조)** | `GET /api/regions?q=` 지역 자동완성 |
@@ -126,6 +128,7 @@
 - **에디토리얼 리듬**: 섹션 인덱스 넘버(01–06)·헤어라인 디바이더·대문자 키커·스크롤 마스킹 리빌
 
 ## 최종 수정일
+2026-06-15 (🚀 SEO·AEO 슈퍼머신: JSON-LD 22종·전역 WebSite/MedicalClinic 주입·sitemap-index 5분할·llms.txt 2.2만자/llms-full 14만자·진료/지역 직답 블록·QAPage/HowTo/procedureRich·`/seo-health` 자가진단 100점)
 2026-06-14 (실배포 검증 완료: 이탤릭 0·"무통" 0·OG/파비콘 라이브·전 라우트 200·회원가입/예약/관리자 API 검증 / 자동배포 가이드 A·B 완비 / thegooddc.kr 도메인 CF세팅 완료·네임서버 대기)
 2026-06-15 (백과사전 상세 용어 200개 완성 — 각 약 1000자 본문 + FAQ + DefinedTerm/FAQPage 스키마, thin-content 대체로 AEO 강화)
 2026-06-13 (1차 SEO·기능 대확장: 백과사전 508·FAQ 240·인링크 엔진·R2 사진·지역 자동완성·블로그 에디터·회원/예약 관리·조회수)
