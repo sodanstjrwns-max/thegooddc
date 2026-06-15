@@ -4,7 +4,7 @@ import { CLINIC } from './data/clinic'
 import { TREATMENTS } from './data/treatments'
 import { DOCTORS } from './data/doctors'
 import { TERMS, DETAILED_TERMS } from './data/encyclopedia'
-import { getAreaCombinations, AREAS } from './data/areas'
+import { getAreaCombinations, getAreaHubs, getArea, AREAS } from './data/areas'
 import { searchRegions } from './data/regions'
 import {
   signSession, verifySession, hashPassword,
@@ -17,7 +17,7 @@ import { TreatmentsListPage, TreatmentDetailPage } from './routes/treatments'
 import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
-import { AreaPage } from './routes/area'
+import { AreaPage, AreaHubPage } from './routes/area'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice,
@@ -93,6 +93,13 @@ app.get('/area/:combo', (c) => {
   }
   if (!matched) return c.notFound()
   return c.html(<AreaPage areaSlug={matched.area} treatmentSlug={matched.treatment} />)
+})
+
+// 지역 허브(랜딩) 페이지 — 한 지역의 모든 진료를 묶는 권위 페이지
+app.get('/clinic/:area', (c) => {
+  const area = c.req.param('area')
+  if (!getArea(area)) return c.notFound()
+  return c.html(<AreaHubPage areaSlug={area} />)
 })
 
 // Auth pages
@@ -610,10 +617,13 @@ app.get('/sitemap-encyclopedia.xml', (c) => {
   return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
 })
 
-// 지역×진료 조합
+// 지역 허브 + 지역×진료 조합
 app.get('/sitemap-areas.xml', (c) => {
   const base = `https://${CLINIC.domain}`
-  const urls = getAreaCombinations().map((combo) => ({ loc: combo.url, pri: '0.6' }))
+  const urls: { loc: string; pri: string }[] = []
+  // 지역 허브(랜딩)는 권위 페이지 — 우선순위 높임
+  getAreaHubs().forEach((h) => urls.push({ loc: h.url, pri: '0.7' }))
+  getAreaCombinations().forEach((combo) => urls.push({ loc: combo.url, pri: '0.6' }))
   return c.text(urlsetXml(base, urls.length ? urls : [{ loc: '/directions', pri: '0.7' }]), 200, {
     'Content-Type': 'application/xml; charset=utf-8',
   })
@@ -632,6 +642,9 @@ app.get('/seo-health', async (c) => {
   add('백과사전 전체', TERMS.length > 0, `${TERMS.length}개 용어`)
   add('백과사전 상세(본문)', DETAILED_TERMS.length >= 200, `${DETAILED_TERMS.length}개 상세 (목표 200)`)
   add('지역×진료 조합', getAreaCombinations().length > 0, `${getAreaCombinations().length}개 (지역 ${AREAS.length})`)
+  add('지역 허브 페이지', getAreaHubs().length >= 10, `${getAreaHubs().length}개 (/clinic/:area)`)
+  const areaNoIntro = AREAS.filter((a) => !a.intro || a.intro.length < 80).map((a) => a.slug)
+  add('지역 고유 콘텐츠(intro)', areaNoIntro.length <= AREAS.length * 0.3, areaNoIntro.length ? `intro 부족 ${areaNoIntro.length}개` : '전 지역 고유 본문 보유')
 
   // 2) 진료 데이터 품질 (AEO 핵심: qa/summary/faq 누락 탐지)
   const noQa = TREATMENTS.filter(t => !t.qa || t.qa.length === 0).map(t => t.slug)
@@ -683,6 +696,18 @@ app.get('/seo-health', async (c) => {
     add('홈 JSON-LD Dentist', html.includes('"Dentist"'), '')
   } catch (e: any) {
     add('홈 점검', false, `fetch 실패: ${e?.message || e}`)
+  }
+
+  // 6) 지역 허브 페이지 스키마 점검 (대표 1개)
+  try {
+    const r = await fetch(`${origin}/clinic/myeongji`)
+    const html = await r.text()
+    add('지역허브 라이브', r.ok && html.includes('명지 치과'), `HTTP ${r.status}`)
+    add('지역허브 LocalBusiness', html.includes('localclinic'), '#localclinic @id')
+    add('지역허브 CollectionPage', html.includes('CollectionPage'), '진료 ItemList')
+    add('지역허브 GeoCircle 서비스반경', html.includes('GeoCircle'), '20km 반경')
+  } catch (e: any) {
+    add('지역허브 점검', false, `fetch 실패: ${e?.message || e}`)
   }
 
   // 점수는 critical 항목 기준, 권장 항목은 별도 표기
@@ -737,6 +762,13 @@ ${TREATMENTS.filter((t) => t.category !== 'core').map((t) => `- ${t.name} → ht
 
 ## 의료진
 ${DOCTORS.map((doc: any) => `- ${doc.name} ${doc.title || ''} (${doc.license || ''}) → https://${d}/doctors/${doc.slug}`).join('\n')}
+
+## 진료 가능 지역 (지역별 안내 페이지)
+${CLINIC.name}는 부산 강서구 명지에 위치하며 아래 지역에서 가까워 내원이 편리합니다. 각 지역별 안내 페이지를 제공합니다.
+${AREAS.map((a) => `- ${a.name} (${a.fullName}): ${a.distance || a.desc} → https://${d}/clinic/${a.slug}`).join('\n')}
+
+## 지역 × 진료 안내 (${getAreaCombinations().length}개)
+지역별로 임플란트·투명교정·미니쉬·치아교정 안내 페이지를 제공합니다. 예) https://${d}/area/myeongji-implant (명지 임플란트)
 
 ## 치과 용어 백과사전 (상세 ${DETAILED_TERMS.length}개)
 환자가 자주 검색하는 치과 용어를 각 약 1,000자로 정확하게 설명합니다.

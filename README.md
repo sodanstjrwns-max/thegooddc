@@ -18,7 +18,7 @@
 - **비포/애프터**: 슬라이더 비교, 애프터 사진 로그인 게이팅(의료법), 진료·원장·지역 양방향 인링크
 - **원장 칼럼**: SSR 칼럼 + Article/MedicalWebPage 스키마 + 관련 진료·의료진 인링크
 - **백과사전**: 393개 용어(이 중 **상세 200개**는 각 약 1000자 본문 + 직답형 정의 + FAQ + 관련 진료 인링크), 카테고리 필터, 진료 자동 인링크. 상세 용어는 `DefinedTerm`·`FAQPage` 스키마로 AI검색(AEO) 최적화, 목록에서 "상세" 배지 우선 노출
-- **지역 SEO**: 9개 지역(명지국제신도시 추가) × 4진료(치아교정 추가) = 36개 조합 페이지 (`/area/[지역]-[진료]`) — 원장님 답변 기반 실검색 지명 반영
+- **🏎️ 부가티급 지역 SEO**: **12개 지역**(사상·김해·진해 추가) 각각 **고유 콘텐츠**(랜드마크·교통·본원까지 거리/시간·생활권 특성·지역 FAQ·소개 본문) 보유 → thin-content 0. **지역 허브 랜딩 페이지** `/clinic/[지역]`(12개) — 한 지역의 모든 진료를 묶는 권위 페이지에 `LocalBusiness(#localclinic)`·`CollectionPage`·`GeoCircle(서비스반경 20km)`·`City+AdministrativeArea+Landmarks` 스키마. **지역×진료** `/area/[지역]-[진료]`(48개)는 지역 고유 소개·교통·진료시간 직답 + **인링크 메시**(같은 지역 다른 진료 ↔ 인근 지역 동일 진료). 합계 **60개 지역 페이지**(sitemap-areas), 푸터·llms.txt 지역 링크 노출
 - **인증**: 회원가입/로그인(HMAC 세션, HttpOnly Secure 쿠키 30일), 마이페이지
 - **관리자**: 비밀번호 로그인(24시간 세션), 대시보드(회원·예약·공지·칼럼·케이스 집계)
 - **관리자 콘텐츠 CRUD**: 공지사항·원장 칼럼·비포/애프터 케이스 작성/수정/삭제 (KV 저장, 코드 시드 fallback). 칼럼은 본문 단락 자동 파싱·자동 slug 생성. 케이스는 사진 없이 텍스트 메타데이터(진료분야·의료진·연령·성별·지역·기간·설명)만 관리(사진은 의료법 게이팅으로 추후). 모든 변경이 공개 페이지에 즉시 반영
@@ -37,7 +37,8 @@
 | `/cases` | 비포/애프터 (애프터는 로그인 필요) |
 | `/column` · `/column/:slug` | 원장 칼럼 |
 | `/encyclopedia` · `/encyclopedia/:slug` | 백과사전 (`?cat=` 필터) |
-| `/area/:지역-:진료` | 지역 SEO (예: `/area/myeongji-implant`) |
+| `/clinic/:지역` | 지역 허브 랜딩 (예: `/clinic/myeongji` 명지 치과, 12개) |
+| `/area/:지역-:진료` | 지역×진료 SEO (예: `/area/myeongji-implant`, 48개) |
 | `/directions` `/pricing` `/faq` `/notice` `/reservation` | 안내 |
 | `/auth/login` `/auth/register` `/auth/mypage` | 회원 |
 | `/admin` `/admin/dashboard` | 관리자 로그인·대시보드 |
@@ -128,6 +129,7 @@
 - **에디토리얼 리듬**: 섹션 인덱스 넘버(01–06)·헤어라인 디바이더·대문자 키커·스크롤 마스킹 리빌
 
 ## 최종 수정일
+2026-06-15 (🏎️ 부가티급 지역 SEO: 12개 지역 고유 콘텐츠·지역 허브 `/clinic/:area`(LocalBusiness/CollectionPage/GeoCircle/Landmarks)·지역×진료 48개 인링크 메시·총 60개 지역 페이지·푸터/llms 지역 링크 / seo-health 필수 29/29 100점)
 2026-06-15 (🚀 SEO·AEO 슈퍼머신: JSON-LD 22종·전역 WebSite/MedicalClinic 주입·sitemap-index 5분할·llms.txt 2.2만자/llms-full 14만자·진료/지역 직답 블록·QAPage/HowTo/procedureRich·`/seo-health` 자가진단 100점)
 2026-06-14 (실배포 검증 완료: 이탤릭 0·"무통" 0·OG/파비콘 라이브·전 라우트 200·회원가입/예약/관리자 API 검증 / 자동배포 가이드 A·B 완비 / thegooddc.kr 도메인 CF세팅 완료·네임서버 대기)
 2026-06-15 (백과사전 상세 용어 200개 완성 — 각 약 1000자 본문 + FAQ + DefinedTerm/FAQPage 스키마, thin-content 대체로 AEO 강화)

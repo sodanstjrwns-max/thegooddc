@@ -1,6 +1,7 @@
 import type { FC, PropsWithChildren } from 'hono/jsx'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
+import { AREAS } from '../data/areas'
 import { canonical, dentistSchema, organizationSchema, medicalClinicSchema, webSiteSchema } from '../lib/seo'
 
 interface LayoutProps {
@@ -211,6 +212,10 @@ const Footer: FC = () => (
           <a href="/pricing">비용 안내</a>
           <a href="/notice">공지사항</a>
           <a href="/encyclopedia">치과 백과사전</a>
+        </div>
+        <div class="footer-col">
+          <h5>지역 안내</h5>
+          {AREAS.slice(0, 8).map((a) => <a href={`/clinic/${a.slug}`}>{a.name} 치과</a>)}
         </div>
       </div>
       <div class="footer-bottom">

@@ -370,3 +370,111 @@ export function definedTermSchema(term: { slug: string; term: string; def: strin
     termCode: term.category,
   }
 }
+
+// ============================================================
+// 🏎️ 부가티급 지역 SEO 전용 스키마
+// ============================================================
+
+// City 강화판 — 지역명 + 행정 전체명 + (가능하면) 좌표·소속 지역
+export function cityRichSchema(area: {
+  name: string
+  fullName: string
+  region?: string
+  landmarks?: string[]
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'City',
+    name: area.fullName,
+    alternateName: area.name,
+    ...(area.region ? { containedInPlace: { '@type': 'AdministrativeArea', name: `${area.region}권` } } : {}),
+    ...(area.landmarks && area.landmarks.length
+      ? { containsPlace: area.landmarks.map((l) => ({ '@type': 'LandmarksOrHistoricalBuildings', name: l })) }
+      : {}),
+  }
+}
+
+// 지역 허브(랜딩) 전용 LocalBusiness — 해당 지역을 명시적으로 서비스 대상으로 선언
+// 본원 #medicalclinic을 areaServed=특정 지역으로 좁혀 "이 지역 치과" 신호를 강화
+export function areaLocalBusinessSchema(area: {
+  slug: string
+  name: string
+  fullName: string
+  desc: string
+  distance?: string
+  transit?: string
+}) {
+  const streetAddress = CLINIC.address.replace(/^부산\s*강서구\s*/, '').trim()
+  return {
+    '@context': 'https://schema.org',
+    '@type': ['MedicalClinic', 'Dentist'],
+    '@id': `${BASE}/clinic/${area.slug}/#localclinic`,
+    name: `${CLINIC.name} (${area.name} 인근 치과)`,
+    alternateName: CLINIC.nameEn,
+    description: `${area.fullName} 인근에서 임플란트·교정·심미치료를 제공하는 통합치의학과 치과. ${area.desc}.`,
+    url: `${BASE}/clinic/${area.slug}`,
+    mainEntityOfPage: { '@id': `${BASE}/#medicalclinic` },
+    telephone: CLINIC.phone,
+    priceRange: '₩₩',
+    image: `${BASE}/images/clinic-exterior.jpg`,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress,
+      addressLocality: CLINIC.addressLocality,
+      addressRegion: CLINIC.addressRegion,
+      postalCode: CLINIC.postalCode,
+      addressCountry: 'KR',
+    },
+    geo: { '@type': 'GeoCoordinates', latitude: CLINIC.geo.lat, longitude: CLINIC.geo.lng },
+    hasMap: `https://map.naver.com/v5/search/${encodeURIComponent(CLINIC.name)}`,
+    areaServed: {
+      '@type': 'City',
+      name: area.fullName,
+      alternateName: area.name,
+    },
+    openingHoursSpecification: (CLINIC.hours || [])
+      .filter((h: any) => !h.closed)
+      .map((h: any) => ({
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: dayToSchema(h.day),
+        opens: h.time.split(' - ')[0],
+        closes: h.time.split(' - ')[1],
+      })),
+  }
+}
+
+// GeoCircle 서비스 반경 — "본원 좌표 중심 N km" 서비스 영역 (로컬 검색 강화)
+export function serviceAreaSchema(radiusKm = 20) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    serviceType: '치과 진료 (임플란트·교정·심미치료)',
+    provider: { '@id': `${BASE}/#medicalclinic` },
+    areaServed: {
+      '@type': 'GeoCircle',
+      geoMidpoint: { '@type': 'GeoCoordinates', latitude: CLINIC.geo.lat, longitude: CLINIC.geo.lng },
+      geoRadius: String(radiusKm * 1000), // meters
+    },
+  }
+}
+
+// CollectionPage — 지역 허브가 여러 진료를 묶는 컬렉션임을 명시
+export function collectionPageSchema(opts: { name: string; path: string; description: string; items: { name: string; url: string }[] }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: opts.name,
+    url: `${BASE}${opts.path}`,
+    description: opts.description,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: opts.items.length,
+      itemListElement: opts.items.map((it, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: it.name,
+        url: `${BASE}${it.url}`,
+      })),
+    },
+  }
+}
