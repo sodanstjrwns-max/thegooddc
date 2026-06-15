@@ -10,6 +10,8 @@ export interface Term {
   category: string
   def: string // 정의 (직답형 — AEO)
   related?: string[] // 관련 진료 slug
+  body?: string[] // 상세 설명 단락 배열 (약 1000자, 엄선 200개 용어)
+  qa?: { q: string; a: string }[] // AEO 질문·답변 (FAQ 스키마)
 }
 
 // 핵심 용어 (상세 정의) — 자동 인링크 대상
@@ -306,7 +308,33 @@ for (const base of PROCEDURE_BASES) {
   }
 }
 
-export const TERMS: Term[] = [...CORE_TERMS, ...EXTRA_TERMS, ...GUIDE_TERMS]
+// 엄선 상세 용어(각 약 1000자) — 병합 시 최우선
+import { DETAIL_TERMS } from './encyclopedia-detail'
+
+const DETAIL_AS_TERM: Term[] = DETAIL_TERMS.map((d) => ({
+  slug: d.slug,
+  term: d.term,
+  reading: d.reading,
+  category: d.category,
+  def: d.def,
+  related: d.related,
+  body: d.body,
+  qa: d.qa,
+}))
+
+// 상세 용어가 우선. 동일 slug·동일 용어명은 상세본으로 대체하고
+// 자동 생성된 빈약한 GUIDE_TERMS(한 줄 정의)는 제외하여 thin-content 방지.
+const detailSlugs = new Set(DETAIL_AS_TERM.map((t) => t.slug))
+const detailNames = new Set(DETAIL_AS_TERM.map((t) => t.term))
+
+const SUPPLEMENT_TERMS: Term[] = [...CORE_TERMS, ...EXTRA_TERMS].filter(
+  (t) => !detailSlugs.has(t.slug) && !detailNames.has(t.term),
+)
+
+export const TERMS: Term[] = [...DETAIL_AS_TERM, ...SUPPLEMENT_TERMS]
+
+// 상세 본문(body)을 가진 용어만 추린 목록 (목록 페이지 "상세" 뱃지·우선 노출용)
+export const DETAILED_TERMS: Term[] = TERMS.filter((t) => t.body && t.body.length > 0)
 
 export const TERM_CATEGORIES = Array.from(new Set(TERMS.map((t) => t.category)))
 

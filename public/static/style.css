@@ -820,6 +820,19 @@ section{position:relative}
 .article-body p{margin-bottom:18px}
 .article-body img{border-radius:var(--radius);margin:24px 0}
 
+/* 백과사전 상세 — 1000자 본문/FAQ/안내 */
+.term-body{margin:28px 0}
+.term-body p{margin-bottom:18px;line-height:1.95;color:var(--ink-3);font-size:1.02rem}
+.term-body a{color:var(--brand);text-decoration:underline;text-underline-offset:3px}
+.term-faq{margin:40px 0 8px}
+.term-faq h2{font-size:1.45rem;margin-bottom:18px;letter-spacing:-.02em}
+.term-faq .faq-item{margin-bottom:12px;padding:0}
+.term-faq .faq-item summary{cursor:pointer;font-weight:600;padding:16px 20px;list-style:none;color:var(--ink);font-size:1.02rem}
+.term-faq .faq-item summary::-webkit-details-marker{display:none}
+.term-faq .faq-item summary::before{content:'Q';display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-right:10px;vertical-align:middle}
+.term-faq .faq-item p{margin:0;padding:0 20px 18px 54px;color:var(--ink-3);line-height:1.8}
+.term-disclaimer{margin:28px 0;padding:14px 18px;background:var(--bg-2);border-radius:var(--radius);font-size:.86rem;color:var(--ink-soft);line-height:1.7}
+
 .go{display:inline-flex;align-items:center;gap:6px;font-weight:500;color:var(--accent)}
 .grad{color:var(--ink)}
 

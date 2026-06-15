@@ -5,7 +5,7 @@ import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
 import { DOCTORS, getDoctor } from '../data/doctors'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
-import { breadcrumbSchema, articleSchema, speakableSchema } from '../lib/seo'
+import { breadcrumbSchema, articleSchema, speakableSchema, faqSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
 import type { Column } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES } from '../lib/content-store'
@@ -251,7 +251,14 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
 // 백과사전
 // ============================================================
 export const EncyclopediaListPage: FC<{ category?: string }> = ({ category }) => {
-  const filtered = category ? TERMS.filter((t) => t.category === category) : TERMS
+  const base = category ? TERMS.filter((t) => t.category === category) : TERMS
+  // 상세 본문(1000자)을 가진 용어를 앞쪽에 우선 노출
+  const filtered = [...base].sort((a, b) => {
+    const ab = a.body && a.body.length ? 1 : 0
+    const bb = b.body && b.body.length ? 1 : 0
+    return bb - ab
+  })
+  const detailCount = TERMS.filter((t) => t.body && t.body.length > 0).length
   return (
     <Layout
       title={`치과 백과사전 | ${CLINIC.name} 강서구 명지`}
@@ -264,7 +271,7 @@ export const EncyclopediaListPage: FC<{ category?: string }> = ({ category }) =>
         <div class="container ph-inner">
           <div class="hero-badge"><i class="fa-solid fa-book"></i> ENCYCLOPEDIA</div>
           <h1>치과 백과사전</h1>
-          <p>{TERMS.length}개 이상의 치과 용어와 진료 정보를 쉽게 풀어 설명합니다.</p>
+          <p>{TERMS.length}개 치과 용어를 수록했으며, 그중 {detailCount}개는 상세 해설로 자세히 설명합니다.</p>
         </div>
       </section>
       <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }]} />
@@ -283,7 +290,12 @@ export const EncyclopediaListPage: FC<{ category?: string }> = ({ category }) =>
           <div class="tlist-grid">
             {filtered.slice(0, 120).map((term) => (
               <a href={`/encyclopedia/${term.slug}`} class="card reveal" style="padding:24px;text-decoration:none">
-                <div style="font-size:12px;color:var(--brand);font-weight:700;margin-bottom:6px">{term.category}</div>
+                <div style="font-size:12px;color:var(--brand);font-weight:700;margin-bottom:6px">
+                  {term.category}
+                  {term.body && term.body.length > 0 && (
+                    <span style="margin-left:8px;font-size:11px;background:var(--brand);color:#fff;padding:2px 8px;border-radius:999px">상세</span>
+                  )}
+                </div>
                 <h3 style="font-size:18px;margin-bottom:6px">{term.term}</h3>
                 <p style="color:var(--ink-soft);font-size:14px;margin:0;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{term.def}</p>
               </a>
@@ -306,16 +318,32 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
     )
   }
   const related = (term.related || []).map((s) => getTreatment(s)).filter(Boolean)
+  const hasBody = term.body && term.body.length > 0
+  const hasQa = term.qa && term.qa.length > 0
+  // 같은 카테고리의 다른 상세 용어 추천 (백과사전 내부 인링크 강화)
+  const sameCategory = TERMS.filter(
+    (t) => t.category === term.category && t.slug !== term.slug && t.body && t.body.length > 0,
+  ).slice(0, 6)
+  const schemas: any[] = [
+    breadcrumbSchema([{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }, { name: term.term, path: `/encyclopedia/${term.slug}` }]),
+    speakableSchema(),
+    // DefinedTerm 스키마 — AI·검색엔진이 용어 정의를 직접 인식
+    {
+      '@context': 'https://schema.org',
+      '@type': 'DefinedTerm',
+      name: term.term,
+      description: term.def,
+      inDefinedTermSet: `${CLINIC.name} 치과 백과사전`,
+    },
+  ]
+  if (hasQa) schemas.push(faqSchema(term.qa!))
   return (
     <Layout
-      title={`${term.term} | 치과 백과사전 · ${CLINIC.name}`}
-      description={`${term.term}: ${term.def}`}
+      title={`${term.term}${term.reading ? ` (${term.reading})` : ''} | 치과 백과사전 · ${CLINIC.name}`}
+      description={term.def.length > 150 ? term.def.slice(0, 150) : term.def}
       path={`/encyclopedia/${term.slug}`}
-      keywords={[term.term, term.category, '치과 용어']}
-      schemas={[
-        breadcrumbSchema([{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }, { name: term.term, path: `/encyclopedia/${term.slug}` }]),
-        speakableSchema(),
-      ]}
+      keywords={[term.term, term.reading || '', term.category, '치과 용어', '강서구 명지 치과'].filter(Boolean)}
+      schemas={schemas}
     >
       <section class="page-hero">
         <div class="container ph-inner">
@@ -327,13 +355,59 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
       <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }, { name: term.term, path: `/encyclopedia/${term.slug}` }]} />
       <section class="sec">
         <div class="container article-body">
+          {/* AEO 직답 — 정의 요약 */}
           <p class="aeo-answer">{term.def}</p>
+
+          {/* 1000자 상세 본문 (자동 인링크 적용) */}
+          {hasBody && (
+            <div class="term-body">
+              {term.body!.map((para) => (
+                <p>
+                  <InlinkText text={para} currentSlug={term.slug} />
+                </p>
+              ))}
+            </div>
+          )}
+
+          {/* 자주 묻는 질문 (FAQ 스키마 연동) */}
+          {hasQa && (
+            <div class="term-faq">
+              <h2><i class="fa-solid fa-circle-question" style="color:var(--brand);margin-right:8px"></i>자주 묻는 질문</h2>
+              {term.qa!.map((item) => (
+                <details class="faq-item" open>
+                  <summary>{item.q}</summary>
+                  <p>{item.a}</p>
+                </details>
+              ))}
+            </div>
+          )}
+
+          {/* 의료광고법 안내 */}
+          {hasBody && (
+            <p class="term-disclaimer">
+              <i class="fa-solid fa-circle-info" style="margin-right:6px"></i>
+              본 내용은 일반적인 치과 정보 제공을 목적으로 하며, 실제 진단·치료 방향과 결과는 개인의 상태에 따라 다를 수 있습니다. 정확한 사항은 정밀 진단과 상담을 통해 안내해 드립니다.
+            </p>
+          )}
+
           {related.length > 0 && (
             <div class="related-box">
               <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료</h3>
               <div class="chip-row">
                 {related.map((t) => <a href={`/treatments/${t!.slug}`} class="chip"><i class={`fa-solid fa-${t!.icon}`}></i> {t!.shortName}</a>)}
                 <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터</a>
+              </div>
+            </div>
+          )}
+
+          {/* 같은 분야 다른 용어 — 백과사전 내부 인링크 */}
+          {sameCategory.length > 0 && (
+            <div class="related-box">
+              <h3><i class="fa-solid fa-book-open" style="color:var(--brand);margin-right:8px"></i>같은 분야 용어 더 보기</h3>
+              <div class="chip-row">
+                {sameCategory.map((t) => (
+                  <a href={`/encyclopedia/${t.slug}`} class="chip">{t.term}</a>
+                ))}
               </div>
             </div>
           )}
