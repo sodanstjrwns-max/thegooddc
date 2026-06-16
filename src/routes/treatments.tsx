@@ -34,6 +34,60 @@ const PROC_META: Record<string, { bodyLocation?: string; preparation?: string; f
     followup: '부착 후 교합을 점검하고, 정기 검진으로 변연 적합도를 관리합니다.',
     howPerformed: '최소 삭제 후 정밀 제작된 세라믹을 치아 표면에 접착해 형태와 색을 개선합니다.',
   },
+  integrated: {
+    bodyLocation: '구강 전체',
+    preparation: '문진·임상 검사·방사선 촬영으로 구강 전반을 진단하고 치료 우선순위를 설계합니다.',
+    followup: '치료 후 정기 검진과 위생 관리로 구강 건강을 유지하도록 안내합니다.',
+    howPerformed: '응급 처치 → 잇몸 기초 → 충치·신경 → 보철·심미 순으로 단계별 통합 치료를 진행합니다.',
+  },
+  conservative: {
+    bodyLocation: '치아 경조직·치수',
+    preparation: '정밀 진단으로 충치 범위와 치아 균열 여부를 파악합니다.',
+    followup: '신경치료 후 크라운으로 보호하고, 정기 검진으로 경계 부위 재발을 관리합니다.',
+    howPerformed: '충치 범위에 따라 레진 충전, 인레이, 신경치료 등으로 자연 치아를 보존하며 수복합니다.',
+  },
+  prosthodontics: {
+    bodyLocation: '결손·손상 치아 부위',
+    preparation: '구강 스캔과 영상으로 잔존 치아·잇몸뼈 상태를 분석해 보철 방식을 설계합니다.',
+    followup: '장착 후 교합을 점검하고, 경계 부위 위생 관리와 정기 검진으로 수명을 관리합니다.',
+    howPerformed: '원내 기공실에서 정밀 제작한 크라운·브릿지·틀니를 장착해 기능과 형태를 복원합니다.',
+  },
+  orthodontics: {
+    bodyLocation: '치열 전체',
+    preparation: '3D 스캔·세팔로 등 영상 분석으로 치아 배열과 골격 관계를 진단합니다.',
+    followup: '교정 후 유지장치(리테이너)를 착용해 결과를 안정화하고 정기 점검합니다.',
+    howPerformed: '투명교정 또는 브라켓 교정으로 치아를 계획된 위치로 점진적으로 이동시킵니다.',
+  },
+  periodontics: {
+    bodyLocation: '치주 조직(잇몸·치조골)',
+    preparation: '치주낭 깊이 측정과 방사선 촬영으로 치주 상태를 정밀 진단합니다.',
+    followup: '정기 스케일링과 유지 관리로 재발을 예방하고 잇몸 건강을 유지합니다.',
+    howPerformed: '진행 정도에 따라 스케일링, 치근활택술, 치주 수술 등으로 단계적으로 치료합니다.',
+  },
+  'oral-surgery': {
+    bodyLocation: '구강·악안면 부위',
+    preparation: '매복 사랑니는 신경 손상 위험 평가를 위해 3D CT로 위치를 확인합니다.',
+    followup: '발치 후 혈병 유지와 지혈 관리를 안내하고, 부기·통증 경과를 확인합니다.',
+    howPerformed: '국소마취 후 사랑니·매복치 발치 및 외과적 처치를 안전하게 진행합니다.',
+  },
+  preventive: {
+    bodyLocation: '구강 전체',
+    preparation: '정기 검진과 위험도 평가로 충치·잇몸병 예방 계획을 세웁니다.',
+    followup: '개인별 검진 주기와 위생 관리법을 안내해 꾸준한 예방을 돕습니다.',
+    howPerformed: '스케일링, 불소도포, 실란트(치아 홈메우기) 등으로 질환을 미리 예방합니다.',
+  },
+  imaging: {
+    bodyLocation: '치아·악골·턱관절',
+    preparation: '진료 목적에 맞는 영상 검사를 선택하고 방호 장비를 적용합니다.',
+    followup: '촬영 영상을 환자와 함께 확인하며 진단 근거를 설명합니다.',
+    howPerformed: '파노라마, 3D CT, 교익 촬영, 구강 스캔 등으로 정밀 진단 데이터를 채득합니다.',
+  },
+  'oral-medicine': {
+    bodyLocation: '턱관절·구강 점막·저작근',
+    preparation: '턱 움직임·근육 촉진·소리 확인과 필요시 영상으로 원인을 평가합니다.',
+    followup: '증상 변화에 따라 장치·습관 교정 효과를 점검하며 단계적으로 관리합니다.',
+    howPerformed: '생활 습관 교정, 물리치료, 약물치료, 스플린트 치료 등 보존적 방법을 우선합니다.',
+  },
 }
 
 // ===== 진료 목록 페이지 =====

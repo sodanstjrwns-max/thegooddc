@@ -2964,3 +2964,17 @@ export const DETAIL_TERMS: DetailTerm[] = [
     related: ['bruxism', 'pediatric', 'night-guard'],
   },
 ]
+
+// ============================================================
+// FAQ 보강 머지 — 수기 작성된 EXTRA_DETAIL_FAQS 를 qa 가 없는 용어에만 채움.
+// (faq-extra.ts → treatments.ts 와 동일한 로드 시점 머지 패턴)
+// 외부 API 미사용. 기존 qa 가 있는 용어는 덮어쓰지 않음.
+// ============================================================
+import { EXTRA_DETAIL_FAQS } from './encyclopedia-faq'
+
+for (const t of DETAIL_TERMS) {
+  if (!t.qa || t.qa.length === 0) {
+    const ex = EXTRA_DETAIL_FAQS[t.slug]
+    if (ex && ex.length > 0) t.qa = ex
+  }
+}
