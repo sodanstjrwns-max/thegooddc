@@ -336,6 +336,8 @@ export function procedureRichSchema(t: {
   preparation?: string
   followup?: string
   howPerformed?: string
+  indications?: string[] // 적응증 — MedicalIndication
+  status?: string // 회복·관리 안내
 }) {
   return {
     '@context': 'https://schema.org',
@@ -347,8 +349,11 @@ export function procedureRichSchema(t: {
     procedureType: 'https://schema.org/TherapeuticProcedure',
     bodyLocation: t.bodyLocation || '구강',
     preparation: t.preparation,
-    followup: t.followup,
+    followup: t.followup || t.status,
     howPerformed: t.howPerformed,
+    ...(t.indications && t.indications.length
+      ? { indication: t.indications.map((i) => ({ '@type': 'MedicalIndication', name: i })) }
+      : {}),
     provider: { '@id': `${BASE}/#medicalclinic` },
   }
 }
@@ -476,5 +481,62 @@ export function collectionPageSchema(opts: { name: string; path: string; descrip
         url: `${BASE}${it.url}`,
       })),
     },
+  }
+}
+
+// ============================================================
+// 🏎️ 부가티급 진료 상세 전용 강화 스키마
+// ============================================================
+
+// MedicalWebPage — 의료 콘텐츠 신뢰 신호(작성·검토 주체, 검토일). 구글 의료 E-E-A-T 친화.
+export function medicalWebPageSchema(opts: {
+  name: string
+  path: string
+  description: string
+  about?: string // 다루는 시술/주제명
+  lastReviewed?: string // YYYY-MM-DD
+  doctorName?: string
+  doctorLicense?: string
+}) {
+  const reviewed = opts.lastReviewed || new Date().toISOString().slice(0, 10)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'MedicalWebPage',
+    '@id': `${BASE}${opts.path}/#medicalwebpage`,
+    name: opts.name,
+    url: `${BASE}${opts.path}`,
+    description: opts.description,
+    inLanguage: 'ko-KR',
+    lastReviewed: reviewed,
+    ...(opts.about ? { about: { '@type': 'MedicalProcedure', name: opts.about } } : {}),
+    ...(opts.doctorName
+      ? {
+          reviewedBy: {
+            '@type': 'Physician',
+            name: opts.doctorName,
+            ...(opts.doctorLicense ? { identifier: opts.doctorLicense } : {}),
+            medicalSpecialty: 'Dentistry',
+          },
+        }
+      : {}),
+    publisher: { '@id': `${BASE}/#medicalclinic` },
+    isPartOf: { '@id': `${BASE}/#website` },
+  }
+}
+
+// ItemList — 세부 진료(subProcedures)를 구조화 목록으로 노출(리치 결과 후보)
+export function itemListSchema(opts: { name: string; path: string; items: { name: string; description?: string }[] }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: opts.name,
+    url: `${BASE}${opts.path}`,
+    numberOfItems: opts.items.length,
+    itemListElement: opts.items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      ...(it.description ? { description: it.description } : {}),
+    })),
   }
 }

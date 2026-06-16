@@ -5,7 +5,7 @@ import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS, GENERAL_TREATMENTS, getTreatment } from '../data/treatments'
 import { getDoctor } from '../data/doctors'
 import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
-import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedureRichSchema, howToSchema, qaPageSchema, imageObjectSchema } from '../lib/seo'
+import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedureRichSchema, howToSchema, qaPageSchema, imageObjectSchema, medicalWebPageSchema, itemListSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
 
 const CORE_IMG: Record<string, string> = {
@@ -153,8 +153,10 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
   const meta = PROC_META[t.slug]
   const heroImg = CORE_IMG[t.slug]
 
-  // AEO: 진료 과정(섹션)을 HowTo로 구조화 — AI가 "어떻게 진행되나요?"에 단계 인용
-  const howToSteps = t.sections.slice(0, 6).map((s) => ({ name: s.heading, text: s.body.slice(0, 280) }))
+  // AEO: 진료 과정을 HowTo로 구조화 — process(명시적 단계) 우선, 없으면 섹션 기반
+  const howToSteps = t.process && t.process.length
+    ? t.process.map((p) => ({ name: p.step, text: p.desc }))
+    : t.sections.slice(0, 6).map((s) => ({ name: s.heading, text: s.body.slice(0, 280) }))
 
   const richSchemas: object[] = [
     breadcrumbSchema([
@@ -162,8 +164,17 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
       { name: '진료안내', path: '/treatments' },
       { name: t.shortName, path: `/treatments/${t.slug}` },
     ]),
-    // 강화 MedicalProcedure(임상 메타 포함) + 기존 procedureSchema 병행
-    procedureRichSchema({ name: t.name, slug: t.slug, summary: t.summary, ...meta }),
+    // 강화 MedicalProcedure(임상 메타 + 적응증 포함)
+    procedureRichSchema({ name: t.name, slug: t.slug, summary: t.summary, ...meta, indications: t.indications, status: t.recovery }),
+    // 의료 콘텐츠 신뢰 신호(검토 주체·검토일) — 구글 의료 E-E-A-T
+    medicalWebPageSchema({
+      name: `${t.name} | ${CLINIC.name}`,
+      path: `/treatments/${t.slug}`,
+      description: t.summary,
+      about: t.name,
+      doctorName: doctor?.name,
+      doctorLicense: doctor?.license,
+    }),
     faqSchema(t.faq),
     speakableSchema(),
   ]
@@ -174,6 +185,10 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
   // 과정형 섹션이 2개 이상이면 HowTo 추가
   if (howToSteps.length >= 2) {
     richSchemas.push(howToSchema({ name: `${t.shortName} 진료 과정`, description: t.summary, steps: howToSteps }))
+  }
+  // 세부 진료가 있으면 ItemList 구조화
+  if (t.subProcedures && t.subProcedures.length) {
+    richSchemas.push(itemListSchema({ name: `${t.shortName} 세부 진료`, path: `/treatments/${t.slug}`, items: t.subProcedures }))
   }
   // 대표 이미지가 있으면 ImageObject
   if (heroImg) {
@@ -236,9 +251,13 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
               <div class="toc-label">목차</div>
               <ul>
                 {t.qa.length > 0 && <li><a href="#qa">핵심 Q&A</a></li>}
+                {t.indications && <li><a href="#indications">이런 분께 권합니다</a></li>}
                 {t.sections.map((s, i) => <li><a href={`#sec-${i}`}>{s.heading}</a></li>)}
+                {t.process && <li><a href="#process">진료 과정</a></li>}
                 {t.subProcedures && <li><a href="#sub">세부 진료</a></li>}
                 {t.comparison && <li><a href="#cmp">비교 안내</a></li>}
+                {t.cautions && <li><a href="#cautions">주의사항</a></li>}
+                {t.recovery && <li><a href="#recovery">회복·관리</a></li>}
                 <li><a href="#related">관련 진료</a></li>
               </ul>
             </aside>
@@ -256,6 +275,18 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                 </div>
               )}
 
+              {/* 적응증: 이런 분께 권합니다 (AEO — "누구에게 필요한가" 직답) */}
+              {t.indications && (
+                <div id="indications" class="reveal">
+                  <h2>이런 분께 권합니다</h2>
+                  <ul class="indication-list">
+                    {t.indications.map((it) => (
+                      <li><i class="fa-solid fa-circle-check" style="color:var(--brand);margin-right:10px"></i>{it}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* 본문 섹션 */}
               {t.sections.map((s, i) => (
                 <div id={`sec-${i}`} class="reveal">
@@ -263,6 +294,21 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                   <p><InlinkText text={s.body} exclude={[t.slug]} /></p>
                 </div>
               ))}
+
+              {/* 진료 과정 (HowTo 시각화 — 단계별 타임라인) */}
+              {t.process && (
+                <div id="process" class="reveal">
+                  <h2>진료는 이렇게 진행됩니다</h2>
+                  <ol class="process-steps">
+                    {t.process.map((p) => (
+                      <li class="process-step">
+                        <div class="ps-head">{p.step}</div>
+                        <div class="ps-desc">{p.desc}</div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
 
               {/* 세부 시술 */}
               {t.subProcedures && (
@@ -284,6 +330,26 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                     <thead><tr>{t.comparison.columns.map((c) => <th>{c}</th>)}</tr></thead>
                     <tbody>{t.comparison.rows.map((row) => <tr>{row.map((cell) => <td>{cell}</td>)}</tr>)}</tbody>
                   </table>
+                </div>
+              )}
+
+              {/* 주의사항·고려사항 (의료광고법 준수 — 정확한 정보 제공) */}
+              {t.cautions && (
+                <div id="cautions" class="reveal">
+                  <h2>진료 전 알아두면 좋은 점</h2>
+                  <ul class="caution-list">
+                    {t.cautions.map((cau) => (
+                      <li><i class="fa-solid fa-circle-info" style="color:var(--blue);margin-right:10px"></i>{cau}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* 회복·관리 안내 */}
+              {t.recovery && (
+                <div id="recovery" class="reveal">
+                  <h2>진료 후 회복과 관리</h2>
+                  <p class="recovery-note"><i class="fa-solid fa-heart-pulse" style="color:var(--brand);margin-right:8px"></i>{t.recovery}</p>
                 </div>
               )}
 

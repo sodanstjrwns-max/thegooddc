@@ -653,6 +653,12 @@ app.get('/seo-health', async (c) => {
   add('진료 직답(qa) 보유', noQa.length === 0, noQa.length ? `누락: ${noQa.join(', ')}` : '전체 보유')
   add('진료 메타 description(summary)', noSummary.length === 0, noSummary.length ? `부족: ${noSummary.join(', ')}` : '전체 50자+ 보유')
   add('진료 FAQ 보유', noFaq.length === 0, noFaq.length ? `누락: ${noFaq.join(', ')}` : '전체 보유')
+  // 코어 진료 볼륨(qa≥3 & sections≥5) — 핵심 페이지 품질
+  const coreThin = TREATMENTS.filter(t => t.category === 'core').filter(t => (t.qa?.length || 0) < 3 || (t.sections?.length || 0) < 5).map(t => t.slug)
+  add('핵심 진료 볼륨(qa3+/섹션5+)', coreThin.length === 0, coreThin.length ? `보강 필요: ${coreThin.join(', ')}` : '핵심 진료 전부 충실')
+  // 진료 임상 메타(적응증/주의사항/회복) 보유 — AEO·의료 신뢰
+  const withClinical = TREATMENTS.filter(t => t.indications && t.cautions && t.recovery).length
+  add('진료 임상 메타(적응증/주의/회복)', withClinical >= 8, `보유 ${withClinical}/${TREATMENTS.length}`, 'recommended')
 
   // 3) 백과사전 상세 품질 점검
   const detailNoBody = DETAILED_TERMS.filter((t: any) => !t.body || t.body.length === 0).map((t: any) => t.slug)
@@ -708,6 +714,19 @@ app.get('/seo-health', async (c) => {
     add('지역허브 GeoCircle 서비스반경', html.includes('GeoCircle'), '20km 반경')
   } catch (e: any) {
     add('지역허브 점검', false, `fetch 실패: ${e?.message || e}`)
+  }
+
+  // 7) 진료 상세 슈퍼 스키마 점검 (대표: 임플란트)
+  try {
+    const r = await fetch(`${origin}/treatments/implant`)
+    const html = await r.text()
+    add('진료상세 라이브', r.ok && html.includes('임플란트'), `HTTP ${r.status}`)
+    add('진료상세 MedicalWebPage(E-E-A-T)', html.includes('MedicalWebPage') && html.includes('lastReviewed'), '검토주체·검토일')
+    add('진료상세 MedicalProcedure 적응증', html.includes('MedicalIndication'), 'indication 노출')
+    add('진료상세 HowTo 진료과정', html.includes('"HowTo"'), '단계 구조화')
+    add('진료상세 임상 섹션 렌더', html.includes('이런 분께 권합니다') && html.includes('진료 후 회복'), '적응증·회복 본문')
+  } catch (e: any) {
+    add('진료상세 점검', false, `fetch 실패: ${e?.message || e}`)
   }
 
   // 점수는 critical 항목 기준, 권장 항목은 별도 표기
