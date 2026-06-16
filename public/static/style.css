@@ -45,13 +45,13 @@
   --on-dark:#F2F1EB;
   --on-dark-soft:#A8B2C0;
 
-  /* accent — TRUST BLUE (원장 선택 컬러) + warm brass secondary */
-  --accent:#1E6FB8;      /* trust blue — 믿음직한, 의료 신뢰 */
-  --accent-d:#114A7E;    /* deep blue */
-  --accent-l:#4A95D6;    /* light blue */
-  --accent-soft:#E7F0F9; /* pale blue tint */
-  --accent-2:#B08D57;    /* warm brass — 따뜻함 담당 secondary */
-  --accent-teal:#2DD4BF; /* fresh teal — dark-stage glow only */
+  /* accent — BRAND TEAL (로고 컬러 매칭: 더착한치과 로고) */
+  --accent:#0C7CA4;      /* brand deep teal — 로고 "더"/"The GOOD" */
+  --accent-d:#08597A;    /* deep teal shade */
+  --accent-l:#43C8F4;    /* bright cyan — 로고 심볼/"착한" */
+  --accent-soft:#E4F4FB; /* pale cyan tint */
+  --accent-2:#2B4A58;    /* dark slate teal — 로고 "치과의원" 계열 secondary */
+  --accent-teal:#43C8F4; /* logo cyan glow — dark-stage glow */
 
   /* type — editorial serif + clean sans pairing */
   --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,"Segoe UI",sans-serif;
@@ -80,7 +80,7 @@
   --sh:0 14px 44px rgba(20,35,55,.07);
   --sh-md:0 24px 64px rgba(20,35,55,.10);
   --sh-lg:0 44px 110px rgba(20,35,55,.14);
-  --sh-glow:0 30px 90px rgba(30,111,184,.18);
+  --sh-glow:0 30px 90px rgba(12,124,164,.18);
 
   --ease-out:cubic-bezier(.16,1,.3,1);
   --ease:cubic-bezier(.4,0,.2,1);
@@ -97,7 +97,7 @@
   --blue-l:var(--accent-l);
   --blue-soft:var(--accent-soft);
   --blue-50:var(--accent-soft);
-  --blue-100:#CFE2F4;
+  --blue-100:#C2E9F7;
   --blue-grad-a:var(--ink-2);
   --blue-grad-b:var(--ink);
   --mint:var(--accent);
@@ -298,11 +298,13 @@ section{position:relative}
   background:rgba(255,255,255,.92);backdrop-filter:blur(22px) saturate(180%);
   border-bottom:1px solid rgba(0,0,0,.07);
 }
-.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
 .brand .logo{
   width:38px;height:38px;border-radius:11px;
   background:var(--ink);display:grid;place-items:center;color:#fff;font-size:1.05rem;
 }
+.brand .logo-img{width:auto;height:40px;display:block;flex-shrink:0}
+.footer-brand .brand .logo-img{height:44px}
 .brand .nm{display:flex;flex-direction:column;line-height:1.1}
 .brand .nm b{font-size:1.12rem;font-weight:600;letter-spacing:-.03em;color:var(--ink)}
 .brand .nm small{font-size:.6rem;font-weight:500;letter-spacing:.18em;color:var(--ink-faint);text-transform:uppercase}
@@ -501,7 +503,7 @@ section{position:relative}
 .digital{position:relative;padding:120px 0;color:var(--on-dark);overflow:hidden;
   background:radial-gradient(1100px 700px at 75% 18%,var(--bg-dark-2) 0%,var(--bg-dark) 58%)}
 .digital::before{content:"";position:absolute;top:8%;right:-8%;width:620px;height:620px;border-radius:50%;
-  background:radial-gradient(circle,rgba(30,111,184,.32),transparent 65%);filter:blur(40px);pointer-events:none}
+  background:radial-gradient(circle,rgba(12,124,164,.32),transparent 65%);filter:blur(40px);pointer-events:none}
 .digital::after{content:"";position:absolute;bottom:-10%;left:-6%;width:480px;height:480px;border-radius:50%;
   background:radial-gradient(circle,rgba(176,141,87,.12),transparent 65%);filter:blur(40px);pointer-events:none}
 .digital .container{position:relative;z-index:1}
@@ -536,7 +538,7 @@ section{position:relative}
 @keyframes grad-spin{to{--grad-angle:360deg}}
 /* mouse spotlight glow — driven by @property typed --glow-x/--glow-y for smoothness */
 .bento-glow{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .35s;pointer-events:none;
-  background:radial-gradient(360px circle at var(--glow-x) var(--glow-y),rgba(45,212,191,.22),transparent 60%)}
+  background:radial-gradient(360px circle at var(--glow-x) var(--glow-y),rgba(67,200,244,.22),transparent 60%)}
 .bento-card:hover .bento-glow,.bento-card:focus-within .bento-glow{opacity:1}
 .bento-card>*{position:relative;z-index:1}
 .bento-kicker{display:inline-flex;align-items:center;gap:7px;font-size:.74rem;font-weight:600;letter-spacing:.04em;
@@ -545,8 +547,8 @@ section{position:relative}
 .bento-card h4{color:#fff;font-size:1.1rem;letter-spacing:-.01em;margin-bottom:7px;font-weight:600}
 .bento-card p{color:var(--on-dark-soft);font-size:.92rem;line-height:1.55;font-weight:400}
 .bento-icon{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-size:1.35rem;color:#fff;
-  background:linear-gradient(150deg,rgba(30,111,184,.6),rgba(45,212,191,.3));margin-bottom:16px;
-  box-shadow:0 10px 30px -12px rgba(30,111,184,.6)}
+  background:linear-gradient(150deg,rgba(12,124,164,.6),rgba(67,200,244,.3));margin-bottom:16px;
+  box-shadow:0 10px 30px -12px rgba(12,124,164,.6)}
 /* card spans */
 .b-feature{grid-column:span 4;grid-row:span 2;justify-content:flex-end;min-height:380px;padding:0}
 .b-feature .bento-img{position:absolute;inset:0;z-index:0}
@@ -577,10 +579,10 @@ section{position:relative}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring circle{fill:none;stroke-width:9;stroke-linecap:round}
 .ring .ring-bg{stroke:rgba(255,255,255,.1)}
-.ring .ring-fg{stroke:#2DD4BF;stroke-dasharray:327;stroke-dashoffset:327;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.7,.2,1);
-  filter:drop-shadow(0 0 8px rgba(45,212,191,.6))}
+.ring .ring-fg{stroke:#43C8F4;stroke-dasharray:327;stroke-dashoffset:327;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.7,.2,1);
+  filter:drop-shadow(0 0 8px rgba(67,200,244,.6))}
 .ring.on .ring-fg{stroke-dashoffset:var(--off,7);animation:ring-pulse 2.6s ease-in-out 1.6s infinite}
-@keyframes ring-pulse{0%,100%{filter:drop-shadow(0 0 7px rgba(45,212,191,.55))}50%{filter:drop-shadow(0 0 15px rgba(45,212,191,.8))}}
+@keyframes ring-pulse{0%,100%{filter:drop-shadow(0 0 7px rgba(67,200,244,.55))}50%{filter:drop-shadow(0 0 15px rgba(67,200,244,.8))}}
 .ring-num{position:absolute;inset:0;display:grid;place-items:center;font-size:2.4rem;font-weight:500;color:#fff;letter-spacing:-.03em;font-family:var(--serif)}
 .ring-num i{font-size:1.2rem;font-style:normal;color:var(--on-dark-soft);margin-left:2px}
 
@@ -662,7 +664,7 @@ section{position:relative}
    CTA BAND — dark stage
    ============================================================ */
 .cta-band{padding:130px 0;overflow:hidden;background:radial-gradient(900px 500px at 50% 0%,var(--bg-dark-2),var(--bg-dark));color:var(--on-dark);text-align:center}
-.cta-band::before{content:"";position:absolute;bottom:-160px;left:50%;transform:translateX(-50%);width:760px;height:420px;background:radial-gradient(circle,rgba(30,111,184,.28),transparent 70%);filter:blur(30px)}
+.cta-band::before{content:"";position:absolute;bottom:-160px;left:50%;transform:translateX(-50%);width:760px;height:420px;background:radial-gradient(circle,rgba(12,124,164,.28),transparent 70%);filter:blur(30px)}
 .cta-band .inner{position:relative;z-index:1;max-width:720px;margin:0 auto}
 .cta-band .eyebrow{color:var(--accent)}
 .cta-band h2{color:#fff;font-family:var(--serif);font-weight:700;font-size:var(--fs-h1);margin:16px 0 18px;letter-spacing:-.022em;line-height:1.2;word-break:keep-all}
@@ -960,7 +962,7 @@ section{position:relative}
 
 .fable-chapter{position:relative;margin-bottom:56px}
 .fable-chapter:last-child{margin-bottom:0}
-.fable-marker{position:absolute;left:-64px;top:8px;width:48px;height:48px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:grid;place-items:center;box-shadow:0 4px 14px rgba(30,111,184,.16);z-index:1}
+.fable-marker{position:absolute;left:-64px;top:8px;width:48px;height:48px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:grid;place-items:center;box-shadow:0 4px 14px rgba(12,124,164,.16);z-index:1}
 .fable-no{font-family:var(--serif);font-weight:600;font-size:1.05rem;color:var(--accent)}
 .fable-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg,20px);padding:38px 40px;overflow:hidden;transition:box-shadow .35s,transform .35s}
 .fable-card:hover{box-shadow:0 18px 44px rgba(20,35,55,.09);transform:translateY(-3px)}
@@ -1039,18 +1041,18 @@ section{position:relative}
 /* ── 버튼: 평면 블루 → 신뢰 블루 그라디언트 (깊이감) ── */
 .btn-primary,.btn-gold,.btn-accent{
   background:linear-gradient(170deg,var(--accent-l) -40%,var(--accent) 45%,var(--accent-d) 130%);
-  box-shadow:0 10px 26px -10px rgba(30,111,184,.55),inset 0 1px 0 rgba(255,255,255,.22);
+  box-shadow:0 10px 26px -10px rgba(12,124,164,.55),inset 0 1px 0 rgba(255,255,255,.22);
 }
 .btn-primary:hover,.btn-gold:hover,.btn-accent:hover{
   background:linear-gradient(170deg,var(--accent) -20%,var(--accent-d) 60%,#0D3A64 140%);
-  box-shadow:0 14px 32px -10px rgba(30,111,184,.65),inset 0 1px 0 rgba(255,255,255,.18);
+  box-shadow:0 14px 32px -10px rgba(12,124,164,.65),inset 0 1px 0 rgba(255,255,255,.18);
 }
 
 /* ── 히어로: accent-word에 따뜻한 손그림 밑줄 (장인의 터치) ── */
 .hero h1 .accent-word{position:relative;white-space:nowrap}
 .hero h1 .accent-word::after{
   content:"";position:absolute;left:-2%;right:-2%;bottom:.04em;height:.16em;z-index:-1;
-  background:linear-gradient(90deg,rgba(30,111,184,.16),rgba(74,149,214,.30) 50%,rgba(45,212,191,.18));
+  background:linear-gradient(90deg,rgba(12,124,164,.16),rgba(67,200,244,.30) 50%,rgba(67,200,244,.18));
   border-radius:999px;transform:skewX(-8deg);
 }
 
@@ -1058,7 +1060,7 @@ section{position:relative}
 .hero-frame{
   background:
     radial-gradient(120% 90% at 50% 0%, color-mix(in oklab,var(--accent) 34%,var(--bg-dark)) 0%, transparent 62%),
-    radial-gradient(80% 60% at 80% 100%, rgba(45,212,191,.14) 0%, transparent 60%),
+    radial-gradient(80% 60% at 80% 100%, rgba(67,200,244,.14) 0%, transparent 60%),
     linear-gradient(160deg,var(--bg-dark-2) 0%,var(--bg-dark) 100%);
   border:1px solid color-mix(in oklab,var(--accent) 38%,var(--bg-dark));
 }
@@ -1082,7 +1084,7 @@ section{position:relative}
 .fp-tab.active{
   background:linear-gradient(170deg,var(--accent) 0%,var(--accent-d) 130%);
   border-color:var(--accent-d);
-  box-shadow:0 8px 20px -8px rgba(30,111,184,.5);
+  box-shadow:0 8px 20px -8px rgba(12,124,164,.5);
 }
 
 /* ── 퍼블 스파인: 블루→틸 여정 그라디언트 ── */
@@ -1095,12 +1097,12 @@ section{position:relative}
 .floating-cta .book{background:linear-gradient(170deg,var(--accent) 0%,var(--accent-d) 130%)}
 
 /* ── 브랜드 로고칩: 네이비→블루 그라디언트 (헤더 시그니처) ── */
-.brand .logo{background:linear-gradient(150deg,var(--accent) 0%,var(--accent-d) 100%);box-shadow:0 4px 12px -4px rgba(30,111,184,.45)}
+.brand .logo{background:linear-gradient(150deg,var(--accent) 0%,var(--accent-d) 100%);box-shadow:0 4px 12px -4px rgba(12,124,164,.45)}
 
 /* ── 카드 호버 보더: 은은한 블루 ── */
 .assure-card:hover,.core-card:hover{border-color:color-mix(in oklab,var(--accent) 30%,var(--line))}
 .assure-card .bento-glow,.core-card .bento-glow{
-  background:radial-gradient(340px circle at var(--glow-x) var(--glow-y),rgba(30,111,184,.10),transparent 60%)}
+  background:radial-gradient(340px circle at var(--glow-x) var(--glow-y),rgba(12,124,164,.10),transparent 60%)}
 
 /* ── 선택 영역: 블루 ── */
 ::selection{background:var(--accent);color:#fff}
@@ -1120,7 +1122,7 @@ section{position:relative}
 
 /* 치아 윤곽 — 스트로크 드로잉 (페이지 진입 시 그려짐) */
 .htv-tooth{stroke-dasharray:1000;stroke-dashoffset:1000;
-  filter:drop-shadow(0 0 14px rgba(74,149,214,.5)) drop-shadow(0 6px 28px rgba(30,111,184,.35));
+  filter:drop-shadow(0 0 14px rgba(67,200,244,.5)) drop-shadow(0 6px 28px rgba(12,124,164,.35));
   animation:htv-draw 2.6s var(--ease-out) .5s forwards}
 @keyframes htv-draw{to{stroke-dashoffset:0}}
 .htv-cusp{stroke-dasharray:100;stroke-dashoffset:100;animation:htv-draw-c 1.2s var(--ease-out) 2.4s forwards}
@@ -1171,7 +1173,7 @@ section{position:relative}
 /* ── 마이크로 인터랙션 극한 폴리시 ── */
 
 /* 페이블 마커 — 현재 읽는 장 부근에서 은은한 블루 링 펄스 */
-.fable-chapter:hover .fable-marker{border-color:var(--accent);box-shadow:0 0 0 6px rgba(30,111,184,.10),0 4px 14px rgba(30,111,184,.22);transition:box-shadow .4s,border-color .4s}
+.fable-chapter:hover .fable-marker{border-color:var(--accent);box-shadow:0 0 0 6px rgba(12,124,164,.10),0 4px 14px rgba(12,124,164,.22);transition:box-shadow .4s,border-color .4s}
 .fable-marker{transition:box-shadow .4s,border-color .4s}
 
 /* 퍼널 스텝 — 호버 시 아이콘 칩 블루 반전 */
@@ -1185,7 +1187,7 @@ section{position:relative}
 
 /* 어슈어 카드 — 아이콘 리프트 + 블루 틴트 */
 .assure-card .ico{transition:transform .4s var(--ease-out),background .35s,color .35s,box-shadow .35s}
-.assure-card:hover .ico{transform:translateY(-4px);background:var(--accent-soft);color:var(--accent-d);box-shadow:0 8px 20px -8px rgba(30,111,184,.35)}
+.assure-card:hover .ico{transform:translateY(-4px);background:var(--accent-soft);color:var(--accent-d);box-shadow:0 8px 20px -8px rgba(12,124,164,.35)}
 
 /* 히어로 스탯 카드 — 부유 (시차) */
 @media (prefers-reduced-motion: no-preference){
@@ -1198,7 +1200,7 @@ section{position:relative}
 @media (prefers-reduced-motion: no-preference){
   .header-cta .btn-nav{animation:cta-ring 8s ease-out 4s infinite}
 }
-@keyframes cta-ring{0%,92%,100%{box-shadow:0 10px 26px -10px rgba(30,111,184,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 0 0 rgba(30,111,184,.35)}96%{box-shadow:0 10px 26px -10px rgba(30,111,184,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 0 9px rgba(30,111,184,0)}}
+@keyframes cta-ring{0%,92%,100%{box-shadow:0 10px 26px -10px rgba(12,124,164,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 0 0 rgba(12,124,164,.35)}96%{box-shadow:0 10px 26px -10px rgba(12,124,164,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 0 9px rgba(12,124,164,0)}}
 
 /* 마퀴 도트 — 블루/틸 교차 */
 .mq-item:nth-child(even) i{color:var(--accent-teal)}
@@ -1208,9 +1210,9 @@ section{position:relative}
 .compare-table .cell.us{transition:background .3s}
 
 /* 페이블 스파인 — 채워지는 끝에 글로우 헤드 (여정의 현재 위치) */
-.fable-spine-fill{position:relative;box-shadow:0 0 12px rgba(30,111,184,.4)}
+.fable-spine-fill{position:relative;box-shadow:0 0 12px rgba(12,124,164,.4)}
 .fable-spine-fill::after{content:"";position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;
-  background:var(--accent-teal);box-shadow:0 0 10px rgba(45,212,191,.8),0 0 22px rgba(45,212,191,.4)}
+  background:var(--accent-teal);box-shadow:0 0 10px rgba(67,200,244,.8),0 0 22px rgba(67,200,244,.4)}
 
 /* ── reduced-motion: 벡터 모션 전부 정지, 최종 상태 고정 ── */
 @media (prefers-reduced-motion: reduce){
@@ -1224,5 +1226,5 @@ section{position:relative}
 
 
 /* ============ 자동 인링크 (백과사전 연결) ============ */
-.inlink{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(30,111,184,.45);transition:all .18s ease;font-weight:600}
+.inlink{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(12,124,164,.45);transition:all .18s ease;font-weight:600}
 .inlink:hover{color:var(--accent-d);border-bottom-style:solid;background:var(--accent-soft)}

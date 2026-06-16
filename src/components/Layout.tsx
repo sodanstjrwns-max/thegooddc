@@ -60,7 +60,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
-        <meta name="theme-color" content="#FBFAF6" />
+        <meta name="theme-color" content="#0C7CA4" />
 
         {/* Fonts & Icons */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous" />
@@ -95,8 +95,8 @@ const Header: FC = () => (
   <header class="site-header">
     <div class="bar">
       <a href="/" class="brand" aria-label={`${CLINIC.name} 홈`}>
-        <span class="logo"><i class="fa-solid fa-tooth"></i></span>
-        <span class="nm"><b>{CLINIC.name}</b><small>The Good Dental</small></span>
+        <img class="logo-img" src="/static/logo-mark.png" srcset="/static/logo-mark.png 1x, /static/logo-mark@2x.png 2x" width="40" height="40" alt={CLINIC.name} />
+        <span class="nm"><b>{CLINIC.name}</b><small>The Good Dental Clinic</small></span>
       </a>
       <nav aria-label="주 메뉴">
         <ul class="nav-top">
@@ -149,7 +149,7 @@ const MobileDrawer: FC = () => (
     <div class="drawer-backdrop" aria-hidden="true"></div>
     <aside class="drawer" aria-hidden="true">
       <div class="drawer-head">
-        <a href="/" class="brand"><span class="logo"><i class="fa-solid fa-tooth"></i></span><span class="nm"><b>{CLINIC.name}</b><small>The Good Dental</small></span></a>
+        <a href="/" class="brand"><img class="logo-img" src="/static/logo-mark.png" srcset="/static/logo-mark.png 1x, /static/logo-mark@2x.png 2x" width="40" height="40" alt={CLINIC.name} /><span class="nm"><b>{CLINIC.name}</b><small>The Good Dental Clinic</small></span></a>
         <button class="drawer-close" aria-label="메뉴 닫기"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <nav>
@@ -179,7 +179,7 @@ const Footer: FC = () => (
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <a href="/" class="brand"><span class="logo"><i class="fa-solid fa-tooth"></i></span><span class="nm"><b>{CLINIC.name}</b><small>The Good Dental</small></span></a>
+          <a href="/" class="brand"><img class="logo-img" src="/static/logo-full.png" srcset="/static/logo-full.png 1x, /static/logo-full@2x.png 2x" height="42" alt={CLINIC.name} /></a>
           <p>{CLINIC.brandSlogan}</p>
           <p style="opacity:.7;font-size:13px">{CLINIC.address}</p>
           <div class="footer-social">
