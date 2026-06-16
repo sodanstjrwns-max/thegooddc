@@ -656,9 +656,12 @@ app.get('/seo-health', async (c) => {
   // 코어 진료 볼륨(qa≥3 & sections≥5) — 핵심 페이지 품질
   const coreThin = TREATMENTS.filter(t => t.category === 'core').filter(t => (t.qa?.length || 0) < 3 || (t.sections?.length || 0) < 5).map(t => t.slug)
   add('핵심 진료 볼륨(qa3+/섹션5+)', coreThin.length === 0, coreThin.length ? `보강 필요: ${coreThin.join(', ')}` : '핵심 진료 전부 충실')
-  // 진료 임상 메타(적응증/주의사항/회복) 보유 — AEO·의료 신뢰
-  const withClinical = TREATMENTS.filter(t => t.indications && t.cautions && t.recovery).length
-  add('진료 임상 메타(적응증/주의/회복)', withClinical >= 8, `보유 ${withClinical}/${TREATMENTS.length}`, 'recommended')
+  // 진료 임상 메타 풀세트(적응증/과정/주의/회복) 보유 — AEO·의료 신뢰 E-E-A-T
+  const withClinical = TREATMENTS.filter(t => t.indications?.length && t.process?.length && t.cautions?.length && t.recovery).length
+  add('진료 임상 메타 풀세트(적응증/과정/주의/회복)', withClinical === TREATMENTS.length, `풀세트 ${withClinical}/${TREATMENTS.length}`, 'recommended')
+  // 진료 과정(process) 타임라인 — HowTo 스키마 근거
+  const withProcess = TREATMENTS.filter(t => t.process?.length).length
+  add('진료 과정 타임라인(process→HowTo)', withProcess === TREATMENTS.length, `보유 ${withProcess}/${TREATMENTS.length}`, 'recommended')
 
   // 3) 백과사전 상세 품질 점검
   const detailNoBody = DETAILED_TERMS.filter((t: any) => !t.body || t.body.length === 0).map((t: any) => t.slug)
