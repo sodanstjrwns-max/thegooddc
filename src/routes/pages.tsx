@@ -125,12 +125,22 @@ export const DirectionsPage: FC = () => (
 
     <section class="sec-sm bg-sand">
       <div class="container">
-        <div class="reveal" style="border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)">
+        <div class="reveal map-block">
+          <div class="map-bar">
+            <div class="map-bar-info">
+              <strong><i class="fa-solid fa-location-dot"></i> {CLINIC.name}</strong>
+              <span>{CLINIC.address}</span>
+            </div>
+            <div class="map-bar-links">
+              <a class="btn btn-ghost btn-sm" href={`https://map.kakao.com/link/to/${encodeURIComponent(CLINIC.name)},${CLINIC.geo.lat},${CLINIC.geo.lng}`} target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right"></i> 카카오맵 길찾기</a>
+              <a class="btn btn-ghost btn-sm" href={`https://www.google.com/maps/dir/?api=1&destination=${CLINIC.geo.lat},${CLINIC.geo.lng}`} target="_blank" rel="noopener"><i class="fa-brands fa-google"></i> 구글맵 길찾기</a>
+            </div>
+          </div>
           <iframe
-            title="더착한치과 지도"
-            width="100%" height="420" style="border:0;display:block"
+            title="더착한치과 위치 지도"
+            width="100%" height="440" style="border:0;display:block"
             loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-            src={`https://maps.google.com/maps?q=${CLINIC.geo.lat},${CLINIC.geo.lng}&z=16&output=embed`}
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${CLINIC.geo.lng - 0.008}%2C${CLINIC.geo.lat - 0.005}%2C${CLINIC.geo.lng + 0.008}%2C${CLINIC.geo.lat + 0.005}&layer=mapnik&marker=${CLINIC.geo.lat}%2C${CLINIC.geo.lng}`}
           ></iframe>
         </div>
       </div>

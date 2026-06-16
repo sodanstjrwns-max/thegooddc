@@ -131,10 +131,12 @@ export const TreatmentsListPage: FC = () => (
         <div class="tlist-grid">
           {GENERAL_TREATMENTS.map((t, i) => (
             <a href={`/treatments/${t.slug}`} class="tlist-card reveal" data-delay={String((i % 3) + 1)}>
-              <div class="tc-icon"><i class={`fa-solid fa-${t.icon}`}></i></div>
-              <h3>{t.name}</h3>
-              <p>{t.tagline}</p>
-              <span class="go">자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+              <div class="ico"><i class={`fa-solid fa-${t.icon}`}></i></div>
+              <div class="tc-body">
+                <div class="nm">{t.shortName}</div>
+                <div class="sub">{t.name}</div>
+              </div>
+              <i class="fa-solid fa-arrow-right tc-go"></i>
             </a>
           ))}
         </div>

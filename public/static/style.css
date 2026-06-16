@@ -430,8 +430,8 @@ section{position:relative}
 .statband .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--line)}
 .statband .item{background:#fff;padding:40px 24px;text-align:center;transition:background .3s}
 .statband .item:hover{background:var(--bg-2)}
-.statband .n{font-size:3rem;font-weight:700;color:var(--ink);letter-spacing:-.05em;line-height:1}
-.statband .n .u{font-size:1.1rem;font-weight:600;color:var(--ink-soft);margin-left:3px}
+.statband .n{font-size:3rem;font-weight:700;color:var(--ink);letter-spacing:-.05em;line-height:1;display:inline-flex;align-items:baseline;gap:4px}
+.statband .n .u{font-size:1.05rem;font-weight:600;color:var(--accent);letter-spacing:0;white-space:nowrap}
 .statband .l{font-size:.9rem;color:var(--ink-soft);margin-top:12px;font-weight:500}
 
 /* ============================================================
@@ -641,10 +641,10 @@ section{position:relative}
 .compare-table .row+.row{border-top:1px solid var(--line)}
 .compare-table .row.head{background:var(--ink);color:#fff}
 .compare-table .row.head .cell{font-weight:600;padding:22px 28px;display:flex;align-items:center;gap:8px;letter-spacing:-.02em}
-.compare-table .row.head .cell.us{background:rgba(255,255,255,.08)}
+.compare-table .row.head .cell.us{background:var(--accent);color:#fff;font-weight:700}
 .compare-table .cell{padding:20px 28px;display:flex;align-items:center;gap:10px;font-size:.98rem}
 .compare-table .cell.label{font-weight:600;color:var(--ink);background:var(--bg-2)}
-.compare-table .cell.us{font-weight:600;color:var(--ink)}
+.compare-table .cell.us{font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--accent) 6%,#fff)}
 .compare-table .cell.us i{color:var(--accent);font-size:1.05rem}
 .compare-table .cell.them{color:var(--ink-faint)}
 .compare-table .cell.them i{color:var(--line-2);font-size:.9rem}
@@ -656,9 +656,24 @@ section{position:relative}
 .tlist-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .tlist-card{display:flex;align-items:center;gap:14px;background:var(--bg-2);border-radius:var(--radius);padding:20px;transition:transform .3s var(--ease-out),background .3s}
 .tlist-card:hover{transform:translateY(-4px);background:var(--bg-3)}
-.tlist-card .ico{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:#fff;color:var(--ink);display:grid;place-items:center;font-size:1.1rem;box-shadow:var(--sh-xs)}
+.tlist-card .ico{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:#fff;color:var(--accent);display:grid;place-items:center;font-size:1.1rem;box-shadow:var(--sh-xs)}
+.tlist-card .tc-body{flex:1 1 auto;min-width:0}
 .tlist-card .nm{font-weight:600;font-size:1rem;color:var(--ink);letter-spacing:-.02em}
 .tlist-card .sub{font-size:.8rem;color:var(--ink-faint);margin-top:2px}
+.tlist-card .tc-go{flex-shrink:0;color:var(--accent);font-size:.85rem;opacity:0;transform:translateX(-6px);transition:opacity .3s,transform .3s}
+.tlist-card:hover .tc-go{opacity:1;transform:translateX(0)}
+
+/* 지도 블록 (오시는 길) */
+.map-block{border-radius:var(--radius);overflow:hidden;box-shadow:var(--sh-sm);background:#fff}
+.map-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;background:var(--bg-2);border-bottom:1px solid var(--line)}
+.map-bar-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.map-bar-info strong{font-size:1.05rem;color:var(--ink);letter-spacing:-.02em}
+.map-bar-info strong i{color:var(--accent);margin-right:6px}
+.map-bar-info span{font-size:.85rem;color:var(--ink-soft)}
+.map-bar-links{display:flex;flex-wrap:wrap;gap:8px}
+.btn-sm{padding:8px 14px;font-size:.82rem}
+.map-block iframe{filter:grayscale(.12) contrast(1.02)}
+@media(max-width:640px){.map-bar{flex-direction:column;align-items:flex-start}.map-bar-links{width:100%}.map-bar-links .btn-sm{flex:1 1 auto;justify-content:center}}
 
 /* ============================================================
    CTA BAND — dark stage
