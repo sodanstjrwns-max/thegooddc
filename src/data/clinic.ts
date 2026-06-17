@@ -14,7 +14,7 @@ export const CLINIC = {
   phone: '051-203-2875',
   phoneRaw: '0512032875',
   fax: '051-201-2853', // 공식 명함 확인 (2026-06)
-  email: 'wsh216@gmail.com',
+  email: 'thegooddc@gmail.com', // 공식 채널 메일 (명함/계정 확인 2026-06)
   cohort: '8기',
   openedYear: 2015,
   businessName: '더착한치과의원',
