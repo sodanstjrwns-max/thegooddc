@@ -480,6 +480,23 @@ section{position:relative}
 .cases-note i{color:var(--accent);margin-right:5px}
 @media(max-width:780px){.cases-grid{grid-template-columns:1fr}}
 
+/* ===== SPACE — 원내 공간 갤러리 ===== */
+.space{padding:var(--sec-pad) 0;background:var(--bg-1)}
+.space-grid{display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:1fr;gap:20px;margin-top:8px}
+.space-card{position:relative;margin:0;border-radius:var(--r-lg,18px);overflow:hidden;border:1px solid var(--line);
+  box-shadow:var(--sh-sm);background:var(--bg-2);transition:transform .4s var(--ease,ease),box-shadow .4s,border-color .4s;min-height:240px}
+.space-card.space-feature{grid-row:span 2;min-height:0}
+.space-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s var(--ease,ease)}
+.space-card:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--line-2)}
+.space-card:hover img{transform:scale(1.05)}
+.space-card .bento-glow{position:absolute;inset:0;z-index:2;opacity:0;transition:opacity .35s;pointer-events:none}
+.space-card:hover .bento-glow{opacity:1}
+.space-card figcaption{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:18px 20px;
+  font-size:.92rem;font-weight:700;letter-spacing:-.02em;color:#fff;
+  background:linear-gradient(to top,rgba(13,27,42,.82) 0%,rgba(13,27,42,.32) 55%,transparent 100%)}
+.space-card figcaption i{margin-right:7px;color:var(--accent-2,#6fd3c9)}
+@media(max-width:780px){.space-grid{grid-template-columns:1fr}.space-card.space-feature{grid-row:auto}.space-card{min-height:200px}}
+
 /* ============================================================
    PHILOSOPHY — big quote, minimal
    ============================================================ */

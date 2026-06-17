@@ -227,7 +227,7 @@ export const HomePage: FC = () => {
             <article class="bento-card b-feature reveal" data-tilt data-glow>
               <div class="bento-glow"></div>
               <div class="bento-img">
-                <img src="/images/digital-system.webp" alt="원내 디지털 기공 시스템" loading="lazy" />
+                <img src="/images/doctor-consult.webp" alt="황우석 대표원장이 3D 파노라마 영상으로 환자에게 진료 계획을 설명하는 모습" loading="lazy" />
                 <div class="bento-img-grad"></div>
               </div>
               <div class="bento-body">
@@ -310,6 +310,34 @@ export const HomePage: FC = () => {
         </div>
       </section>
 
+      {/* ===================== SPACE — 실제 원내 공간 ===================== */}
+      <section class="space" id="clinic-space" aria-label="더착한치과 원내 공간">
+        <div class="container">
+          <div class="shead center" data-index="04" style="margin-bottom:46px">
+            <span class="eyebrow center">Our Space</span>
+            <h2>오시면, <span>먼저 편안해집니다</span></h2>
+            <p>우드톤의 따뜻한 라운지와 넓은 동선. 치과 특유의 긴장을 덜어내도록 설계한 공간입니다.</p>
+          </div>
+          <div class="space-grid">
+            <figure class="space-card space-feature reveal" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/interior-reception.webp" alt="더착한치과 메인 인포메이션 데스크와 라운지 — 원형 샹들리에 천장과 대리석 데스크" loading="lazy" />
+              <figcaption><i class="fa-solid fa-couch"></i> 메인 라운지 &amp; 인포메이션</figcaption>
+            </figure>
+            <figure class="space-card reveal reveal-d1" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/interior-lounge.webp" alt="더착한치과 대기 공간 — 우드톤 셸 체어 라운지" loading="lazy" />
+              <figcaption><i class="fa-solid fa-mug-hot"></i> 대기 라운지</figcaption>
+            </figure>
+            <figure class="space-card reveal reveal-d2" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/interior-2.webp" alt="더착한치과 입구와 안내 동선" loading="lazy" />
+              <figcaption><i class="fa-solid fa-door-open"></i> 입구 &amp; 안내 동선</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
       {/* ===================== DOCTOR ===================== */}
       <section class="doctor">
         <div class="container doctor-grid">
@@ -336,7 +364,7 @@ export const HomePage: FC = () => {
       {/* ===================== CASE STORIES — 원장이 들려주는 진료 이야기 ===================== */}
       <section class="cases" id="case-stories" aria-label="원장이 들려주는 진료 이야기">
         <div class="container">
-          <div class="shead center" data-index="04">
+          <div class="shead center" data-index="05">
             <span class="eyebrow center">From the Chair</span>
             <h2>원장이 직접 들려주는 <em>진료 이야기</em></h2>
             <p>24년 진료실에서 만난 분들의 이야기입니다. 개인정보 보호를 위해 익명으로 각색했습니다.</p>
@@ -361,7 +389,7 @@ export const HomePage: FC = () => {
       {/* ===================== PATIENT FUNNEL — 10단계 스토리맵 ===================== */}
       <section class="funnel" id="patient-funnel">
         <div class="container">
-          <div class="shead center" data-index="05">
+          <div class="shead center" data-index="06">
             <span class="eyebrow center">Patient Funnel &mdash; 10 Steps</span>
             <h2>처음 알게 된 순간부터<br /><em>소개하는 순간까지</em></h2>
             <p>환자분의 여정 전체를 10단계로 설계했습니다. 어느 단계에 계시든, 그 자리에서 편안하게 시작하시면 됩니다.</p>
@@ -392,7 +420,7 @@ export const HomePage: FC = () => {
       {/* ===================== COMPARE ===================== */}
       <section class="compare">
         <div class="container">
-          <div class="shead center" data-index="06">
+          <div class="shead center" data-index="07">
             <span class="eyebrow center">The Difference</span>
             <h2>왜 <span class="gold">더착한치과</span>일까요?</h2>
             <p>같은 진료라도 장비와 시스템에 따라 결과가 달라집니다.</p>
@@ -417,7 +445,7 @@ export const HomePage: FC = () => {
       {/* ===================== ALL TREATMENTS ===================== */}
       <section class="tlist">
         <div class="container">
-          <div class="shead center" data-index="07">
+          <div class="shead center" data-index="08">
             <span class="eyebrow center">All Departments</span>
             <h2>한 곳에서 받는 <em>모든 치과 진료</em></h2>
             <p>대학병원과 동일한 진료 시스템으로 10개 진료과를 통합 운영합니다.</p>
