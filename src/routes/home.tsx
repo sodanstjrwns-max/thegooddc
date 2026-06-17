@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
-import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA } from '../data/story'
+import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA, CASE_STORIES } from '../data/story'
 import { HeroToothVector, JourneyPathVector } from '../components/vectors'
 import { speakableSchema } from '../lib/seo'
 
@@ -332,10 +332,35 @@ export const HomePage: FC = () => {
         </div>
       </section>
 
+      {/* ===================== CASE STORIES — 원장이 들려주는 진료 이야기 ===================== */}
+      <section class="cases" id="case-stories" aria-label="원장이 들려주는 진료 이야기">
+        <div class="container">
+          <div class="shead center" data-index="04">
+            <span class="eyebrow center">From the Chair</span>
+            <h2>원장이 직접 들려주는 <em>진료 이야기</em></h2>
+            <p>24년 진료실에서 만난 분들의 이야기입니다. 개인정보 보호를 위해 익명으로 각색했습니다.</p>
+          </div>
+          <div class="cases-grid" data-tilt-scope>
+            {CASE_STORIES.map((c, i) => (
+              <article class={`case-card reveal reveal-d${(i % 4) + 1}`} data-glow>
+                <div class="bento-glow"></div>
+                <span class="case-kicker"><i class={`fa-solid fa-${c.icon}`}></i> {c.tag}</span>
+                <h3>{c.title}</h3>
+                <p class="case-body">{c.body}</p>
+                <span class="case-meta"><i class="fa-solid fa-tooth"></i> {c.meta}</span>
+              </article>
+            ))}
+          </div>
+          <p class="cases-note reveal">
+            <i class="fa-solid fa-circle-info"></i> 위 사례는 실제 진료 경험을 바탕으로 하나, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다.
+          </p>
+        </div>
+      </section>
+
       {/* ===================== PATIENT FUNNEL — 10단계 스토리맵 ===================== */}
       <section class="funnel" id="patient-funnel">
         <div class="container">
-          <div class="shead center" data-index="04">
+          <div class="shead center" data-index="05">
             <span class="eyebrow center">Patient Funnel &mdash; 10 Steps</span>
             <h2>처음 알게 된 순간부터<br /><em>소개하는 순간까지</em></h2>
             <p>환자분의 여정 전체를 10단계로 설계했습니다. 어느 단계에 계시든, 그 자리에서 편안하게 시작하시면 됩니다.</p>
@@ -366,7 +391,7 @@ export const HomePage: FC = () => {
       {/* ===================== COMPARE ===================== */}
       <section class="compare">
         <div class="container">
-          <div class="shead center" data-index="05">
+          <div class="shead center" data-index="06">
             <span class="eyebrow center">The Difference</span>
             <h2>왜 <span class="gold">더착한치과</span>일까요?</h2>
             <p>같은 진료라도 장비와 시스템에 따라 결과가 달라집니다.</p>
@@ -391,7 +416,7 @@ export const HomePage: FC = () => {
       {/* ===================== ALL TREATMENTS ===================== */}
       <section class="tlist">
         <div class="container">
-          <div class="shead center" data-index="06">
+          <div class="shead center" data-index="07">
             <span class="eyebrow center">All Departments</span>
             <h2>한 곳에서 받는 <em>모든 치과 진료</em></h2>
             <p>대학병원과 동일한 진료 시스템으로 10개 진료과를 통합 운영합니다.</p>

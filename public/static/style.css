@@ -456,6 +456,31 @@ section{position:relative}
 .assure-card:hover .bento-glow,.core-card:hover .bento-glow,.assure-card:focus-within .bento-glow,.core-card:focus-within .bento-glow{opacity:1}
 
 /* ============================================================
+   CASE STORIES — 원장이 들려주는 진료 이야기
+   ============================================================ */
+.cases{padding:var(--sec-pad) 0;background:var(--bg-2)}
+.cases-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:8px}
+.case-card{
+  position:relative;background:#fff;border-radius:var(--radius-lg);border:1px solid var(--line);
+  padding:34px 32px 30px;overflow:hidden;transition:transform .4s var(--ease-out),box-shadow .4s,border-color .4s;
+}
+.case-card:hover{box-shadow:var(--sh-md);border-color:var(--line-2);transform:translateY(-3px)}
+.case-card>*{position:relative;z-index:1}
+.case-card .bento-glow{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .35s;pointer-events:none;
+  background:radial-gradient(360px circle at var(--glow-x) var(--glow-y),rgba(12,124,164,.08),transparent 60%)}
+.case-card:hover .bento-glow{opacity:1}
+.case-kicker{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:700;letter-spacing:.01em;
+  color:var(--accent);background:var(--accent-soft);padding:6px 13px;border-radius:999px}
+.case-card h3{font-size:1.22rem;margin:16px 0 12px;letter-spacing:-.03em;color:var(--ink)}
+.case-body{color:var(--ink-soft);line-height:1.72;font-size:.96rem}
+.case-meta{display:inline-flex;align-items:center;gap:7px;margin-top:18px;font-size:.82rem;font-weight:600;
+  color:var(--accent-2);padding-top:16px;border-top:1px solid var(--line);width:100%}
+.case-meta i{color:var(--accent-l)}
+.cases-note{margin-top:26px;text-align:center;font-size:.82rem;color:var(--ink-faint);line-height:1.6}
+.cases-note i{color:var(--accent);margin-right:5px}
+@media(max-width:780px){.cases-grid{grid-template-columns:1fr}}
+
+/* ============================================================
    PHILOSOPHY — big quote, minimal
    ============================================================ */
 .philo{padding:110px 0;background:var(--ink);color:var(--on-dark)}
