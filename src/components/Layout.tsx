@@ -222,7 +222,9 @@ const Footer: FC = () => (
         <div>
           상호: {CLINIC.businessName} &nbsp;|&nbsp; 대표자: {CLINIC.director}
           {CLINIC.businessRegNo && <> &nbsp;|&nbsp; 사업자등록번호: {CLINIC.businessRegNo}</>}
-          &nbsp;|&nbsp; 대표전화: {CLINIC.phone} &nbsp;|&nbsp; 개원: {CLINIC.openedYear}년
+          &nbsp;|&nbsp; 대표전화: {CLINIC.phone}
+          {CLINIC.fax && <> &nbsp;|&nbsp; 팩스: {CLINIC.fax}</>}
+          &nbsp;|&nbsp; 개원: {CLINIC.openedYear}년
           <br />주소: {CLINIC.address} &nbsp;|&nbsp; 개인정보보호책임자: {CLINIC.privacyOfficer}
         </div>
         <div class="links">

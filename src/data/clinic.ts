@@ -13,6 +13,7 @@ export const CLINIC = {
   directorTitle: '대표원장',
   phone: '051-203-2875',
   phoneRaw: '0512032875',
+  fax: '051-201-2853', // 공식 명함 확인 (2026-06)
   email: 'wsh216@gmail.com',
   cohort: '8기',
   openedYear: 2015,
@@ -85,7 +86,8 @@ export const CLINIC = {
     instagram: '',
     blog: '',
     youtube: '',
-    kakao: '',
+    kakao: 'https://pf.kakao.com/_yRxjxeV', // 더착한치과의원 공식 카카오톡 채널
+    legacySite: 'http://thegooddc.com', // 기존(구) 홈페이지
   },
 
   // GA4 / GTM (배포 시 교체)
