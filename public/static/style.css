@@ -762,8 +762,8 @@ section{position:relative}
 /* ============================================================
    FLOATING CTA (mobile)
    ============================================================ */
-.floating-cta{position:fixed;bottom:16px;left:16px;right:16px;z-index:900;display:none;gap:10px}
-.floating-cta a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border-radius:var(--radius);font-weight:600;font-size:1rem;box-shadow:var(--sh-md)}
+.floating-cta{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:14px;right:14px;z-index:900;display:none;gap:10px}
+.floating-cta a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;min-height:54px;border-radius:var(--radius);font-weight:600;font-size:1.02rem;box-shadow:var(--sh-md);-webkit-tap-highlight-color:transparent}
 .floating-cta .call{background:#fff;color:var(--ink);border:1px solid var(--line-2)}
 .floating-cta .book{background:var(--accent);color:#fff}
 
@@ -955,6 +955,9 @@ section{position:relative}
 @media (max-width:760px){
   .nav-toggle{display:grid}
   .header-cta .btn-nav{display:none}
+  /* 노치 안전영역: 헤더·컨테이너 좌우 여백 보정 */
+  .site-header .bar{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right))}
+  .container,.container-wide{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right))}
   .assure-grid,.core-grid,.grid-2,.grid-3,.split{grid-template-columns:1fr}
   .bento{grid-template-columns:1fr;gap:14px}
   .b-feature,.b-ring,.b-lab,.b-plagen,.b-pain,.b-scan{grid-column:span 1}
@@ -968,7 +971,7 @@ section{position:relative}
   .hero-stat{padding:10px 14px}
   .hero-stat .n{font-size:1.4rem}
   .floating-cta{display:flex}
-  body{padding-bottom:78px}
+  body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
   section,.assure,.philo,.core,.digital,.doctor,.journey,.compare,.tlist,.cta-band{padding-top:72px;padding-bottom:72px}
   .compare-table .row{grid-template-columns:1fr}
   .compare-table .row.head{display:none}
