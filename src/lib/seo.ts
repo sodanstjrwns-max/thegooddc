@@ -30,7 +30,7 @@ export function dentistSchema() {
     url: BASE,
     telephone: CLINIC.phone,
     email: CLINIC.email,
-    image: `${BASE}/images/clinic-exterior.jpg`,
+    image: `${BASE}/images/og-default.jpg`,
     logo: `${BASE}/images/logo.png`,
     priceRange: '₩₩',
     address: {
@@ -216,7 +216,7 @@ export function medicalClinicSchema() {
     url: BASE,
     telephone: CLINIC.phone,
     email: CLINIC.email,
-    image: `${BASE}/images/clinic-exterior.jpg`,
+    image: `${BASE}/images/og-default.jpg`,
     logo: `${BASE}/images/logo.png`,
     priceRange: '₩₩',
     currenciesAccepted: 'KRW',
@@ -421,7 +421,7 @@ export function areaLocalBusinessSchema(area: {
     mainEntityOfPage: { '@id': `${BASE}/#medicalclinic` },
     telephone: CLINIC.phone,
     priceRange: '₩₩',
-    image: `${BASE}/images/clinic-exterior.jpg`,
+    image: `${BASE}/images/og-default.jpg`,
     address: {
       '@type': 'PostalAddress',
       streetAddress,

@@ -331,8 +331,8 @@ export const HomePage: FC = () => {
             </figure>
             <figure class="space-card reveal reveal-d2" data-glow>
               <div class="bento-glow"></div>
-              <img src="/images/interior-2.webp" alt="더착한치과 입구와 안내 동선" loading="lazy" />
-              <figcaption><i class="fa-solid fa-door-open"></i> 입구 &amp; 안내 동선</figcaption>
+              <img src="/images/interior-1.webp" alt="더착한치과 우드톤 라운지 전경 — 넓은 동선과 따뜻한 조명" loading="lazy" />
+              <figcaption><i class="fa-solid fa-tree"></i> 우드톤 라운지 전경</figcaption>
             </figure>
           </div>
         </div>
