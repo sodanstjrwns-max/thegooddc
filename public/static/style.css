@@ -146,6 +146,9 @@ p,.lead,blockquote{text-wrap:pretty}
 h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,span,a,td,th,dt,dd,label,
 .lead,.eyebrow,.btn,.cell,.nm,.sub,.tl,.tc,.case-body,.bento-kicker{
   word-break:keep-all;overflow-wrap:anywhere}
+/* 기울임체(italic) 전역 제거 — em/cite/address/i(아이콘 제외) 모두 정체로 */
+em,cite,address,dfn,var,i:not([class*="fa-"]):not([class*="fa "]),
+blockquote,q{font-style:normal}
 ::selection{background:var(--ink);color:#fff}
 
 /* 2026: content-visibility — skip rendering offscreen sections (faster paint) */
