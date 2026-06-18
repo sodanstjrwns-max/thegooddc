@@ -142,6 +142,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 /* 2026: text-wrap balances headlines, pretties body — no orphans, even ragging */
 h1,h2,h3,h4{line-height:1.08;letter-spacing:-.035em;font-weight:700;color:var(--ink);text-wrap:balance}
 p,.lead,blockquote{text-wrap:pretty}
+/* 한글 줄바꿈: 어절(띄어쓰기) 단위로만 끊고, 너무 긴 영문/URL만 강제 분리 */
+h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,span,a,td,th,dt,dd,label,
+.lead,.eyebrow,.btn,.cell,.nm,.sub,.tl,.tc,.case-body,.bento-kicker{
+  word-break:keep-all;overflow-wrap:anywhere}
 ::selection{background:var(--ink);color:#fff}
 
 /* 2026: content-visibility — skip rendering offscreen sections (faster paint) */
@@ -966,7 +970,8 @@ section{position:relative}
   .compare-table .row{grid-template-columns:1fr}
   .compare-table .row.head{display:none}
   .compare-table .cell{padding:14px 22px}
-  .compare-table .cell::before{content:attr(data-l);font-weight:600;color:var(--ink-faint);margin-right:auto;font-size:.85rem}
+  .compare-table .cell::before{content:attr(data-l);font-weight:600;color:var(--ink-faint);margin-right:auto;font-size:.85rem;white-space:nowrap;flex-shrink:0}
+  .compare-table .cell.us,.compare-table .cell.them{flex-wrap:wrap;gap:6px 10px}
   .compare-table .cell.label{justify-content:flex-start;font-size:1.05rem;background:var(--bg-2)}
   .compare-table .cell.label::before{display:none}
 }
