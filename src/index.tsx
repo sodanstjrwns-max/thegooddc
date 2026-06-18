@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { CLINIC } from './data/clinic'
+import { ASSET_VERSION } from './lib/asset-version'
 import { TREATMENTS } from './data/treatments'
 import { DOCTORS } from './data/doctors'
 import { TERMS, DETAILED_TERMS } from './data/encyclopedia'
@@ -853,7 +854,7 @@ function legalPage(title: string, html: string) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title} | {CLINIC.name}</title>
         <meta name="robots" content="noindex" />
-        <link rel="stylesheet" href="/static/style.css" />
+        <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
       </head>
       <body>
         <section class="page-hero"><div class="container ph-inner" style="padding-top:60px"><h1>{title}</h1></div></section>
@@ -872,7 +873,7 @@ function notFoundPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>페이지를 찾을 수 없습니다 | {CLINIC.name}</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" />
-        <link rel="stylesheet" href="/static/style.css" />
+        <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
       </head>
       <body>
         <section class="hero" style="min-height:100vh">

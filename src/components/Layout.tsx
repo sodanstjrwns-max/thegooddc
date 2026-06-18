@@ -3,6 +3,7 @@ import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { AREAS } from '../data/areas'
 import { canonical, dentistSchema, organizationSchema, medicalClinicSchema, webSiteSchema } from '../lib/seo'
+import { ASSET_VERSION } from '../lib/asset-version'
 
 interface LayoutProps {
   title: string
@@ -70,7 +71,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         {/* Editorial serif pairing — Newsreader (Latin) + Nanum Myeongjo (Korean) */}
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" />
         <link rel="stylesheet" href={FA} />
-        <link rel="stylesheet" href="/static/style.css" />
+        <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
 
         {/* JSON-LD */}
         {allSchemas.map((s) => (
@@ -85,7 +86,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <main>{children}</main>
         <Footer />
         <FloatingCTA />
-        <script src="/static/app.js" defer></script>
+        <script src={`/static/app.js?v=${ASSET_VERSION}`} defer></script>
       </body>
     </html>
   )
