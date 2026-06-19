@@ -104,6 +104,33 @@ export const DoctorDetailPage: FC<{ slug: string }> = ({ slug }) => {
         </div>
       </section>
 
+      {/* 진료실에서 — 원장 직접 집도 실사 갤러리 (대표원장 전용) */}
+      {d.slug === 'hwang-wooseok' && (
+        <section class="sec doc-clinic" aria-label="진료실에서">
+          <div class="container">
+            <div class="shead center" style="margin-bottom:38px">
+              <span class="eyebrow center">In the Operating Room</span>
+              <h2>진료실에서, <span>직접 집도합니다</span></h2>
+              <p>상담부터 식립까지, 황우석 대표원장이 직접 진료합니다. 디지털 가이드와 최소 절개를 지향합니다.</p>
+            </div>
+            <figure class="doc-feature reveal" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/doctor-surgery-wide.webp" alt="황우석 대표원장이 스태프와 함께 임플란트 수술을 진행하는 모습" loading="lazy" />
+              <figcaption><i class="fa-solid fa-user-doctor"></i> 디지털 가이드 임플란트 수술 — 직접 집도</figcaption>
+            </figure>
+            <div class="doc-clinic-grid">
+              <figure class="doc-card reveal reveal-d1" data-glow><div class="bento-glow"></div><img src="/images/op-guide.webp" alt="가이드 수술 식립 과정" loading="lazy" /><figcaption>가이드 식립</figcaption></figure>
+              <figure class="doc-card reveal reveal-d2" data-glow><div class="bento-glow"></div><img src="/images/op-focus.webp" alt="현미경급 집중 진료" loading="lazy" /><figcaption>정밀 진료</figcaption></figure>
+              <figure class="doc-card reveal reveal-d3" data-glow><div class="bento-glow"></div><img src="/images/op-assist.webp" alt="스태프와 협진하는 모습" loading="lazy" /><figcaption>협진 시스템</figcaption></figure>
+              <figure class="doc-card reveal reveal-d4" data-glow><div class="bento-glow"></div><img src="/images/case-consult.webp" alt="환자와 상담하는 원장" loading="lazy" /><figcaption>충분한 상담</figcaption></figure>
+            </div>
+            <p class="cases-note reveal">
+              <i class="fa-solid fa-circle-info"></i> 실제 진료 현장을 촬영한 사진이며, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다.
+            </p>
+          </div>
+        </section>
+      )}
+
       <section class="sec-sm">
         <div class="container">
           <div class="cta-band reveal">

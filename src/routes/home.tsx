@@ -361,6 +361,37 @@ export const HomePage: FC = () => {
         </div>
       </section>
 
+      {/* ===================== OPERATING — 원장이 직접 집도합니다 ===================== */}
+      <section class="operating" id="operating" aria-label="원장이 직접 집도합니다">
+        <div class="container">
+          <div class="shead center" style="margin-bottom:40px">
+            <span class="eyebrow center">Hands-on Care</span>
+            <h2>상담부터 식립까지, <span>원장이 직접</span></h2>
+            <p>진단·상담·수술을 황우석 대표원장이 직접 진행합니다. 디지털 가이드와 최소 절개로, 한 번에 정확하게.</p>
+          </div>
+          <div class="op-grid" data-tilt-scope>
+            <figure class="op-card op-card-lg reveal" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/op-team.webp" alt="황우석 대표원장이 스태프와 함께 임플란트 수술을 진행하는 모습" loading="lazy" />
+              <figcaption><i class="fa-solid fa-user-doctor"></i> 디지털 가이드 임플란트 — 직접 집도</figcaption>
+            </figure>
+            <figure class="op-card reveal reveal-d1" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/op-focus.webp" alt="현미경급 집중으로 정밀하게 진료하는 모습" loading="lazy" />
+              <figcaption><i class="fa-solid fa-crosshairs"></i> 정밀 진료</figcaption>
+            </figure>
+            <figure class="op-card reveal reveal-d2" data-glow>
+              <div class="bento-glow"></div>
+              <img src="/images/op-light.webp" alt="수술 조명 아래 식립을 진행하는 모습" loading="lazy" />
+              <figcaption><i class="fa-solid fa-tooth"></i> 정확한 식립</figcaption>
+            </figure>
+          </div>
+          <p class="cases-note reveal">
+            <i class="fa-solid fa-circle-info"></i> 실제 진료 현장을 촬영한 사진이며, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다.
+          </p>
+        </div>
+      </section>
+
       {/* ===================== CASE STORIES — 원장이 들려주는 진료 이야기 ===================== */}
       <section class="cases" id="case-stories" aria-label="원장이 들려주는 진료 이야기">
         <div class="container">
@@ -373,10 +404,15 @@ export const HomePage: FC = () => {
             {CASE_STORIES.map((c, i) => (
               <article class={`case-card reveal reveal-d${(i % 4) + 1}`} data-glow>
                 <div class="bento-glow"></div>
-                <span class="case-kicker"><i class={`fa-solid fa-${c.icon}`}></i> {c.tag}</span>
-                <h3>{c.title}</h3>
-                <p class="case-body">{c.body}</p>
-                <span class="case-meta"><i class="fa-solid fa-tooth"></i> {c.meta}</span>
+                <div class="case-photo">
+                  <img src={c.image} alt={c.alt} loading="lazy" />
+                  <span class="case-kicker"><i class={`fa-solid fa-${c.icon}`}></i> {c.tag}</span>
+                </div>
+                <div class="case-text">
+                  <h3>{c.title}</h3>
+                  <p class="case-body">{c.body}</p>
+                  <span class="case-meta"><i class="fa-solid fa-tooth"></i> {c.meta}</span>
+                </div>
               </article>
             ))}
           </div>

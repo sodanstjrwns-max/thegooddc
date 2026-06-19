@@ -163,6 +163,8 @@ export interface CaseStory {
   title: string       // 케이스 제목
   body: string        // 원장 1인칭 진료 경험담
   meta: string        // 진료 키워드
+  image: string       // 실제 진료 사진
+  alt: string         // 이미지 대체 텍스트
 }
 
 export const CASE_STORIES: CaseStory[] = [
@@ -175,6 +177,8 @@ export const CASE_STORIES: CaseStory[] = [
       'AI 임플란트 가이드 시스템으로 남아 있는 뼈를 최대한 활용하도록 식립 경로를 미리 설계해 치료를 진행했습니다. ' +
       '컴퓨터가 최적의 경로를 제안하면 의사는 최종 확인을 거쳐, 좁고 신경관과 가까운 부위도 계획대로 식립할 수 있습니다.',
     meta: '디지털 가이드 · 골이식 · 무절개 지향',
+    image: '/images/case-implant.webp',
+    alt: 'AI 가이드 임플란트 식립 — 디지털 가이드를 활용한 정밀 수술',
   },
   {
     tag: '3단계 무통마취',
@@ -186,6 +190,8 @@ export const CASE_STORIES: CaseStory[] = [
       '3단계 무통마취 시스템으로 편안하게 치료를 받으신 뒤 ' +
       '“마취가 다 끝난 거냐”고 재차 물으시며 “진작 올걸” 하셨던 기억이 오래 남습니다.',
     meta: '편안한 마취 시스템 · 치과 공포 케어',
+    image: '/images/case-consult.webp',
+    alt: '원장이 환자와 충분히 상담하며 두려움을 덜어주는 모습',
   },
   {
     tag: '재수술 케이스',
@@ -196,6 +202,8 @@ export const CASE_STORIES: CaseStory[] = [
       'AI 가이드 시스템으로 정확한 위치에 적당한 간격을 두고 다시 계획해 식립했습니다. ' +
       '“싼 데는 이유가 있더라”는 말씀을 들을 때면, 처음부터 제대로 하는 것의 가치를 다시 생각하게 됩니다.',
     meta: '재식립 설계 · 임플란트 주위염 관리',
+    image: '/images/case-redo.webp',
+    alt: '스태프와 협진하며 재식립을 정밀하게 진행하는 모습',
   },
   {
     tag: '24년의 보람',
@@ -207,6 +215,8 @@ export const CASE_STORIES: CaseStory[] = [
       '지긋지긋하던 틀니에서 벗어나 식사를 편히 하신다는 말씀을 들었을 때, ' +
       '치과의사로서 가장 큰 보람을 느낍니다.',
     meta: '골이식 · 고정성 보철 · 난케이스',
+    image: '/images/case-denture.webp',
+    alt: '골이식과 고정성 보철로 난케이스를 해결하는 정밀 진료 모습',
   },
 ]
 
