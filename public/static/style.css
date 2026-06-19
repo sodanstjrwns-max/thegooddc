@@ -152,9 +152,8 @@ blockquote,q{font-style:normal}
 ::selection{background:var(--ink);color:#fff}
 
 /* 2026: content-visibility — skip rendering offscreen sections (faster paint) */
-.assure,.philo,.core,.digital,.doctor,.journey,.compare,.tlist,.marquee-band{
-  content-visibility:auto;contain-intrinsic-size:auto 600px;
-}
+/* content-visibility:auto 는 빠른 스크롤·캡처 시 섹션 렌더링을 건너뛰어
+   reveal 요소가 노출되지 않는 문제가 있어 제거함 (섹션 수가 적어 성능 영향 미미). */
 
 /* ============================================================
    2026 NATIVE WEB TECH
@@ -175,17 +174,9 @@ blockquote,q{font-style:normal}
 }
 @keyframes sp-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 
-/* ── Scroll-driven reveal (pure CSS, view() timeline) — progressive enhancement ── */
-@supports (animation-timeline: view()){
-  @media (prefers-reduced-motion: no-preference){
-    .reveal{opacity:1;transform:none} /* JS class no longer required */
-    .reveal:not(.in){
-      animation:reveal-in linear both;
-      animation-timeline:view();
-      animation-range:entry 0% entry 38%;
-    }
-  }
-}
+/* ── Reveal: JS IntersectionObserver(.in) 단일 방식으로 통일.
+   과거 CSS scroll-driven(view() timeline) 방식은 .in 토글과 충돌해
+   일부 요소가 opacity:0에 갇히는 문제가 있어 제거함. ── */
 @keyframes reveal-in{
   from{opacity:0;transform:translateY(34px)}
   to{opacity:1;transform:translateY(0)}
@@ -1053,7 +1044,7 @@ section{position:relative}
    ============================================================ */
 
 /* ===== FABLE — 5장 스크롤텔링 ===== */
-.fable{padding:120px 0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%);position:relative;content-visibility:auto;contain-intrinsic-size:auto 1800px}
+.fable{padding:120px 0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%);position:relative}
 .fable-track{position:relative;max-width:860px;margin:64px auto 0;padding-left:64px}
 .fable-spine{position:absolute;left:23px;top:0;bottom:0;width:2px;background:var(--line-2);border-radius:2px;overflow:hidden}
 .fable-spine-fill{display:block;width:100%;height:100%;background:linear-gradient(180deg,var(--accent),var(--accent-2));transform-origin:top;transform:scaleY(0)}
@@ -1079,7 +1070,7 @@ section{position:relative}
 .fable-coda::before{content:"✦";display:block;color:var(--accent-2);font-size:.9rem;margin-bottom:16px}
 
 /* ===== FUNNEL — 10단계 스토리맵 ===== */
-.funnel{padding:120px 0;background:var(--bg);content-visibility:auto;contain-intrinsic-size:auto 1400px}
+.funnel{padding:120px 0;background:var(--bg)}
 .funnel-phases{display:flex;justify-content:center;gap:10px;margin:48px 0 40px;flex-wrap:wrap}
 .fp-tab{appearance:none;border:1px solid var(--line-2);background:var(--card);border-radius:999px;padding:10px 22px;font-family:var(--sans);font-size:.9rem;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:all .25s;display:flex;flex-direction:column;align-items:center;line-height:1.25}
 .fp-tab small{font-size:.62rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
@@ -1331,3 +1322,62 @@ section{position:relative}
 /* ============ 자동 인링크 (백과사전 연결) ============ */
 .inlink{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(12,124,164,.45);transition:all .18s ease;font-weight:600}
 .inlink:hover{color:var(--accent-d);border-bottom-style:solid;background:var(--accent-soft)}
+
+
+/* ============ 병원소개(MISSION) 리디자인 ============ */
+/* STORY split: 텍스트 + 실제 인테리어 사진 */
+.mis-story{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,64px);align-items:center}
+.mis-story .ms-text .eyebrow{margin-bottom:16px}
+.mis-story .ms-text h2{font-size:clamp(24px,3.2vw,34px);letter-spacing:-.04em;line-height:1.35;margin-bottom:20px;color:var(--ink)}
+.mis-story .ms-text h2 .grad{color:var(--accent)}
+.mis-story .ms-text p{color:var(--ink-soft);line-height:1.9;font-size:1.02rem;margin-bottom:14px}
+.mis-story .ms-sign{margin-top:26px;display:flex;align-items:center;gap:14px;font-weight:700;color:var(--ink)}
+.mis-story .ms-sign .line{width:34px;height:2px;background:var(--accent);border-radius:2px}
+.mis-photo{position:relative;border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--sh-md);aspect-ratio:4/5}
+.mis-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .9s var(--ease-out,ease)}
+.mis-photo:hover img{transform:scale(1.04)}
+.mis-photo .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 22px 18px;color:#fff;font-weight:600;font-size:.95rem;background:linear-gradient(to top,rgba(13,27,42,.82),transparent)}
+@media(max-width:880px){.mis-story{grid-template-columns:1fr;gap:28px}.mis-photo{aspect-ratio:4/3;max-width:560px;margin:0 auto}}
+
+/* VALUE cards (photo-backed) */
+.mis-values{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.mis-val{position:relative;border-radius:var(--radius-lg);overflow:hidden;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;padding:26px;color:#fff;box-shadow:var(--sh-sm);border:1px solid var(--line);transition:transform .4s var(--ease-out,ease),box-shadow .4s}
+.mis-val .bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center}
+.mis-val::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(11,30,46,.15) 0%,rgba(11,30,46,.55) 55%,rgba(11,30,46,.88) 100%)}
+.mis-val:hover{transform:translateY(-6px);box-shadow:var(--sh-md)}
+.mis-val .v-inner{position:relative;z-index:2}
+.mis-val .v-ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:rgba(67,200,244,.22);backdrop-filter:blur(6px);color:#fff;font-size:1.15rem;margin-bottom:16px;border:1px solid rgba(255,255,255,.25)}
+.mis-val h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:8px}
+.mis-val p{font-size:.94rem;line-height:1.7;color:rgba(255,255,255,.88)}
+@media(max-width:880px){.mis-values{grid-template-columns:1fr;gap:14px}.mis-val{min-height:230px}}
+
+/* SPACE gallery */
+.mis-gallery{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:14px}
+.mis-gallery figure{position:relative;margin:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-xs)}
+.mis-gallery figure.wide{grid-column:span 2}
+.mis-gallery figure.tall{grid-row:span 2}
+.mis-gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s var(--ease-out,ease)}
+.mis-gallery figure:hover img{transform:scale(1.06)}
+.mis-gallery figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 16px 12px;color:#fff;font-weight:600;font-size:.88rem;background:linear-gradient(to top,rgba(13,27,42,.78),transparent);opacity:0;transform:translateY(8px);transition:all .35s ease}
+.mis-gallery figure:hover figcaption{opacity:1;transform:none}
+@media(max-width:880px){.mis-gallery{grid-template-columns:1fr 1fr;grid-auto-rows:150px;gap:10px}.mis-gallery figure.wide{grid-column:span 2}.mis-gallery figure.tall{grid-row:span 1}}
+
+/* 진료 현장 strip */
+.mis-onsite{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mis-onsite figure{position:relative;margin:0;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:4/5;border:1px solid var(--line);box-shadow:var(--sh-sm)}
+.mis-onsite img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s var(--ease-out,ease)}
+.mis-onsite figure:hover img{transform:scale(1.05)}
+.mis-onsite figcaption{position:absolute;left:0;right:0;bottom:0;padding:18px 18px 14px;color:#fff;font-weight:700;font-size:.96rem;letter-spacing:-.01em;background:linear-gradient(to top,rgba(13,27,42,.85),rgba(13,27,42,.2) 60%,transparent)}
+.mis-onsite figcaption i{margin-right:7px;color:var(--accent-teal)}
+@media(max-width:880px){.mis-onsite{grid-template-columns:1fr;gap:12px}.mis-onsite figure{aspect-ratio:3/2}}
+
+/* 원장 카드(실사진) */
+.mis-doctor{display:grid;grid-template-columns:.78fr 1.22fr;gap:clamp(28px,4vw,56px);align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--sh-sm);padding:clamp(20px,3vw,40px)}
+.mis-doctor .md-photo{position:relative;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:3/4;box-shadow:var(--sh-md)}
+.mis-doctor .md-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.mis-doctor .md-photo .ribbon{position:absolute;bottom:16px;left:16px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);color:var(--accent-d);font-weight:700;font-size:.86rem;padding:8px 16px;border-radius:var(--radius-pill)}
+.mis-doctor .md-body .license{display:inline-block;background:var(--accent-soft);color:var(--accent-d);font-weight:700;font-size:.82rem;padding:6px 14px;border-radius:var(--radius-pill);margin-bottom:14px}
+.mis-doctor .md-body h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.03em;margin-bottom:14px;color:var(--ink)}
+.mis-doctor .md-body h2 small{font-size:.6em;font-weight:600;color:var(--ink-soft);margin-left:8px}
+.mis-doctor .md-body p{color:var(--ink-soft);line-height:1.88;margin-bottom:22px}
+@media(max-width:880px){.mis-doctor{grid-template-columns:1fr;text-align:center}.mis-doctor .md-photo{max-width:340px;margin:0 auto}.mis-doctor .md-body .actions{justify-content:center}}

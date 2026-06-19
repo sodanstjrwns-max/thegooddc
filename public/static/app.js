@@ -61,10 +61,6 @@
   /* ---- REVEAL on scroll ---- */
   function initReveal() {
     var els = document.querySelectorAll('.reveal,.reveal-up,.reveal-scale');
-    // 2026: if the browser supports CSS scroll-driven view() timelines,
-    // the reveal is handled natively in CSS — JS observer not needed.
-    var nativeScroll = CSS && CSS.supports && CSS.supports('animation-timeline: view()');
-    if (nativeScroll && !prefersReduced) return;
     if (prefersReduced || !('IntersectionObserver' in window)) {
       els.forEach(function (el) { el.classList.add('in'); });
       return;
@@ -89,6 +85,14 @@
     window.addEventListener('scroll', sweep, { passive: true });
     window.addEventListener('resize', sweep, { passive: true });
     sweep();
+
+    /* absolute failsafe: 가로 캐러셀 등 observer/sweep가 못 잡는 요소도
+       4초 후에는 무조건 노출해 콘텐츠가 사라지지 않도록 보장 */
+    setTimeout(function () {
+      els.forEach(function (el) {
+        if (!el.classList.contains('in')) el.classList.add('in');
+      });
+    }, 4000);
   }
 
   /* ---- COUNT UP ---- */

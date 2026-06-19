@@ -20,7 +20,7 @@ export const MissionPage: FC = () => {
       schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema()]}
     >
       <section class="page-hero has-img">
-        <div class="bg" data-parallax="0.12" style="background-image:url('/images/hero.webp')"></div>
+        <div class="bg" data-parallax="0.12" style="background-image:url('/images/interior-reception.webp')"></div>
         <div class="container">
           <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]} />
           <div class="eyebrow">OUR MISSION</div>
@@ -29,42 +29,125 @@ export const MissionPage: FC = () => {
         </div>
       </section>
 
+      {/* OUR STORY — 텍스트 + 실제 인테리어 사진 */}
       <section class="sec">
-        <div class="container article-body">
-          <div class="reveal" style="text-align:center;margin-bottom:20px"><div class="eyebrow" style="justify-content:center">OUR STORY</div></div>
-          <h2 class="aeo-answer" style="border:none;background:none;font-size:clamp(22px,3vw,30px);font-weight:800;text-align:center;color:var(--ink);line-height:1.5;padding:0">
-            "{CLINIC.philosophy.mission}"
-          </h2>
-          <p style="text-align:center;font-size:18px">{CLINIC.philosophy.story}</p>
+        <div class="container">
+          <div class="mis-story">
+            <div class="ms-text reveal">
+              <div class="eyebrow">OUR STORY</div>
+              <h2>"치과가 무섭지 않은 곳"을<br />만들고 싶었습니다</h2>
+              <p>치과에 대한 막연한 두려움 때문에 꼭 받아야 할 진료를 미루는 분들이 많습니다. 더착한치과는 바로 그 두려움을 덜어드리기 위해 시작했습니다.</p>
+              <p>24년의 임상 경험과 디지털 기술을 더해, 정확하면서도 편안한 진료로 환자분의 두려움을 안심으로 바꾸어 드리는 것 — 그것이 우리의 약속입니다.</p>
+              <div class="ms-sign"><span class="line"></span> 더착한치과 의료진 일동</div>
+            </div>
+            <div class="mis-photo reveal reveal-d1">
+              <img src="/images/interior-lounge.webp" alt="더착한치과 대기 라운지 — 편안한 공간" loading="lazy" />
+              <span class="cap">환자분이 가장 먼저 마주하는 편안한 공간</span>
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* CORE VALUES — 사진 배경 카드 */}
       <section class="sec bg-sand">
         <div class="container">
-          <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 50px">
-            <div class="eyebrow" style="justify-content:center">CORE VALUES</div>
+          <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
+            <div class="eyebrow center">CORE VALUES</div>
             <h2 class="section-title">우리가 지키는 세 가지 가치</h2>
           </div>
-          <div class="value-grid">
-            {CLINIC.philosophy.coreValues.map((v, i) => (
-              <div class="value-card reveal" data-delay={String(i + 1)}>
-                <div class="vc-icon"><i class={`fa-solid fa-${v.icon}`}></i></div>
-                <h3>{v.title}</h3><p>{v.desc}</p>
+          <div class="mis-values">
+            {[
+              { ...CLINIC.philosophy.coreValues[0], bg: '/images/op-guide.webp' },
+              { ...CLINIC.philosophy.coreValues[1], bg: '/images/op-focus.webp' },
+              { ...CLINIC.philosophy.coreValues[2], bg: '/images/interior-1.webp' },
+            ].map((v, i) => (
+              <div class={`mis-val reveal reveal-d${i + 1}`}>
+                <div class="bg" style={`background-image:url('${v.bg}')`}></div>
+                <div class="v-inner">
+                  <div class="v-ico"><i class={`fa-solid fa-${v.icon}`}></i></div>
+                  <h3>{v.title}</h3>
+                  <p>{v.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* SPACE — 공간 갤러리 */}
       <section class="sec">
         <div class="container">
-          <div class="doctor-card reveal">
-            <div class="doctor-photo"><i class="fa-solid fa-user-doctor"></i></div>
-            <div>
+          <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
+            <div class="eyebrow center">OUR SPACE</div>
+            <h2 class="section-title">정돈된 공간, 안심되는 첫인상</h2>
+            <p style="color:var(--ink-soft)">서울대학교 치과병원 시스템을 기준으로 설계한 진료 환경입니다.</p>
+          </div>
+          <div class="mis-gallery reveal">
+            <figure class="wide tall">
+              <img src="/images/interior-reception.webp" alt="더착한치과 리셉션" loading="lazy" />
+              <figcaption>리셉션 · 안내 데스크</figcaption>
+            </figure>
+            <figure>
+              <img src="/images/interior-1.webp" alt="진료실" loading="lazy" />
+              <figcaption>진료실</figcaption>
+            </figure>
+            <figure>
+              <img src="/images/interior-2.webp" alt="상담실" loading="lazy" />
+              <figcaption>상담 공간</figcaption>
+            </figure>
+            <figure class="wide">
+              <img src="/images/interior-lounge.webp" alt="대기 라운지" loading="lazy" />
+              <figcaption>대기 라운지</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      {/* ON-SITE — 진료 현장 */}
+      <section class="sec bg-sand">
+        <div class="container">
+          <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
+            <div class="eyebrow center">ON-SITE</div>
+            <h2 class="section-title">원장이 직접, 정밀하게</h2>
+          </div>
+          <div class="mis-onsite reveal">
+            <figure>
+              <img src="/images/op-team.webp" alt="협진 시스템" loading="lazy" />
+              <figcaption><i class="fa-solid fa-people-group"></i> 체계적인 협진 시스템</figcaption>
+            </figure>
+            <figure>
+              <img src="/images/op-focus.webp" alt="정밀 진료" loading="lazy" />
+              <figcaption><i class="fa-solid fa-crosshairs"></i> 디지털 정밀 진료</figcaption>
+            </figure>
+            <figure>
+              <img src="/images/op-light.webp" alt="감염관리" loading="lazy" />
+              <figcaption><i class="fa-solid fa-shield-halved"></i> 철저한 감염관리</figcaption>
+            </figure>
+          </div>
+          <p style="text-align:center;color:var(--ink-soft);font-size:.86rem;margin-top:22px">※ 실제 진료 현장을 촬영한 사진이며, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다.</p>
+        </div>
+      </section>
+
+      {/* 대표원장 (실사진) */}
+      <section class="sec">
+        <div class="container">
+          <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 40px">
+            <div class="eyebrow center">DIRECTOR</div>
+            <h2 class="section-title">진료를 책임지는 사람</h2>
+          </div>
+          <div class="mis-doctor reveal">
+            <div class="md-photo">
+              <img src={doctor.photo} alt={`${doctor.name} ${doctor.title}`} loading="lazy" />
+              <span class="ribbon">임플란트 15,000+ 케이스</span>
+            </div>
+            <div class="md-body">
               <span class="license">{doctor.license}</span>
-              <h2 class="section-title" style="font-size:30px;margin-bottom:12px">{doctor.name} {doctor.title}</h2>
-              <p style="color:var(--ink-soft);line-height:1.85;margin-bottom:20px">{doctor.philosophy}</p>
-              <a href={`/doctors/${doctor.slug}`} class="btn btn-outline"><i class="fa-solid fa-arrow-right"></i> 의료진 소개</a>
+              <h2>{doctor.name} <small>{doctor.title}</small></h2>
+              <p>{doctor.philosophy}</p>
+              <div class="actions" style="display:flex;flex-wrap:wrap;gap:12px">
+                <a href={`/doctors/${doctor.slug}`} class="btn btn-accent"><i class="fa-solid fa-user-doctor"></i> 의료진 자세히 보기</a>
+                <a href="/reservation" class="btn btn-outline"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
+              </div>
             </div>
           </div>
         </div>
