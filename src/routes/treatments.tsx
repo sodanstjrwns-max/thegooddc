@@ -401,11 +401,13 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
       <section class="sec-sm">
         <div class="container">
           <div class="cta-band reveal">
-            <h2>{t.shortName} 이야기의 첫 문장을 써보세요</h2>
-            <p>정밀 진단 후 개인별 맞춤 진료 계획을 함께 설계합니다.</p>
-            <div class="hero-actions">
-              <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> {STORY_CTA.reserve}</a>
-              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {STORY_CTA.call}</a>
+            <div class="inner">
+              <h2>{t.shortName} 이야기의 첫 문장을 써보세요</h2>
+              <p>정밀 진단 후 개인별 맞춤 진료 계획을 함께 설계합니다.</p>
+              <div class="actions">
+                <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> {STORY_CTA.reserve}</a>
+                <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {STORY_CTA.call}</a>
+              </div>
             </div>
           </div>
         </div>
