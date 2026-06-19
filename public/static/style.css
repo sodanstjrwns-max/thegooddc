@@ -511,18 +511,16 @@ section{position:relative}
 
 /* ===== OPERATING — 원장 직접 집도 (홈) ===== */
 .operating{padding:var(--sec-pad) 0;background:var(--bg-1)}
-.op-grid{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:18px;margin-top:8px}
-.op-card{position:relative;margin:0;border-radius:var(--r-lg,18px);overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-sm);transition:transform .4s var(--ease,ease),box-shadow .4s,border-color .4s}
-.op-card-lg{grid-row:span 2}
+.op-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+.op-card{position:relative;margin:0;aspect-ratio:4/5;border-radius:var(--r-lg,18px);overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-sm);transition:transform .4s var(--ease,ease),box-shadow .4s,border-color .4s}
 .op-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s var(--ease,ease)}
 .op-card:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--line-2)}
 .op-card:hover img{transform:scale(1.05)}
-.op-card figcaption{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:16px 20px;font-size:.92rem;font-weight:700;letter-spacing:-.02em;color:#fff;background:linear-gradient(to top,rgba(13,27,42,.85) 0%,rgba(13,27,42,.28) 60%,transparent 100%)}
-.op-card-lg figcaption{font-size:1.04rem;padding:22px 24px}
+.op-card figcaption{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:18px 20px;font-size:1rem;font-weight:700;letter-spacing:-.02em;color:#fff;background:linear-gradient(to top,rgba(13,27,42,.85) 0%,rgba(13,27,42,.28) 60%,transparent 100%)}
 .op-card figcaption i{margin-right:8px;color:var(--accent-2,#6fd3c9)}
 .op-card .bento-glow{position:absolute;inset:0;z-index:2;opacity:0;transition:opacity .35s;pointer-events:none}
 .op-card:hover .bento-glow{opacity:1}
-@media(max-width:780px){.op-grid{grid-template-columns:1fr;grid-template-rows:none;grid-auto-rows:230px}.op-card-lg{grid-row:auto;grid-auto-rows:260px}}
+@media(max-width:780px){.op-grid{grid-template-columns:1fr;gap:14px}.op-card{aspect-ratio:3/4}}
 
 /* ===== SPACE — 원내 공간 갤러리 ===== */
 .space{padding:var(--sec-pad) 0;background:var(--bg-1)}

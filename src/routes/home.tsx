@@ -370,10 +370,10 @@ export const HomePage: FC = () => {
             <p>진단·상담·수술을 황우석 대표원장이 직접 진행합니다. 디지털 가이드와 최소 절개로, 한 번에 정확하게.</p>
           </div>
           <div class="op-grid" data-tilt-scope>
-            <figure class="op-card op-card-lg reveal" data-glow>
+            <figure class="op-card reveal" data-glow>
               <div class="bento-glow"></div>
               <img src="/images/op-team.webp" alt="황우석 대표원장이 스태프와 함께 임플란트 수술을 진행하는 모습" loading="lazy" />
-              <figcaption><i class="fa-solid fa-user-doctor"></i> 디지털 가이드 임플란트 — 직접 집도</figcaption>
+              <figcaption><i class="fa-solid fa-user-doctor"></i> 직접 집도</figcaption>
             </figure>
             <figure class="op-card reveal reveal-d1" data-glow>
               <div class="bento-glow"></div>
