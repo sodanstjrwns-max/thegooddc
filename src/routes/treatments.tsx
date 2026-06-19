@@ -9,9 +9,9 @@ import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedur
 import { InlinkText } from '../lib/inlink'
 
 const CORE_IMG: Record<string, string> = {
-  implant: '/images/core-implant.webp',
-  'clear-aligner': '/images/core-aligner.webp',
-  minish: '/images/core-minish.webp',
+  implant: '/images/core-implant-v2.webp',
+  'clear-aligner': '/images/core-aligner-v2.webp',
+  minish: '/images/core-minish-v2.webp',
 }
 
 // 진료별 임상 메타데이터 (procedureRichSchema 강화용 — AI가 깊게 인용)
@@ -100,7 +100,7 @@ export const TreatmentsListPage: FC = () => (
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }])]}
   >
     <section class="page-hero has-img">
-      <div class="bg" data-parallax="0.12" style="background-image:url('/images/core-implant.webp')"></div>
+      <div class="bg" data-parallax="0.12" style="background-image:url('/images/core-implant-v2.webp')"></div>
       <div class="container ph-inner">
         <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }]} />
         <div class="eyebrow">TREATMENTS</div>

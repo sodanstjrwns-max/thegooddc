@@ -8,9 +8,9 @@ import { HeroToothVector, JourneyPathVector } from '../components/vectors'
 import { speakableSchema } from '../lib/seo'
 
 const CORE_IMG: Record<string, string> = {
-  implant: '/images/core-implant.webp',
-  'clear-aligner': '/images/core-aligner.webp',
-  minish: '/images/core-minish.webp',
+  implant: '/images/core-implant-v2.webp',
+  'clear-aligner': '/images/core-aligner-v2.webp',
+  minish: '/images/core-minish-v2.webp',
 }
 
 const ASSURE = [
