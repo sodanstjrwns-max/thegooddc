@@ -100,7 +100,7 @@ export const TreatmentsListPage: FC = () => (
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }])]}
   >
     <section class="page-hero has-img">
-      <div class="bg" data-parallax="0.12" style="background-image:url('/images/core-implant-v2.webp')"></div>
+      <div class="bg" data-parallax="0.12" style="background-image:url('/images/interior-reception.webp')"></div>
       <div class="container ph-inner">
         <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }]} />
         <div class="eyebrow">TREATMENTS</div>
@@ -112,13 +112,20 @@ export const TreatmentsListPage: FC = () => (
     <section class="sec">
       <div class="container">
         <div class="reveal" style="margin-bottom:40px"><div class="eyebrow">SIGNATURE</div><h2 class="section-title" style="font-size:34px">핵심 진료</h2></div>
-        <div class="core-grid">
+        <div class="core-grid" data-tilt-scope>
           {CORE_TREATMENTS.map((t, i) => (
-            <a href={`/treatments/${t.slug}`} class={`core-card core-${i + 1} reveal`} data-delay={String(i + 1)}>
-              <span class="num-tag">0{i + 1}</span>
-              <h3>{t.name}</h3>
-              <p>{t.tagline}</p>
-              <span class="more">자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+            <a href={`/treatments/${t.slug}`} class={`core-card reveal reveal-d${i + 1}`} data-tilt data-glow>
+              <div class="bento-glow"></div>
+              <div class="cc-img">
+                {CORE_IMG[t.slug] ? <img src={CORE_IMG[t.slug]} alt={t.name} loading="lazy" /> : <div class="ph"><i class={`fa-solid fa-${t.icon}`}></i></div>}
+                <span class="cc-num">0{i + 1}</span>
+              </div>
+              <div class="cc-body">
+                <span class="tag">{t.shortName}</span>
+                <h3>{t.name}</h3>
+                <p>{t.tagline}</p>
+                <span class="cc-more">자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+              </div>
             </a>
           ))}
         </div>

@@ -806,9 +806,9 @@ section{position:relative}
    PAGE HERO (inner pages) — minimal light grey stage
    ============================================================ */
 .page-hero{position:relative;padding:160px 0 70px;overflow:hidden;background:linear-gradient(180deg,#fff,var(--bg-2));text-align:center}
-.page-hero.has-img .bg{position:absolute;inset:0;z-index:0}
+.page-hero.has-img .bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat}
 .page-hero.has-img .bg img{width:100%;height:100%;object-fit:cover;opacity:.1}
-.page-hero.has-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),var(--bg-2))}
+.page-hero.has-img::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.86) 55%,var(--bg-2))}
 .page-hero .container,.page-hero .ph-inner{position:relative;z-index:2}
 .page-hero .eyebrow{margin-bottom:16px}
 .page-hero h1{font-size:var(--fs-h1);margin-bottom:16px;letter-spacing:-.04em}
