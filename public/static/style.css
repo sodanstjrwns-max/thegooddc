@@ -1381,3 +1381,42 @@ section{position:relative}
 .mis-doctor .md-body h2 small{font-size:.6em;font-weight:600;color:var(--ink-soft);margin-left:8px}
 .mis-doctor .md-body p{color:var(--ink-soft);line-height:1.88;margin-bottom:22px}
 @media(max-width:880px){.mis-doctor{grid-template-columns:1fr;text-align:center}.mis-doctor .md-photo{max-width:340px;margin:0 auto}.mis-doctor .md-body .actions{justify-content:center}}
+
+
+/* ============ 비급여 수가표 (PRICING) ============ */
+.price-meta{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:center;margin-bottom:34px;color:var(--ink-soft);font-size:.92rem}
+.price-meta i{color:var(--accent);margin-right:6px}
+.price-block{margin-bottom:40px}
+.price-cat{display:flex;align-items:center;gap:11px;font-size:clamp(19px,2.4vw,24px);letter-spacing:-.03em;color:var(--ink);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--accent)}
+.price-cat i{color:var(--accent);font-size:.95em}
+.price-table-wrap{border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--sh-xs);background:#fff}
+.price-table{width:100%;border-collapse:collapse;font-size:.95rem}
+.price-table thead th{background:var(--accent-2);color:#fff;font-weight:700;text-align:left;padding:14px 18px;letter-spacing:-.01em;white-space:nowrap}
+.price-table th.c-cost{text-align:right}
+.price-table tbody td{padding:14px 18px;border-top:1px solid var(--line);color:var(--ink-3);vertical-align:top;line-height:1.5}
+.price-table tbody tr:nth-child(even) td{background:var(--bg-2)}
+.price-table tbody tr:hover td{background:var(--accent-soft)}
+.price-table .c-sub{font-weight:600;color:var(--ink);min-width:150px}
+.price-table .c-detail{color:var(--ink-soft);white-space:nowrap}
+.price-table .c-cost{text-align:right;font-weight:700;color:var(--accent-d);white-space:nowrap;font-variant-numeric:tabular-nums}
+.price-table .c-cost.is-free{color:var(--ink-soft);font-weight:600}
+.price-table .c-note{color:var(--ink-soft);font-size:.86rem;max-width:340px}
+.price-notice{margin-top:8px;background:var(--accent-soft);border:1px solid color-mix(in oklab,var(--accent) 22%,var(--line));border-radius:var(--radius-lg);padding:24px 28px}
+.price-notice h3{display:flex;align-items:center;gap:9px;font-size:1.08rem;color:var(--accent-d);margin-bottom:12px}
+.price-notice ul{margin:0;padding-left:4px;list-style:none}
+.price-notice li{position:relative;padding-left:20px;margin-bottom:8px;color:var(--ink-3);line-height:1.65;font-size:.94rem}
+.price-notice li::before{content:"·";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700}
+.price-notice li:last-child{margin-bottom:0}
+@media(max-width:780px){
+  .price-table thead{display:none}
+  .price-table,.price-table tbody,.price-table tr,.price-table td{display:block;width:100%}
+  .price-table tbody tr{border-top:1px solid var(--line);padding:14px 16px}
+  .price-table tbody tr:first-child{border-top:none}
+  .price-table tbody tr:nth-child(even) td,.price-table tbody tr:hover td{background:transparent}
+  .price-table tbody td{border:none;padding:3px 0;display:flex;justify-content:space-between;gap:14px;text-align:right}
+  .price-table tbody td::before{content:attr(data-label);font-weight:700;color:var(--ink-soft);text-align:left;flex-shrink:0}
+  .price-table .c-sub{font-size:1rem}
+  .price-table .c-cost{text-align:right}
+  .price-table .c-note:empty{display:none}
+  .price-table .c-note{font-size:.84rem;border-top:1px dashed var(--line);margin-top:6px;padding-top:8px}
+}

@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout'
 import { Breadcrumb, FaqList } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS } from '../data/treatments'
+import { PRICING, PRICING_UPDATED, PRICING_UNIT_NOTE } from '../data/pricing'
 import { DOCTORS } from '../data/doctors'
 import { breadcrumbSchema, faqSchema, speakableSchema } from '../lib/seo'
 import type { Notice } from '../lib/content-store'
@@ -280,25 +281,74 @@ export const PricingPage: FC = () => (
     <section class="page-hero">
       <div class="container ph-inner">
         <div class="hero-badge"><i class="fa-solid fa-won-sign"></i> PRICING</div>
-        <h1>비용 안내</h1>
-        <p>투명한 비용 안내를 원칙으로 합니다.</p>
+        <h1>비급여 진료비용 안내</h1>
+        <p>의료법 제45조에 따라 비급여 진료비용을 투명하게 고지합니다.</p>
       </div>
     </section>
     <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '비용 안내', path: '/pricing' }]} />
 
-    <section class="sec">
-      <div class="container article-body">
-        <p class="aeo-answer">
-          치과 진료비용은 환자분의 구강 상태, 진료 범위, 사용 재료에 따라 달라집니다.
-          더착한치과는 정밀 진단 후 진료 계획과 함께 정확한 비용을 충분히 설명드린 뒤 진료를 시작합니다.
-          비급여 진료비용은 병원 내 게시되어 있으며, 상담 시 자세히 안내해 드립니다.
-        </p>
-        <h2>비급여 진료비 고지 안내</h2>
-        <p>본 병원은 의료법 제45조에 따라 비급여 진료비용을 병원 내에 게시하고 있습니다. 정확한 비용은 진단 결과에 따라 개인별로 안내되므로, 내원하여 상담받으시기를 권합니다.</p>
-        <h2>건강보험 적용 진료</h2>
-        <p>스케일링(연 1회), 충치치료, 신경치료, 잇몸치료 등 일부 진료는 건강보험이 적용됩니다. 자세한 적용 범위는 내원 시 안내해 드립니다.</p>
-        <div class="related-box">
-          <h3><i class="fa-solid fa-phone" style="color:var(--brand);margin-right:8px"></i>비용 상담 문의</h3>
+    <section class="sec-sm">
+      <div class="container">
+        <div class="reveal" style="max-width:860px;margin:0 auto">
+          <p class="aeo-answer">
+            치과 진료비용은 환자분의 구강 상태·진료 범위·사용 재료에 따라 달라집니다.
+            더착한치과는 정밀 진단 후 진료 계획과 함께 정확한 비용을 충분히 설명드린 뒤 진료를 시작합니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* 비급여 수가표 */}
+    <section class="sec-sm">
+      <div class="container">
+        <div class="price-meta reveal">
+          <span><i class="fa-regular fa-calendar"></i> 기준일 {PRICING_UPDATED}</span>
+          <span><i class="fa-solid fa-circle-info"></i> {PRICING_UNIT_NOTE}</span>
+        </div>
+
+        {PRICING.map((g) => (
+          <div class="price-block reveal">
+            <h2 class="price-cat"><i class={`fa-solid fa-${g.icon}`}></i> {g.category}</h2>
+            <div class="price-table-wrap">
+              <table class="price-table">
+                <thead>
+                  <tr>
+                    <th class="c-sub">항목</th>
+                    <th class="c-detail">상세</th>
+                    <th class="c-cost">비용(원)</th>
+                    <th class="c-note">비고</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.items.map((it) => {
+                    const free = it.cost === '비용 없음' || it.cost === 'X'
+                    return (
+                      <tr>
+                        <td class="c-sub" data-label="항목">{it.sub}</td>
+                        <td class="c-detail" data-label="상세">{it.detail || '—'}</td>
+                        <td class={`c-cost${free ? ' is-free' : ''}`} data-label="비용">{it.cost === 'X' ? '별도 문의' : it.cost}</td>
+                        <td class="c-note" data-label="비고">{it.note || ''}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+
+        <div class="price-notice reveal">
+          <h3><i class="fa-solid fa-circle-exclamation"></i> 안내사항</h3>
+          <ul>
+            <li>위 금액은 비급여 진료비용이며, <strong>진찰료 및 각종 검사료 등 진료비용은 포함하지 않습니다.</strong></li>
+            <li>‘~’ 표기는 ‘이상’을 의미하며, 환자분의 구강 상태·재료·범위에 따라 비용이 달라질 수 있습니다.</li>
+            <li>스케일링(연 1회), 충치치료, 신경치료, 잇몸치료 등 일부 진료는 건강보험이 적용됩니다.</li>
+            <li>정확한 비용은 정밀 진단 후 개인별 상태에 따라 상담 시 안내해 드립니다.</li>
+          </ul>
+        </div>
+
+        <div class="related-box reveal" style="margin-top:28px">
+          <h3><i class="fa-solid fa-phone" style="color:var(--accent);margin-right:8px"></i>비용 상담 문의</h3>
           <div class="chip-row">
             <a href={`tel:${CLINIC.phoneRaw}`} class="chip"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
             <a href="/reservation" class="chip"><i class="fa-regular fa-calendar-check"></i> 상담 예약</a>

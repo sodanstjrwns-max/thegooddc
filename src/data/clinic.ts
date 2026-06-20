@@ -17,9 +17,10 @@ export const CLINIC = {
   email: 'thegooddc@gmail.com', // 공식 채널 메일 (명함/계정 확인 2026-06)
   cohort: '8기',
   openedYear: 2015,
+  openedDate: '2015-02-09', // 사업자등록증 개업년월일
   businessName: '더착한치과의원',
-  // 사업자정보 (실값 수령 후 교체 — 빈 값이면 푸터에서 자동 숨김)
-  businessRegNo: '', // 예: '123-45-67890'
+  // 사업자정보 (사업자등록증 확인 2026-06)
+  businessRegNo: '606-39-03241', // 사업자등록번호
   medInstitutionNo: '', // 요양기관기호(선택)
   privacyOfficer: '황우석', // 개인정보보호책임자
 
