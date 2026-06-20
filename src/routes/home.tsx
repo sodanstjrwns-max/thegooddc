@@ -6,6 +6,7 @@ import { DOCTORS } from '../data/doctors'
 import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA, CASE_STORIES } from '../data/story'
 import { HeroToothVector, JourneyPathVector } from '../components/vectors'
 import { speakableSchema } from '../lib/seo'
+import type { Notice } from '../lib/content-store'
 
 const CORE_IMG: Record<string, string> = {
   implant: '/images/core-implant-v2.webp',
@@ -41,7 +42,7 @@ const COMPARE = [
   { label: '상담 방식', us: '꼭 필요한 진료만 설명', them: '획일적 안내' },
 ]
 
-export const HomePage: FC = () => {
+export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
   const doctor = DOCTORS[0]
   return (
     <Layout
@@ -51,6 +52,7 @@ export const HomePage: FC = () => {
       path="/"
       schemas={[speakableSchema()]}
     >
+      {popup && <NoticePopup notice={popup} />}
       {/* ===================== HERO — editorial asymmetric ===================== */}
       <section class="hero">
         <div class="container-wide hero-inner">
@@ -514,5 +516,91 @@ export const HomePage: FC = () => {
         </div>
       </section>
     </Layout>
+  )
+}
+
+// ===================== 공지 팝업 (홈 첫 화면) =====================
+// 관리자가 "팝업으로 띄우기"를 켠 공지를 모달로 노출.
+// "오늘 하루 보지 않기"는 localStorage에 (id + 날짜)를 저장해 제어.
+const NoticePopup: FC<{ notice: Notice }> = ({ notice }) => {
+  const POPUP_CSS = `
+.npop-ov{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,32,.55);backdrop-filter:blur(3px);animation:npop-fade .25s ease}
+.npop-ov.show{display:flex}
+@keyframes npop-fade{from{opacity:0}to{opacity:1}}
+.npop{width:100%;max-width:420px;background:var(--card,#fff);border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.32);animation:npop-up .3s cubic-bezier(.16,1,.3,1)}
+@keyframes npop-up{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+.npop-head{background:linear-gradient(135deg,var(--accent,#1f6f6b),var(--accent-d,#155350));color:#fff;padding:20px 24px;position:relative}
+.npop-head .npop-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.85;display:flex;align-items:center;gap:7px}
+.npop-head h2{margin:8px 0 0;font-size:21px;line-height:1.35;color:#fff;word-break:keep-all}
+.npop-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.npop-x:hover{background:rgba(255,255,255,.34)}
+.npop-body{padding:22px 24px;color:var(--ink,#2b2b2b);font-size:15px;line-height:1.7;white-space:pre-line;max-height:46vh;overflow-y:auto}
+.npop-date{font-size:12.5px;color:var(--ink-faint,#9aa);margin-bottom:10px}
+.npop-actions{display:flex;gap:10px;padding:0 24px 22px}
+.npop-actions .btn{flex:1;justify-content:center}
+.npop-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;border-top:1px solid var(--line,#eee);background:var(--bg-2,#f7f7f5)}
+.npop-foot label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft,#666);cursor:pointer;user-select:none}
+.npop-foot input{width:17px;height:17px}
+.npop-foot .npop-close2{background:none;border:none;font-size:13px;font-weight:700;color:var(--ink-soft,#666);cursor:pointer;padding:4px}
+@media(max-width:480px){.npop{max-width:100%} .npop-head h2{font-size:19px}}
+`
+  const POPUP_JS = `
+(function(){
+  var id=${JSON.stringify(notice.id)};
+  var mod=${JSON.stringify(notice.modified || notice.date || '')};
+  var key='npop_dismiss_'+id;
+  try{
+    var saved=localStorage.getItem(key);
+    // 저장값 형식: "YYYY-MM-DD|modified". 오늘이거나 내용이 그대로면 숨김.
+    if(saved){
+      var parts=saved.split('|');
+      var savedDate=parts[0], savedMod=parts[1]||'';
+      var todayStr=new Date().toISOString().slice(0,10);
+      // 공지 내용이 수정됐으면 다시 노출
+      if(savedMod===mod && savedDate===todayStr) return;
+    }
+  }catch(e){}
+  var ov=document.getElementById('npop-overlay');
+  if(!ov) return;
+  // 약간의 지연 후 등장(첫 화면 인지 후)
+  setTimeout(function(){ ov.classList.add('show'); document.body.style.overflow='hidden'; }, 600);
+  function close(){
+    ov.classList.remove('show'); document.body.style.overflow='';
+    var dontShow=document.getElementById('npop-dont');
+    if(dontShow && dontShow.checked){
+      try{ localStorage.setItem(key, new Date().toISOString().slice(0,10)+'|'+mod); }catch(e){}
+    }
+  }
+  ov.querySelectorAll('[data-npop-close]').forEach(function(b){ b.addEventListener('click', close); });
+  ov.addEventListener('click', function(e){ if(e.target===ov) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.classList.contains('show')) close(); });
+})();
+`
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: POPUP_CSS }} />
+      <div id="npop-overlay" class="npop-ov" role="dialog" aria-modal="true" aria-labelledby="npop-title">
+        <div class="npop">
+          <div class="npop-head">
+            <span class="npop-eyebrow"><i class="fa-solid fa-bullhorn"></i> 더착한치과 공지</span>
+            <h2 id="npop-title">{notice.title}</h2>
+            <button type="button" class="npop-x" data-npop-close aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="npop-body">
+            {notice.date && <div class="npop-date"><i class="fa-regular fa-calendar"></i> {notice.date}</div>}
+            {notice.body}
+          </div>
+          <div class="npop-actions">
+            <a href="/notice" class="btn btn-gold btn-sm"><i class="fa-solid fa-list"></i> 공지 전체보기</a>
+            <a href="/reservation" class="btn btn-ghost btn-sm"><i class="fa-solid fa-calendar-check"></i> 예약하기</a>
+          </div>
+          <div class="npop-foot">
+            <label><input type="checkbox" id="npop-dont" /> 오늘 하루 보지 않기</label>
+            <button type="button" class="npop-close2" data-npop-close>닫기</button>
+          </div>
+        </div>
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: POPUP_JS }} />
+    </>
   )
 }

@@ -21,7 +21,7 @@ import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, Ency
 import { AreaPage, AreaHubPage } from './routes/area'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage } from './routes/auth'
 import {
-  listNotices, createNotice, updateNotice, deleteNotice,
+  listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
   listCases, createCase, updateCase, deleteCase,
 } from './lib/content-store'
@@ -55,7 +55,7 @@ async function getSession(c: any, role: 'member' | 'admin'): Promise<SessionPayl
 // ============================================================
 // PAGE ROUTES
 // ============================================================
-app.get('/', (c) => c.html(<HomePage />))
+app.get('/', async (c) => c.html(<HomePage popup={await getActivePopupNotice(c.env)} />))
 app.get('/mission', (c) => c.html(<MissionPage />))
 app.get('/treatments', (c) => c.html(<TreatmentsListPage />))
 app.get('/treatments/:slug', (c) => c.html(<TreatmentDetailPage slug={c.req.param('slug')} />))
@@ -127,8 +127,8 @@ app.get('/admin/dashboard', async (c) => {
     const r = await c.env.KV.list({ prefix: 'reservation:' })
     reservations = r.keys.length
   }
-  const [notices, columns, cases] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env)])
-  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} />)
+  const [notices, columns, cases, popup] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env), getActivePopupNotice(c.env)])
+  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} popup={popup} />)
 })
 
 // Admin content management UI
@@ -261,6 +261,8 @@ app.post('/api/admin/notices/create', async (c) => {
     body: String(f.body || ''),
     date: String(f.date || ''),
     pinned: f.pinned === 'on' || f.pinned === 'true',
+    popup: f.popup === 'on' || f.popup === 'true',
+    popupUntil: String(f.popupUntil || ''),
   })
   return c.redirect('/admin/notices?ok=created')
 })
@@ -272,6 +274,8 @@ app.post('/api/admin/notices/update', async (c) => {
     body: String(f.body || ''),
     date: String(f.date || ''),
     pinned: f.pinned === 'on' || f.pinned === 'true',
+    popup: f.popup === 'on' || f.popup === 'true',
+    popupUntil: String(f.popupUntil || ''),
   })
   return c.redirect('/admin/notices?ok=updated')
 })

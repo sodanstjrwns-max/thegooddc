@@ -11,6 +11,8 @@ export interface Notice {
   pinned: boolean
   date: string // YYYY-MM-DD
   modified: string
+  popup?: boolean // 홈 히어로 팝업으로 노출할지
+  popupUntil?: string // 팝업 노출 종료일(YYYY-MM-DD). 빈값이면 무기한
 }
 
 export interface ColumnBlock {
@@ -207,6 +209,8 @@ export async function createNotice(env: any, input: Partial<Notice>): Promise<No
     pinned: !!input.pinned,
     date: (input.date || today()).toString(),
     modified: today(),
+    popup: !!input.popup,
+    popupUntil: (input.popupUntil || '').toString().trim(),
   }
   await writeList(env, KV_NOTICES, [n, ...list])
   return n
@@ -222,6 +226,8 @@ export async function updateNotice(env: any, id: string, input: Partial<Notice>)
     body: input.body !== undefined ? input.body.toString().trim() : list[idx].body,
     pinned: input.pinned !== undefined ? !!input.pinned : list[idx].pinned,
     date: input.date !== undefined ? input.date.toString() : list[idx].date,
+    popup: input.popup !== undefined ? !!input.popup : list[idx].popup,
+    popupUntil: input.popupUntil !== undefined ? input.popupUntil.toString().trim() : list[idx].popupUntil,
     modified: today(),
   }
   list[idx] = updated
@@ -235,6 +241,20 @@ export async function deleteNotice(env: any, id: string): Promise<boolean> {
   if (next.length === list.length) return false
   await writeList(env, KV_NOTICES, next)
   return true
+}
+
+// 홈 히어로에 띄울 "활성 팝업" 1건 반환.
+// 조건: popup === true && (popupUntil 비었거나 오늘 이전이 아님)
+// 여러 건이면 고정글 우선 → 최신 날짜 우선으로 정렬해 첫 건 사용.
+export async function getActivePopupNotice(env: any): Promise<Notice | null> {
+  const list = await listNotices(env) // 이미 pinned→date 정렬됨
+  const todayStr = today()
+  const active = list.filter((n) => {
+    if (!n.popup) return false
+    if (n.popupUntil && n.popupUntil < todayStr) return false // 종료일 지남
+    return true
+  })
+  return active[0] || null
 }
 
 // ============================================================

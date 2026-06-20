@@ -128,11 +128,52 @@ export const AdminLoginPage: FC = () => (
   </Layout>
 )
 
-export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number } }> = ({ stats }) => (
+const DASH_CSS = `
+.dash-popup{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between;border-radius:var(--radius-lg);padding:18px 22px;margin-bottom:30px;border:1px solid var(--line)}
+.dash-popup.on{background:var(--accent-soft);border-color:color-mix(in oklab,var(--accent) 35%,transparent)}
+.dash-popup.off{background:var(--bg-2)}
+.dash-popup .dp-left{display:flex;align-items:center;gap:14px;min-width:0}
+.dash-popup .dp-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.dash-popup.on .dp-ic{background:var(--accent);color:#fff}
+.dash-popup.off .dp-ic{background:var(--line);color:var(--ink-soft)}
+.dash-popup .dp-txt{min-width:0}
+.dash-popup .dp-txt b{display:block;font-size:15px;margin-bottom:2px}
+.dash-popup .dp-txt span{font-size:13px;color:var(--ink-soft);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46ch}
+.dash-quick{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px}
+.dash-quick .btn{font-size:13.5px}
+.dash-sec-title{font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin:0 0 14px}
+`
+
+export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number }; popup?: Notice | null }> = ({ stats, popup }) => (
   <Layout title="관리자 대시보드" description="관리자 전용" path="/admin/dashboard">
+    <style dangerouslySetInnerHTML={{ __html: DASH_CSS }} />
     <section class="page-hero" style="padding:130px 0 50px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-gauge"></i> DASHBOARD</div><h1>관리자 대시보드</h1></div></section>
     <section class="sec">
       <div class="container">
+        {/* 팝업 상태 배너 */}
+        <div class={`dash-popup ${popup ? 'on' : 'off'}`}>
+          <div class="dp-left">
+            <div class="dp-ic"><i class="fa-solid fa-window-restore"></i></div>
+            <div class="dp-txt">
+              {popup
+                ? <><b>홈 팝업 노출 중</b><span>“{popup.title}”{popup.popupUntil ? ` · ${popup.popupUntil}까지` : ' · 종료일 없음'}</span></>
+                : <><b>현재 홈 팝업 없음</b><span>공지 작성 시 “홈 첫 화면에 팝업으로 띄우기”를 켜면 방문자에게 표시됩니다.</span></>}
+            </div>
+          </div>
+          <a href="/admin/notices" class="btn btn-gold btn-sm"><i class="fa-solid fa-bullhorn"></i> 공지 관리</a>
+        </div>
+
+        {/* 빠른 작업 */}
+        <p class="dash-sec-title">빠른 작업</p>
+        <div class="dash-quick">
+          <a href="/admin/notices" class="btn btn-gold btn-sm"><i class="fa-solid fa-plus"></i> 공지 작성</a>
+          <a href="/admin/columns" class="btn btn-outline btn-sm"><i class="fa-solid fa-pen-nib"></i> 칼럼 작성</a>
+          <a href="/admin/cases" class="btn btn-outline btn-sm"><i class="fa-solid fa-images"></i> 케이스 등록</a>
+          <a href="/" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> 사이트 보기</a>
+          <button type="button" id="dash-indexnow" class="btn btn-ghost btn-sm"><i class="fa-solid fa-magnifying-glass"></i> 검색엔진 색인요청</button>
+        </div>
+
+        <p class="dash-sec-title">현황</p>
         <div class="stats" style="margin-bottom:40px">
           <div class="stat"><div class="num">{stats.members}</div><div class="lbl">회원</div></div>
           <div class="stat"><div class="num">{stats.reservations}</div><div class="lbl">예약 신청</div></div>
@@ -140,16 +181,27 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
           <div class="stat"><div class="num">{stats.columns}</div><div class="lbl">원장 칼럼</div></div>
           <div class="stat"><div class="num">{stats.cases}</div><div class="lbl">비포/애프터</div></div>
         </div>
+
+        <p class="dash-sec-title">관리 메뉴</p>
         <div class="tlist-grid">
           <a href="/admin/reservations" class="tlist-card"><div class="tc-icon"><i class="fa-regular fa-calendar-check"></i></div><h3>예약 관리</h3><p>예약 목록 조회 및 상태 변경</p></a>
           <a href="/admin/members" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-users"></i></div><h3>회원 관리</h3><p>가입 회원 목록 조회</p></a>
           <a href="/admin/cases" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-images"></i></div><h3>비포/애프터</h3><p>케이스 작성 및 관리</p></a>
           <a href="/admin/columns" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>원장 칼럼</h3><p>칼럼 작성 및 관리</p></a>
-          <a href="/admin/notices" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-bullhorn"></i></div><h3>공지사항</h3><p>공지 작성 및 관리</p></a>
+          <a href="/admin/notices" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-bullhorn"></i></div><h3>공지사항 · 팝업</h3><p>공지 작성 및 홈 팝업 설정</p></a>
           <a href="/api/admin/logout" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-right-from-bracket"></i></div><h3>로그아웃</h3><p>관리자 세션 종료</p></a>
         </div>
       </div>
     </section>
+    <script dangerouslySetInnerHTML={{ __html: `
+      var inx=document.getElementById('dash-indexnow');
+      if(inx) inx.addEventListener('click', async function(){
+        inx.disabled=true; var t=inx.innerHTML; inx.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 요청 중...';
+        try{ var r=await fetch('/api/admin/indexnow',{method:'POST'}); var j=await r.json(); alert(j.ok?('검색엔진 색인요청 완료'+(j.submitted?(' ('+j.submitted+'개 URL)'):'')):(j.error||'요청 실패')); }
+        catch(e){ alert('요청 중 오류가 발생했습니다.'); }
+        finally{ inx.disabled=false; inx.innerHTML=t; }
+      });
+    ` }} />
   </Layout>
 )
 
@@ -182,6 +234,8 @@ const ADMIN_CSS = `
 .adm-detail[open] summary{border-bottom:1px solid var(--line)}
 .adm-detail .adm-form{padding:18px 16px}
 .adm-hint{font-size:12px;color:var(--ink-faint);margin-top:4px}
+.adm-popup-box{border:1px dashed color-mix(in oklab,var(--accent) 45%,transparent);background:var(--accent-soft);border-radius:var(--radius-sm);padding:14px 16px}
+.adm-popup-box .adm-check{color:var(--accent-d)}
 @media(max-width:640px){.adm-form .row{grid-template-columns:1fr}}
 `
 
@@ -221,6 +275,11 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
           <div><label>날짜</label><input type="date" name="date" /></div>
           <div style="display:flex;align-items:flex-end"><label class="adm-check"><input type="checkbox" name="pinned" /> 상단 고정(중요)</label></div>
         </div>
+        <div class="adm-popup-box">
+          <label class="adm-check"><input type="checkbox" name="popup" /> <i class="fa-solid fa-window-restore" style="color:var(--accent)"></i> 홈 첫 화면에 팝업으로 띄우기</label>
+          <p class="adm-hint">체크하면 방문자가 홈에 들어올 때 이 공지가 팝업 창으로 표시됩니다. (여러 개를 체크하면 가장 위 항목 1개만 노출)</p>
+          <div style="margin-top:10px"><label>팝업 종료일 <span style="font-weight:400;color:var(--ink-faint)">(선택 · 비우면 직접 끌 때까지 계속 노출)</span></label><input type="date" name="popupUntil" /></div>
+        </div>
         <div><button type="submit" class="btn btn-gold"><i class="fa-solid fa-check"></i> 등록하기</button></div>
       </form>
     </details>
@@ -228,7 +287,7 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
     {notices.length === 0 && <p style="color:var(--ink-soft)">등록된 공지가 없습니다.</p>}
     {notices.map((n) => (
       <div class="adm-card">
-        <div class="adm-meta">{n.pinned && <span class="adm-pin">중요</span>}<span>{n.date}</span><span style="color:var(--ink-faint)">수정 {n.modified}</span></div>
+        <div class="adm-meta">{n.pinned && <span class="adm-pin">중요</span>}{n.popup && <span class="adm-pin" style="background:var(--accent-d)"><i class="fa-solid fa-window-restore"></i> 팝업</span>}<span>{n.date}</span>{n.popup && n.popupUntil && <span style="color:var(--accent-d)">팝업 ~{n.popupUntil}</span>}<span style="color:var(--ink-faint)">수정 {n.modified}</span></div>
         <h3>{n.title}</h3>
         <p class="adm-body-prev">{n.body}</p>
         <div class="adm-actions">
@@ -241,6 +300,10 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
               <div class="row">
                 <div><label>날짜</label><input type="date" name="date" value={n.date} /></div>
                 <div style="display:flex;align-items:flex-end"><label class="adm-check"><input type="checkbox" name="pinned" checked={n.pinned} /> 상단 고정</label></div>
+              </div>
+              <div class="adm-popup-box">
+                <label class="adm-check"><input type="checkbox" name="popup" checked={n.popup} /> <i class="fa-solid fa-window-restore" style="color:var(--accent)"></i> 홈 첫 화면에 팝업으로 띄우기</label>
+                <div style="margin-top:10px"><label>팝업 종료일 <span style="font-weight:400;color:var(--ink-faint)">(선택)</span></label><input type="date" name="popupUntil" value={n.popupUntil || ''} /></div>
               </div>
               <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
             </form>
