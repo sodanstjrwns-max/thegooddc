@@ -102,7 +102,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
           </div>
           <aside class="hero-visual reveal reveal-d1">
             <figure class="hero-frame hero-portrait">
-              <img src={`/images/doctor-hwang.webp?v=${ASSET_VERSION}`} width="900" height="1200" alt={`${CLINIC.name} 대표원장 ${DOCTORS[0]?.name || ''} — 통합치의학 전문의`} loading="eager" fetchpriority="high" />
+              <img src={`/images/director-lobby.webp?v=${ASSET_VERSION}`} width="900" height="1125" alt={`${CLINIC.name} 대표원장 ${DOCTORS[0]?.name || ''} — 통합치의학 전문의`} loading="eager" fetchpriority="high" />
               <figcaption class="hero-caption">
                 <span class="hc-name">{DOCTORS[0]?.name || '대표원장'} <em>대표원장</em></span>
                 <span class="hc-role">치의학박사 · 통합치의학 전문의</span>
