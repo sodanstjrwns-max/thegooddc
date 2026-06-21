@@ -44,6 +44,15 @@ const MARQUEE = [
   '과잉진료 없는 진료', '10개 진료과 통합',
 ]
 
+// 더착한치과만의 진료 기준 (타 의료기관 비교 없이 자사 시스템만 소개)
+const COMPARE = [
+  { label: '진료 설계', us: '3D CT · AI 디지털 가이드' },
+  { label: '보철물 제작', us: '원내 기공실 (밀링기·3D프린터)' },
+  { label: '통증 관리', us: '편안한 마취 시스템' },
+  { label: '진료 범위', us: '10개 진료과 통합 진료' },
+  { label: '상담 방식', us: '꼭 필요한 진료만 설명' },
+]
+
 export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
   const doctor = DOCTORS[0]
   return (
@@ -433,10 +442,33 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
         </div>
       </section>
 
+      {/* ===================== COMPARE — 더착한치과의 진료 기준 ===================== */}
+      <section class="compare">
+        <div class="container">
+          <div class="shead center" data-index="06">
+            <span class="eyebrow center">The Standard</span>
+            <h2>더착한치과가 <span class="gold">진료하는 방식</span></h2>
+            <p>같은 진료라도 장비와 시스템에 따라 결과가 달라집니다. 더착한치과의 기준을 공개합니다.</p>
+          </div>
+          <div class="compare-table solo reveal">
+            <div class="row head">
+              <div class="cell">진료 항목</div>
+              <div class="cell us">더착한치과의 기준</div>
+            </div>
+            {COMPARE.map((c) => (
+              <div class="row">
+                <div class="cell label" data-l="항목">{c.label}</div>
+                <div class="cell us" data-l="더착한치과"><i class="fa-solid fa-circle-check"></i>{c.us}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===================== ALL TREATMENTS ===================== */}
       <section class="tlist">
         <div class="container">
-          <div class="shead center" data-index="09">
+          <div class="shead center" data-index="07">
             <span class="eyebrow center">All Departments</span>
             <h2>한 곳에서 받는 <em>모든 치과 진료</em></h2>
             <p>대학병원과 동일한 진료 시스템으로 10개 진료과를 통합 운영합니다.</p>

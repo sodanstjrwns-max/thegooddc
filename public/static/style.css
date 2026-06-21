@@ -241,7 +241,7 @@ section{position:relative}
   font-size:clamp(3.2rem,6vw,5.4rem);line-height:1;
   color:var(--accent);opacity:.10;letter-spacing:-.04em;pointer-events:none;
 }
-.shead.center[data-index]::after{right:auto;left:50%;top:-14px;transform:translateX(-50%)}
+.shead.center[data-index]::after{right:auto;left:50%;top:-2px;transform:translateX(-50%)}
 .shead h2{font-family:var(--serif);font-size:var(--fs-h2);margin:14px 0 18px;font-weight:700;letter-spacing:-.022em;line-height:1.16;word-break:keep-all}
 .shead h2 em{font-style:normal;color:var(--accent);font-weight:700}
 .shead h2 .gold{color:var(--accent);font-style:normal}
@@ -728,6 +728,8 @@ section{position:relative}
 .compare{padding:110px 0;background:var(--bg-2)}
 .compare-table{max-width:980px;margin:0 auto;background:#fff;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--sh-sm)}
 .compare-table .row{display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr;align-items:stretch}
+.compare-table.solo{max-width:760px}
+.compare-table.solo .row{grid-template-columns:1fr 1.5fr}
 .compare-table .row+.row{border-top:1px solid var(--line)}
 .compare-table .row.head{background:var(--ink);color:#fff}
 .compare-table .row.head .cell{font-weight:600;padding:22px 28px;display:flex;align-items:center;gap:8px;letter-spacing:-.02em}
