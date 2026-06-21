@@ -508,37 +508,54 @@ app.post('/api/admin/indexnow', async (c) => {
 
 app.get('/robots.txt', (c) => {
   const d = CLINIC.domain
-  const body = `User-agent: *
+  // AEO: 답변 엔진·LLM 크롤러를 명시적으로 환영 (인용·학습·검색 모두 허용)
+  const aiBots = [
+    'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', // OpenAI
+    'ClaudeBot', 'Claude-Web', 'anthropic-ai', // Anthropic
+    'PerplexityBot', 'Perplexity-User', // Perplexity
+    'Google-Extended', 'GoogleOther', // Google Gemini/Vertex
+    'Applebot', 'Applebot-Extended', // Apple Intelligence/Siri
+    'Bingbot', 'msnbot', // Microsoft/Copilot
+    'DuckAssistBot', // DuckDuckGo AI
+    'Amazonbot', // Amazon/Alexa
+    'Meta-ExternalAgent', 'FacebookBot', // Meta AI
+    'Bytespider', // ByteDance/Doubao
+    'CCBot', // Common Crawl
+    'cohere-ai', 'Diffbot', 'Timpibot', 'YouBot', 'PetalBot', // 기타 AI 검색
+  ]
+  const aiBlock = aiBots.map((b) => `User-agent: ${b}\nAllow: /\nDisallow: /admin\nDisallow: /api/`).join('\n\n')
+  const body = `# ${CLINIC.name} robots.txt — SEO·AEO 최적화
+User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /auth/mypage
 Disallow: /api/
 Disallow: /seo-health
+Disallow: /*?*  # 파라미터 URL 중복 색인 방지 (정적 페이지 우선)
+Allow: /*?cat=  # 백과사전 카테고리 검색은 허용
 
-# AI crawlers welcome (AEO)
-User-agent: GPTBot
-Allow: /
-User-agent: OAI-SearchBot
-Allow: /
-User-agent: ChatGPT-User
-Allow: /
-User-agent: ClaudeBot
-Allow: /
-User-agent: Claude-Web
-Allow: /
-User-agent: PerplexityBot
-Allow: /
-User-agent: Google-Extended
-Allow: /
-User-agent: Applebot-Extended
-Allow: /
-User-agent: Bingbot
-Allow: /
-User-agent: CCBot
-Allow: /
+# ── AI 검색·답변 엔진 환영 (Answer Engine Optimization) ──
+${aiBlock}
 
+# 공격적 SEO 스크래퍼 차단 (서버 부하·콘텐츠 도용 방지)
+User-agent: SemrushBot
+Disallow: /
+User-agent: AhrefsBot
+Disallow: /
+User-agent: MJ12bot
+Disallow: /
+User-agent: DotBot
+Disallow: /
+
+# ── 사이트맵 (검색엔진 색인 가속) ──
 Sitemap: https://${d}/sitemap.xml
-Sitemap: https://${d}/sitemap-encyclopedia.xml`
+Sitemap: https://${d}/sitemap-main.xml
+Sitemap: https://${d}/sitemap-treatments.xml
+Sitemap: https://${d}/sitemap-content.xml
+Sitemap: https://${d}/sitemap-encyclopedia.xml
+Sitemap: https://${d}/sitemap-areas.xml
+
+# AI 인용용 핵심 정보 요약: https://${d}/llms.txt`
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 
@@ -589,30 +606,51 @@ app.get('/sitemap-treatments.xml', (c) => {
   return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
 })
 
-// 칼럼 + 공지 (KV 동적 콘텐츠)
+// 칼럼 + 공지 (KV 동적 콘텐츠) — 이미지 사이트맵(칼럼 대표이미지) 포함
 app.get('/sitemap-content.xml', async (c) => {
   const base = `https://${CLINIC.domain}`
-  const urls: { loc: string; pri: string; lastmod?: string }[] = []
+  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+  const now = new Date().toISOString().slice(0, 10)
+  type CUrl = { loc: string; pri: string; lastmod?: string; img?: { url: string; caption?: string } }
+  const urls: CUrl[] = []
+  let latestColumn = ''
   try {
     const columns = await listColumns(c.env)
     columns.forEach((col: any) => {
-      if (col.published === false) return
+      // 칼럼 대표이미지: 지정 cover → 본문 첫 이미지 fallback
+      let img = col.cover || ''
+      if (!img && Array.isArray(col.body)) {
+        for (const b of col.body) {
+          const m = (b?.p || '').match(/!\[(.*?)\]\((.*?)\)/)
+          if (m) { img = m[2]; break }
+        }
+      }
+      const lastmod = (col.modified || col.date || '').slice(0, 10) || now
+      if (lastmod > latestColumn) latestColumn = lastmod
       urls.push({
         loc: `/column/${col.slug}`,
         pri: '0.7',
-        lastmod: (col.updatedAt || col.createdAt || '').slice(0, 10) || undefined,
+        lastmod,
+        img: img ? { url: /^https?:\/\//.test(img) ? img : `${base}${img}`, caption: col.coverAlt || col.title } : undefined,
       })
     })
   } catch {}
+  // 공지 목록 페이지는 1회만, lastmod는 최신 공지 기준
   try {
     const notices = await listNotices(c.env)
-    notices.forEach((n: any) => {
-      if (n.id) urls.push({ loc: `/notice`, pri: '0.5', lastmod: (n.createdAt || '').slice(0, 10) || undefined })
-    })
+    if (notices.length) {
+      const latest = notices.map((n: any) => (n.modified || n.date || '').slice(0, 10)).filter(Boolean).sort().pop()
+      urls.push({ loc: `/notice`, pri: '0.5', lastmod: latest || now })
+    }
   } catch {}
-  return c.text(urlsetXml(base, urls.length ? urls : [{ loc: '/column', pri: '0.7' }]), 200, {
-    'Content-Type': 'application/xml; charset=utf-8',
-  })
+  const body = urls.length ? urls : [{ loc: '/column', pri: '0.7' } as CUrl]
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${body
+    .map((u) => {
+      const imgTag = u.img ? `\n    <image:image><image:loc>${esc(u.img.url)}</image:loc>${u.img.caption ? `<image:caption>${esc(u.img.caption)}</image:caption>` : ''}</image:image>` : ''
+      return `  <url><loc>${base}${u.loc}</loc><lastmod>${u.lastmod || now}</lastmod><priority>${u.pri}</priority>${imgTag}</url>`
+    })
+    .join('\n')}\n</urlset>`
+  return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
 })
 
 // 백과사전 — 상세 200개는 우선순위 높임
@@ -779,11 +817,25 @@ app.get('/llms.txt', (c) => {
 ## 병원 정보
 - 정식명칭: ${CLINIC.name} (${CLINIC.nameEn})
 - 위치: ${CLINIC.address}
+- 좌표: 위도 ${CLINIC.geo.lat}, 경도 ${CLINIC.geo.lng}
 - 전화: ${CLINIC.phone}
-- 진료시간: ${CLINIC.hoursNote}
 - 대표원장: ${CLINIC.director} ${CLINIC.directorTitle} (치의학박사, 통합치의학과 전문의)
+- 개원: ${CLINIC.openedYear}년
 - 진료지역: 부산 강서구 명지, 부산 강서구, 김해, 창원 생활권
 - 공식 웹사이트: https://${d}
+- 카카오톡 채널: ${CLINIC.sns.kakao}
+
+## 진료시간 (요일별)
+${CLINIC.hours.map((h: any) => `- ${h.day}요일: ${h.closed ? '정기휴무' : `${h.time}${h.lunch ? ` (점심 ${h.lunch})` : ' (점심시간 없음)'}${h.note ? ` · ${h.note}` : ''}`}`).join('\n')}
+- 요약: ${CLINIC.hoursNote}
+
+## 자주 묻는 질문 (AI 인용용 핵심 답변)
+- Q. 더착한치과는 어디에 있나요? A. 부산 강서구 명지오션시티4로 59 스타빌딩 601·602호에 있습니다. 명지국제신도시·강서구·김해 장유·사하구 하단에서 가깝습니다.
+- Q. 야간 진료를 하나요? A. 월요일과 수요일은 저녁 8시(20:00)까지 진료합니다.
+- Q. 토요일 진료를 하나요? A. 네, 토요일 오전 8시부터 12시까지 점심시간 없이 진료합니다. (일요일은 정기휴무)
+- Q. 어떤 진료를 받을 수 있나요? A. 디지털 가이드 임플란트, 투명교정, 미니쉬·라미네이트 등 심미치료를 비롯해 통합치의학과 전반의 진료를 제공합니다.
+- Q. 주차가 가능한가요? A. ${CLINIC.directions.car}.
+- Q. 대표원장은 누구인가요? A. ${CLINIC.director} ${CLINIC.directorTitle}(치의학박사, 통합치의학과 전문의)입니다.
 
 ## 핵심 진료
 ${TREATMENTS.filter((t) => t.category === 'core').map((t) => `- ${t.name}: ${t.tagline} → https://${d}/treatments/${t.slug}`).join('\n')}
@@ -794,9 +846,9 @@ ${TREATMENTS.filter((t) => t.category !== 'core').map((t) => `- ${t.name} → ht
 ## 의료진
 ${DOCTORS.map((doc: any) => `- ${doc.name} ${doc.title || ''} (${doc.license || ''}) → https://${d}/doctors/${doc.slug}`).join('\n')}
 
-## 진료 가능 지역 (지역별 안내 페이지)
+## 진료 가능 지역 (내원 가능 지역 · 지역별 안내 페이지)
 ${CLINIC.name}는 부산 강서구 명지에 위치하며 아래 지역에서 가까워 내원이 편리합니다. 각 지역별 안내 페이지를 제공합니다.
-${AREAS.map((a) => `- ${a.name} (${a.fullName}): ${a.distance || a.desc} → https://${d}/clinic/${a.slug}`).join('\n')}
+${AREAS.map((a) => `- ${a.name} (${a.fullName}): ${a.distance || a.desc}${a.transit ? ` · ${a.transit}` : ''} → https://${d}/clinic/${a.slug}`).join('\n')}
 
 ## 지역 × 진료 안내 (${getAreaCombinations().length}개)
 지역별로 임플란트·투명교정·미니쉬·치아교정 안내 페이지를 제공합니다. 예) https://${d}/area/myeongji-implant (명지 임플란트)

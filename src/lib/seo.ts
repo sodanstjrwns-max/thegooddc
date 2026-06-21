@@ -416,6 +416,7 @@ export function areaLocalBusinessSchema(area: {
   desc: string
   distance?: string
   transit?: string
+  geo?: { lat: number; lng: number }
 }) {
   const streetAddress = CLINIC.address.replace(/^부산\s*강서구\s*/, '').trim()
   return {
@@ -440,11 +441,17 @@ export function areaLocalBusinessSchema(area: {
     },
     geo: { '@type': 'GeoCoordinates', latitude: CLINIC.geo.lat, longitude: CLINIC.geo.lng },
     hasMap: `https://map.naver.com/v5/search/${encodeURIComponent(CLINIC.name)}`,
-    areaServed: {
-      '@type': 'City',
-      name: area.fullName,
-      alternateName: area.name,
-    },
+    areaServed: [
+      { '@type': 'City', name: area.fullName, alternateName: area.name },
+      // 해당 지역 좌표 중심 반경 서비스 영역 — 로컬 검색 강화
+      ...(area.geo
+        ? [{
+            '@type': 'GeoCircle',
+            geoMidpoint: { '@type': 'GeoCoordinates', latitude: area.geo.lat, longitude: area.geo.lng },
+            geoRadius: '5000',
+          }]
+        : []),
+    ],
     openingHoursSpecification: (CLINIC.hours || [])
       .filter((h: any) => !h.closed)
       .map((h: any) => ({

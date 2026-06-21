@@ -5,7 +5,16 @@ import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA, CASE_STORIES } from '../data/story'
 import { HeroToothVector, JourneyPathVector } from '../components/vectors'
-import { speakableSchema } from '../lib/seo'
+import { speakableSchema, faqSchema } from '../lib/seo'
+
+// 홈 핵심 FAQ — 검색·AI 답변 노출도가 가장 높은 페이지의 직답형 FAQPage
+const HOME_FAQS = [
+  { q: '더착한치과는 어디에 있나요?', a: `${CLINIC.address}에 있습니다. 명지국제신도시·강서구·김해 장유·사하구 하단에서 가깍습니다.` },
+  { q: '야간 진료를 하나요?', a: '월요일과 수요일은 저녁 8시(20:00)까지 야간 진료를 합니다.' },
+  { q: '토요일에도 진료하나요?', a: '네, 토요일 오전 8시부터 12시까지 점심시간 없이 진료합니다. 일요일은 정기휴무입니다.' },
+  { q: '주차가 가능한가요?', a: `${CLINIC.directions.car}.` },
+  { q: '어떤 진료를 받을 수 있나요?', a: '디지털 가이드 임플란트, 투명교정, 미니쉬·라미네이트 심미치료를 비롯해 통합치의학과 전반의 진료를 제공합니다.' },
+]
 import type { Notice } from '../lib/content-store'
 
 const CORE_IMG: Record<string, string> = {
@@ -50,7 +59,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
       description="부산 강서구 명지 더착한치과. 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만."
       keywords={['명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과']}
       path="/"
-      schemas={[speakableSchema()]}
+      schemas={[speakableSchema(), faqSchema(HOME_FAQS)]}
     >
       {popup && <NoticePopup notice={popup} />}
       {/* ===================== HERO — editorial asymmetric ===================== */}
@@ -498,6 +507,28 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
                 </div>
               </a>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===================== 자주 묻는 질문 (AEO·FAQPage) ===================== */}
+      <section class="sec bg-sand" id="home-faq">
+        <div class="container">
+          <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto 36px">
+            <div class="eyebrow" style="justify-content:center">FAQ</div>
+            <h2 class="section-title" style="font-size:30px">자주 묻는 질문</h2>
+            <p style="color:var(--ink-soft);margin-top:8px">위치·진료시간·주차 등 가장 많이 물어보시는 내용을 모았습니다.</p>
+          </div>
+          <div class="home-faq-list reveal">
+            {HOME_FAQS.map((f, i) => (
+              <details class="home-faq-item" {...(i === 0 ? { open: true } : {})}>
+                <summary><i class="fa-solid fa-circle-question" style="color:var(--brand);margin-right:10px"></i>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+          <div style="text-align:center;margin-top:28px">
+            <a href="/faq" class="btn btn-outline"><i class="fa-solid fa-list-ul"></i> 전체 자주 묻는 질문 보기</a>
           </div>
         </div>
       </section>
