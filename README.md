@@ -41,8 +41,21 @@
 - **관리자에서 ID만 입력 → 즉시 작동** (코드 수정·재배포 불필요)
 - 네이버 서치어드바이저 / 구글 서치콘솔 소유확인 메타 자동 주입
 
-### 접근성 (a11y)
-- 본문 바로가기(skip-link), 키보드 포커스 가시성, 시맨틱 마크업, 이미지 lazy/LCP 최적화
+### 예약 운영 (NEW) — 병원이 매일 쓰는 운영 루프
+- **예약 운영 대시보드** `/admin/reservations`: 상태관리(신규→확정→완료/취소), 이름·연락처 실시간 검색, 상태별 필터
+- **CSV 내보내기**: 엑셀에서 바로 열리는 UTF-8 BOM CSV (`/api/admin/reservations/export`)
+- **안내문 한 번에 복사**: 환자에게 보낼 예약 확인 문자 템플릿을 클립보드로 복사
+- **운영 분석** `/admin/analytics`: 전환 퍼널(접수→확정→완료)·전환율, 인기 진료 TOP, 요일/시간대 예약 패턴 (순수 CSS 차트)
+
+### PWA (NEW) — 홈 화면 앱 설치
+- `/manifest.webmanifest` + 서비스워커(`/sw.js`)로 **모바일 홈 화면 설치** 지원
+- 오프라인 폴백 페이지(`/offline`) — 네트워크 끊겨도 전화 연결 안내
+- 정적 자원 cache-first, 페이지 network-first 캐싱 전략
+
+### 접근성·성능 (a11y / Web Vitals)
+- 본문 바로가기(skip-link), 키보드 포커스 가시성, 시맨틱 마크업
+- 모든 이미지 `aspect-ratio` 컨테이너로 CLS 방지, lazy 로딩, 헤더 로고 `fetchpriority=high`
+- 세리프 폰트·Font Awesome 비차단(non-blocking) 로드로 렌더 블로킹 제거
 
 ---
 
@@ -59,6 +72,7 @@
 | `/column`, `/column/:slug` | 원장 칼럼 목록·상세 |
 | `/encyclopedia`, `/encyclopedia/:slug` | 치과 백과사전 (`?cat=` 카테고리 필터) |
 | `/directions` `/pricing` `/faq` `/notice` `/reservation` | 안내·예약 |
+| `/manifest.webmanifest` `/sw.js` `/offline` | PWA (앱 설치·오프라인) |
 | `/clinic/:area` | 지역 허브 (예: `/clinic/myeongji`) |
 | `/area/:area-:treatment` | 지역×진료 랜딩 |
 | `/privacy` `/terms` | 개인정보처리방침·이용약관 |
@@ -79,7 +93,9 @@
 | `/admin/notices` | 공지·팝업 관리 |
 | `/admin/columns` | 원장 칼럼 (사진 드롭·커버·실시간 미리보기 슈퍼 에디터) |
 | `/admin/cases` | 비포/애프터 케이스 관리 |
-| `/admin/members` `/admin/reservations` | 회원·예약 조회 |
+| `/admin/members` | 회원 조회 |
+| **`/admin/reservations`** | **예약 운영 (상태관리·검색·필터·CSV·안내문 복사)** |
+| **`/admin/analytics`** | **운영 분석 (전환 퍼널·인기진료·요일/시간대 패턴)** |
 | **`/admin/settings`** | **추적·분석 설정 (GA4/GTM/네이버/구글)** |
 
 ---

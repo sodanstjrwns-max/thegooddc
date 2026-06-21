@@ -19,12 +19,13 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage, AreaHubPage } from './routes/area'
-import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage } from './routes/auth'
+import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
   listCases, createCase, updateCase, deleteCase,
   getSettings, getSettingsDiagnostic, saveSettings,
+  listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
 } from './lib/content-store'
 import { setActiveSettings } from './lib/runtime-settings'
 
@@ -203,16 +204,17 @@ app.get('/admin/members', async (c) => {
 app.get('/admin/reservations', async (c) => {
   const s = await getSession(c, 'admin')
   if (!s) return c.redirect('/admin')
-  const items: any[] = []
-  if (c.env.KV) {
-    const list = await c.env.KV.list({ prefix: 'reservation:' })
-    for (const k of list.keys) {
-      const raw = await c.env.KV.get(k.name)
-      if (raw) { try { items.push({ key: k.name, ...JSON.parse(raw) }) } catch {} }
-    }
-    items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-  }
-  return c.html(<AdminReservationsPage items={items} />)
+  const items = await listReservations(c.env)
+  const stats = buildResStats(items)
+  return c.html(<AdminReservationsPage items={items} stats={stats} />)
+})
+
+app.get('/admin/analytics', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  const items = await listReservations(c.env)
+  const stats = buildResStats(items)
+  return c.html(<AdminAnalyticsPage stats={stats} />)
 })
 
 // Legal pages
@@ -283,6 +285,41 @@ async function requireAdmin(c: any): Promise<boolean> {
 }
 
 // ----- NOTICES -----
+// 예약 상태/메모 업데이트
+app.post('/api/admin/reservations/update', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  const key = String(f.key || '')
+  const status = String(f.status || '') as any
+  const valid = ['new', 'confirmed', 'done', 'canceled']
+  if (key && valid.includes(status)) await updateReservation(c.env, key, { status })
+  if (f.memo !== undefined) await updateReservation(c.env, key, { memo: String(f.memo) })
+  return c.redirect('/admin/reservations')
+})
+
+// 예약 삭제
+app.post('/api/admin/reservations/delete', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  const key = String(f.key || '')
+  if (key) await deleteReservation(c.env, key)
+  return c.redirect('/admin/reservations')
+})
+
+// 예약 CSV 내보내기 (엑셀 한글 깨짐 방지 위해 UTF-8 BOM 부착)
+app.get('/api/admin/reservations/export', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const items = await listReservations(c.env)
+  const csv = '\uFEFF' + reservationsToCsv(items)
+  const fname = `reservations_${new Date().toISOString().slice(0, 10)}.csv`
+  return new Response(csv, {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${fname}"`,
+    },
+  })
+})
+
 // 추적·분석 설정 저장 (KV)
 app.post('/api/admin/settings', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
@@ -520,6 +557,122 @@ app.get('/api/auth/google', (c) => {
 })
 
 // ============================================================
+// PWA (앱 설치 / 오프라인)
+// ============================================================
+
+// 웹 앱 매니페스트 — 홈 화면 설치 시 사용
+app.get('/manifest.webmanifest', (c) => {
+  return c.json({
+    name: CLINIC.name,
+    short_name: CLINIC.name,
+    description: CLINIC.brandSlogan,
+    start_url: '/?source=pwa',
+    scope: '/',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#ffffff',
+    theme_color: CLINIC.brand.primary,
+    lang: 'ko',
+    categories: ['medical', 'health'],
+    icons: [
+      { src: '/static/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/static/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/static/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+    shortcuts: [
+      { name: '예약 신청', short_name: '예약', url: '/reservation', icons: [{ src: '/static/icon-192.png', sizes: '192x192' }] },
+      { name: '오시는 길', short_name: '오시는 길', url: '/directions', icons: [{ src: '/static/icon-192.png', sizes: '192x192' }] },
+    ],
+  }, 200, { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'public, max-age=86400' })
+})
+
+// 서비스 워커 — 오프라인 대응 (정적 자원 cache-first, 페이지 network-first)
+app.get('/sw.js', (c) => {
+  const sw = `// 더착한치과 Service Worker
+const CACHE = 'tgdc-v${ASSET_VERSION}';
+const OFFLINE_URL = '/offline';
+const PRECACHE = [
+  '/',
+  '/offline',
+  '/static/style.css?v=${ASSET_VERSION}',
+  '/static/app.js?v=${ASSET_VERSION}',
+  '/static/icon-192.png',
+  '/static/icon-512.png',
+  '/manifest.webmanifest',
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE).catch(() => {})).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== location.origin) return;
+  // API / 관리자 화면은 항상 네트워크
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin')) return;
+
+  // 정적 자원: cache-first
+  if (url.pathname.startsWith('/static/')) {
+    e.respondWith(
+      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => hit))
+    );
+    return;
+  }
+
+  // 페이지(HTML): network-first → 실패 시 캐시 → 오프라인
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => caches.match(req).then((hit) => hit || caches.match(OFFLINE_URL)))
+    );
+    return;
+  }
+});
+`
+  return c.body(sw, 200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=0, must-revalidate', 'Service-Worker-Allowed': '/' })
+})
+
+// 오프라인 폴백 페이지
+app.get('/offline', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>오프라인 · ${CLINIC.name}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard',-apple-system,sans-serif;background:#f5f8fc;color:#114A7E;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .wrap{max-width:380px}
+  .ic{font-size:56px;margin-bottom:16px}
+  h1{font-size:22px;margin-bottom:10px;color:${CLINIC.brand.primary}}
+  p{font-size:15px;line-height:1.6;color:#4a5b6b;margin-bottom:24px}
+  .btn{display:inline-block;background:${CLINIC.brand.primary};color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:700;font-size:15px;margin:5px}
+  .btn.line{background:#fff;color:${CLINIC.brand.primary};border:1.5px solid ${CLINIC.brand.primary}}
+</style></head>
+<body><div class="wrap">
+  <div class="ic">📡</div>
+  <h1>인터넷 연결이 끊겼어요</h1>
+  <p>네트워크가 복구되면 자동으로 다시 연결됩니다.<br>급하신 경우 아래로 바로 전화 주세요.</p>
+  <a class="btn" href="tel:${CLINIC.phone || '051-203-2875'}">📞 전화 상담</a>
+  <a class="btn line" href="/" onclick="location.reload();return false;">다시 시도</a>
+</div></body></html>`)
+})
+
 // SEO FILES
 // ============================================================
 

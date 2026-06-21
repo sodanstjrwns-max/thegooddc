@@ -4,8 +4,8 @@ import { Breadcrumb } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
-import type { Notice, Column, CaseItem, SiteSettings } from '../lib/content-store'
-import { bodyToText } from '../lib/content-store'
+import type { Notice, Column, CaseItem, SiteSettings, Reservation, ResStats } from '../lib/content-store'
+import { bodyToText, RES_STATUS_LABEL } from '../lib/content-store'
 
 // 추적 설정 진단 타입 (대시보드/설정 화면 공용)
 export type SettingsSource = 'env' | 'kv' | 'seed' | 'none'
@@ -195,7 +195,8 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
 
         <p class="dash-sec-title">관리 메뉴</p>
         <div class="tlist-grid">
-          <a href="/admin/reservations" class="tlist-card"><div class="tc-icon"><i class="fa-regular fa-calendar-check"></i></div><h3>예약 관리</h3><p>예약 목록 조회 및 상태 변경</p></a>
+          <a href="/admin/reservations" class="tlist-card"><div class="tc-icon"><i class="fa-regular fa-calendar-check"></i></div><h3>예약 운영</h3><p>상태관리·검색·CSV·안내문 복사</p></a>
+          <a href="/admin/analytics" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-chart-pie"></i></div><h3>운영 분석</h3><p>전환율·인기진료·요일/시간대 패턴</p></a>
           <a href="/admin/members" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-users"></i></div><h3>회원 관리</h3><p>가입 회원 목록 조회</p></a>
           <a href="/admin/cases" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-images"></i></div><h3>비포/애프터</h3><p>케이스 작성 및 관리</p></a>
           <a href="/admin/columns" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>원장 칼럼</h3><p>칼럼 작성 및 관리</p></a>
@@ -977,30 +978,292 @@ export const AdminMembersPage: FC<{ members: { name: string; email: string; phon
 // ============================================================
 // ADMIN — 예약 목록
 // ============================================================
-export const AdminReservationsPage: FC<{ items: any[] }> = ({ items }) => (
-  <Layout title="예약 관리 | 관리자" description="관리자 전용" path="/admin/reservations">
-    <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
-    <section class="page-hero" style="padding:120px 0 40px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-regular fa-calendar-check"></i> ADMIN</div><h1>예약 관리</h1></div></section>
-    <section class="sec">
-      <div class="container adm-wrap">
-        <div class="adm-bar">
-          <div class="chip-row">
-            <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
-            <span class="chip" style="background:var(--accent);color:#fff;border-color:var(--accent)"><i class="fa-regular fa-calendar-check"></i> 예약 신청 {items.length}건</span>
-          </div>
-        </div>
-        {items.length === 0 && <p style="color:var(--ink-soft)">접수된 예약 신청이 없습니다.</p>}
-        {items.map((r) => (
-          <div class="adm-card">
-            <div class="adm-meta">
-              <span class="adm-pin">{r.status === 'new' ? '신규' : r.status}</span>
-              <span>{r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 16).replace('T', ' ') : '-'}</span>
+const RES_CSS = `
+.res-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:22px}
+.res-stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--sh-sm)}
+.res-stat .n{font-size:28px;font-weight:800;line-height:1;color:var(--ink)}
+.res-stat .l{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:600}
+.res-stat.hot .n{color:var(--accent-d)}
+.res-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.res-toolbar input[type=search]{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius-sm);font:inherit;background:var(--bg);color:var(--ink)}
+.res-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.res-fbtn{padding:7px 14px;border:1px solid var(--line);background:var(--card);border-radius:100px;font-size:13px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.res-fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.res-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line-2);border-radius:var(--radius);padding:18px 20px;margin-bottom:12px;box-shadow:var(--sh-sm)}
+.res-card[data-status=new]{border-left-color:#e8a33d}
+.res-card[data-status=confirmed]{border-left-color:#1E6FB8}
+.res-card[data-status=done]{border-left-color:#16a34a}
+.res-card[data-status=canceled]{border-left-color:#cbd2da;opacity:.7}
+.res-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.res-name{font-size:17px;font-weight:800;margin:0}
+.res-name a{color:var(--accent-d)}
+.res-badge{font-size:11px;font-weight:800;padding:3px 11px;border-radius:100px;letter-spacing:.02em}
+.res-badge.new{background:#fdf0d9;color:#a96a13}
+.res-badge.confirmed{background:#e3eefb;color:#1a56db}
+.res-badge.done{background:#e7f8ef;color:#0f7a3d}
+.res-badge.canceled{background:#f1f3f5;color:#868e96}
+.res-info{font-size:14px;color:var(--ink-2);line-height:1.7;margin:0 0 12px}
+.res-info .meta{color:var(--ink-faint);font-size:12.5px}
+.res-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.res-actions select{padding:7px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--bg);color:var(--ink)}
+.res-mini{padding:7px 12px;font-size:12.5px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--card);color:var(--ink-2);cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.res-mini:hover{border-color:var(--accent);color:var(--accent-d)}
+.res-mini.danger:hover{border-color:#d9534f;color:#c0392b}
+.res-empty{text-align:center;color:var(--ink-soft);padding:40px 0}
+.res-hide{display:none!important}
+`
+
+export const AdminReservationsPage: FC<{ items: Reservation[]; stats: ResStats }> = ({ items, stats }) => {
+  const fmt = (t: number) => t ? new Date(t).toISOString().slice(0, 16).replace('T', ' ') : '-'
+  return (
+    <Layout title="예약 관리 | 관리자" description="관리자 전용" path="/admin/reservations">
+      <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS + RES_CSS }} />
+      <section class="page-hero" style="padding:120px 0 40px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-regular fa-calendar-check"></i> ADMIN</div><h1>예약 운영</h1></div></section>
+      <section class="sec">
+        <div class="container adm-wrap">
+          <div class="adm-bar">
+            <div class="chip-row">
+              <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
+              <a href="/admin/analytics" class="chip"><i class="fa-solid fa-chart-pie"></i> 운영 분석</a>
             </div>
-            <h3>{r.name} <span style="font-weight:400;font-size:14px;color:var(--ink-soft)">· {r.phone}</span></h3>
-            <p class="adm-body-prev">희망 진료: {r.treatment || '-'} · 희망 날짜: {r.date || '-'}{r.message ? `\n문의: ${r.message}` : ''}</p>
+            <div class="chip-row">
+              <a href="/api/admin/reservations/export" class="btn btn-outline btn-sm"><i class="fa-solid fa-file-csv"></i> CSV 내보내기</a>
+            </div>
           </div>
-        ))}
-      </div>
-    </section>
-  </Layout>
-)
+
+          {/* 운영 요약 */}
+          <div class="res-stats">
+            <div class="res-stat hot"><div class="n">{stats.today}</div><div class="l">오늘 접수</div></div>
+            <div class="res-stat"><div class="n">{stats.byStatus.new || 0}</div><div class="l">신규 대기</div></div>
+            <div class="res-stat"><div class="n">{stats.byStatus.confirmed || 0}</div><div class="l">확정</div></div>
+            <div class="res-stat"><div class="n">{stats.byStatus.done || 0}</div><div class="l">완료</div></div>
+            <div class="res-stat"><div class="n">{stats.last7}</div><div class="l">최근 7일</div></div>
+            <div class="res-stat"><div class="n">{stats.total}</div><div class="l">전체</div></div>
+          </div>
+
+          {items.length === 0 ? (
+            <p class="res-empty"><i class="fa-regular fa-calendar-xmark" style="font-size:32px;opacity:.3;display:block;margin-bottom:10px"></i>접수된 예약 신청이 없습니다.</p>
+          ) : (
+            <>
+              <div class="res-toolbar">
+                <input type="search" id="res-search" placeholder="이름·연락처·진료명 검색…" autocomplete="off" />
+              </div>
+              <div class="res-filters" id="res-filters">
+                <button type="button" class="res-fbtn on" data-f="all">전체 {items.length}</button>
+                <button type="button" class="res-fbtn" data-f="new">신규 {stats.byStatus.new || 0}</button>
+                <button type="button" class="res-fbtn" data-f="confirmed">확정 {stats.byStatus.confirmed || 0}</button>
+                <button type="button" class="res-fbtn" data-f="done">완료 {stats.byStatus.done || 0}</button>
+                <button type="button" class="res-fbtn" data-f="canceled">취소 {stats.byStatus.canceled || 0}</button>
+              </div>
+
+              <div id="res-list">
+                {items.map((r) => {
+                  const hay = `${r.name} ${r.phone} ${r.treatment || ''} ${r.message || ''}`.toLowerCase()
+                  return (
+                    <div class="res-card" data-status={r.status} data-hay={hay}>
+                      <div class="res-top">
+                        <h3 class="res-name">{r.name} <span style="font-weight:400;font-size:14px;color:var(--ink-soft)">· <a href={`tel:${(r.phone || '').replace(/[^0-9]/g, '')}`}>{r.phone}</a></span></h3>
+                        <span class={`res-badge ${r.status}`}>{RES_STATUS_LABEL[r.status] || r.status}</span>
+                      </div>
+                      <p class="res-info">
+                        희망 진료: <b>{r.treatment || '-'}</b> · 희망 날짜: <b>{r.date || '-'}</b><br />
+                        {r.message && <>문의: {r.message}<br /></>}
+                        <span class="meta">접수: {fmt(r.createdAt)}</span>
+                      </p>
+                      <div class="res-actions">
+                        <form method="post" action="/api/admin/reservations/update" style="display:inline-flex;gap:7px;align-items:center">
+                          <input type="hidden" name="key" value={r.key} />
+                          <select name="status" onchange="this.form.submit()">
+                            {(['new', 'confirmed', 'done', 'canceled'] as const).map((s) => (
+                              <option value={s} selected={r.status === s}>{RES_STATUS_LABEL[s]}</option>
+                            ))}
+                          </select>
+                        </form>
+                        <button type="button" class="res-mini res-copy"
+                          data-msg={`[더착한치과] ${r.name}님, 안녕하세요. 신청해 주신 ${r.treatment || '상담'} 예약${r.date ? ` (희망일: ${r.date})` : ''} 관련하여 연락드립니다.`}>
+                          <i class="fa-solid fa-comment"></i> 안내문 복사
+                        </button>
+                        <form method="post" action="/api/admin/reservations/delete" style="display:inline" onsubmit="return confirm('이 예약을 삭제할까요?')">
+                          <input type="hidden" name="key" value={r.key} />
+                          <button type="submit" class="res-mini danger"><i class="fa-solid fa-trash"></i> 삭제</button>
+                        </form>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <p class="res-empty res-hide" id="res-noresult">검색 결과가 없습니다.</p>
+            </>
+          )}
+        </div>
+      </section>
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function(){
+          var search=document.getElementById('res-search');
+          var filters=document.getElementById('res-filters');
+          var cards=Array.prototype.slice.call(document.querySelectorAll('.res-card'));
+          var noResult=document.getElementById('res-noresult');
+          var curFilter='all';
+          function apply(){
+            var q=(search&&search.value||'').trim().toLowerCase();
+            var shown=0;
+            cards.forEach(function(c){
+              var okF = curFilter==='all' || c.getAttribute('data-status')===curFilter;
+              var okQ = !q || (c.getAttribute('data-hay')||'').indexOf(q)>-1;
+              var vis = okF && okQ;
+              c.classList.toggle('res-hide', !vis);
+              if(vis) shown++;
+            });
+            if(noResult) noResult.classList.toggle('res-hide', shown>0);
+          }
+          if(search) search.addEventListener('input', apply);
+          if(filters) filters.addEventListener('click', function(e){
+            var b=e.target.closest('.res-fbtn'); if(!b) return;
+            curFilter=b.getAttribute('data-f');
+            filters.querySelectorAll('.res-fbtn').forEach(function(x){x.classList.toggle('on',x===b);});
+            apply();
+          });
+          document.addEventListener('click', function(e){
+            var b=e.target.closest('.res-copy'); if(!b) return;
+            var msg=b.getAttribute('data-msg')||'';
+            navigator.clipboard.writeText(msg).then(function(){
+              var t=b.innerHTML; b.innerHTML='<i class="fa-solid fa-check"></i> 복사됨';
+              setTimeout(function(){b.innerHTML=t;},1400);
+            });
+          });
+        })();
+      ` }} />
+    </Layout>
+  )
+}
+
+// ============================================================
+// ADMIN — 운영 분석 (예약 데이터 기반 인사이트)
+// 페이션트 퍼널: 어떤 진료가 인기인지, 언제 문의가 몰리는지 → 의사결정
+// ============================================================
+const ANALYTICS_CSS = `
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:760px){.an-grid{grid-template-columns:1fr}}
+.an-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--sh-sm)}
+.an-card h3{font-size:15px;margin:0 0 16px;display:flex;align-items:center;gap:8px}
+.an-card h3 i{color:var(--accent)}
+.funnel-step{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.funnel-bar{flex:1;height:34px;border-radius:8px;background:var(--bg-2);position:relative;overflow:hidden}
+.funnel-fill{position:absolute;inset:0;background:linear-gradient(90deg,var(--accent),var(--accent-d));border-radius:8px;display:flex;align-items:center;padding-left:12px;color:#fff;font-weight:700;font-size:13px}
+.funnel-lbl{width:88px;font-size:13px;font-weight:700;color:var(--ink-2)}
+.funnel-val{width:54px;text-align:right;font-weight:800;font-size:15px}
+.conv-rate{text-align:center;padding:18px;background:var(--accent-soft);border-radius:var(--radius);margin-top:6px}
+.conv-rate .big{font-size:34px;font-weight:900;color:var(--accent-d);line-height:1}
+.conv-rate .cap{font-size:13px;color:var(--ink-soft);margin-top:6px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.bar-row .bl{width:96px;font-size:13px;color:var(--ink-2);font-weight:600;text-align:right;flex:0 0 auto}
+.bar-track{flex:1;height:22px;background:var(--bg-2);border-radius:6px;overflow:hidden}
+.bar-in{height:100%;background:var(--accent);border-radius:6px;min-width:2px}
+.bar-row .bn{width:34px;font-size:13px;font-weight:700;color:var(--ink);flex:0 0 auto}
+.hour-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;align-items:end;height:120px}
+.hour-bar{background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.hour-bar.peak{background:var(--accent-d)}
+.hour-axis{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:5px;font-size:9px;color:var(--ink-faint);text-align:center}
+.an-note{font-size:13px;color:var(--ink-soft);line-height:1.7;margin:14px 0 0;padding:12px 14px;background:var(--bg-2);border-radius:var(--radius-sm)}
+.an-empty{text-align:center;color:var(--ink-soft);padding:30px 0}
+`
+
+export const AdminAnalyticsPage: FC<{ stats: ResStats }> = ({ stats }) => {
+  const wk = ['일', '월', '화', '수', '목', '금', '토']
+  const maxTreat = Math.max(1, ...stats.byTreatment.map((t) => t.count))
+  const maxWk = Math.max(1, ...stats.byWeekday)
+  const peakWk = stats.byWeekday.indexOf(maxWk)
+  // 퍼널: 전체 접수 → 확정 → 완료
+  const total = stats.total
+  const confirmed = (stats.byStatus.confirmed || 0) + (stats.byStatus.done || 0)
+  const done = stats.byStatus.done || 0
+  const confRate = total > 0 ? Math.round((confirmed / total) * 100) : 0
+  const pct = (n: number) => total > 0 ? Math.max(4, Math.round((n / total) * 100)) : 0
+  // 시간대: 2시간 단위 12구간으로 압축
+  const hour12 = Array.from({ length: 12 }, (_, i) => stats.byHour[i * 2] + stats.byHour[i * 2 + 1])
+  const maxHour12 = Math.max(1, ...hour12)
+  const peak12 = hour12.indexOf(maxHour12)
+
+  return (
+    <Layout title="운영 분석 | 관리자" description="관리자 전용" path="/admin/analytics">
+      <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS + ANALYTICS_CSS }} />
+      <section class="page-hero" style="padding:120px 0 40px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-chart-pie"></i> ANALYTICS</div><h1>운영 분석</h1></div></section>
+      <section class="sec">
+        <div class="container adm-wrap">
+          <div class="chip-row" style="margin-bottom:24px">
+            <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
+            <a href="/admin/reservations" class="chip"><i class="fa-regular fa-calendar-check"></i> 예약 운영</a>
+          </div>
+
+          {total === 0 ? (
+            <p class="an-empty"><i class="fa-solid fa-chart-line" style="font-size:32px;opacity:.3;display:block;margin-bottom:10px"></i>분석할 예약 데이터가 아직 없습니다. 예약이 접수되면 자동으로 인사이트가 생성됩니다.</p>
+          ) : (
+            <>
+              <div class="an-grid">
+                {/* 전환 퍼널 */}
+                <div class="an-card">
+                  <h3><i class="fa-solid fa-filter"></i> 예약 전환 퍼널</h3>
+                  <div class="funnel-step"><span class="funnel-lbl">접수</span><div class="funnel-bar"><div class="funnel-fill" style="width:100%">{total}건</div></div></div>
+                  <div class="funnel-step"><span class="funnel-lbl">확정+완료</span><div class="funnel-bar"><div class="funnel-fill" style={`width:${pct(confirmed)}%`}>{confirmed}건</div></div></div>
+                  <div class="funnel-step"><span class="funnel-lbl">완료</span><div class="funnel-bar"><div class="funnel-fill" style={`width:${pct(done)}%`}>{done}건</div></div></div>
+                  <div class="conv-rate"><div class="big">{confRate}%</div><div class="cap">접수 → 확정 전환율</div></div>
+                </div>
+
+                {/* 인기 진료 */}
+                <div class="an-card">
+                  <h3><i class="fa-solid fa-ranking-star"></i> 인기 희망 진료 TOP</h3>
+                  {stats.byTreatment.slice(0, 7).map((t) => (
+                    <div class="bar-row">
+                      <span class="bl">{t.name || '기타'}</span>
+                      <div class="bar-track"><div class="bar-in" style={`width:${Math.round((t.count / maxTreat) * 100)}%`}></div></div>
+                      <span class="bn">{t.count}</span>
+                    </div>
+                  ))}
+                  <p class="an-note"><i class="fa-solid fa-lightbulb" style="color:var(--accent)"></i> 가장 문의가 많은 진료에 콘텐츠·상담 역량을 집중하세요.</p>
+                </div>
+              </div>
+
+              <div class="an-grid">
+                {/* 요일별 */}
+                <div class="an-card">
+                  <h3><i class="fa-solid fa-calendar-week"></i> 요일별 문의 분포</h3>
+                  {wk.map((d, i) => (
+                    <div class="bar-row">
+                      <span class="bl" style="width:40px">{d}</span>
+                      <div class="bar-track"><div class="bar-in" style={`width:${Math.round((stats.byWeekday[i] / maxWk) * 100)}%${i === peakWk ? ';background:var(--accent-d)' : ''}`}></div></div>
+                      <span class="bn">{stats.byWeekday[i]}</span>
+                    </div>
+                  ))}
+                  <p class="an-note"><i class="fa-solid fa-lightbulb" style="color:var(--accent)"></i> <b>{wk[peakWk]}요일</b>에 문의가 가장 많습니다. 데스크 인력·상담 준비를 강화하세요.</p>
+                </div>
+
+                {/* 시간대별 */}
+                <div class="an-card">
+                  <h3><i class="fa-solid fa-clock"></i> 시간대별 문의 분포</h3>
+                  <div class="hour-grid">
+                    {hour12.map((v, i) => (
+                      <div class={`hour-bar ${i === peak12 ? 'peak' : ''}`} style={`height:${Math.round((v / maxHour12) * 100)}%`} title={`${i * 2}-${i * 2 + 2}시: ${v}건`}></div>
+                    ))}
+                  </div>
+                  <div class="hour-axis">
+                    {Array.from({ length: 12 }, (_, i) => <span>{i * 2}</span>)}
+                  </div>
+                  <p class="an-note"><i class="fa-solid fa-lightbulb" style="color:var(--accent)"></i> <b>{peak12 * 2}~{peak12 * 2 + 2}시</b>에 문의가 몰립니다. 야간진료(월·수 20시) 홍보 타이밍 참고.</p>
+                </div>
+              </div>
+
+              <div class="an-card">
+                <h3><i class="fa-solid fa-circle-info"></i> GA4 연동 안내</h3>
+                <p style="font-size:14px;color:var(--ink-2);line-height:1.7;margin:0">
+                  이 분석은 <b>예약 신청 데이터</b> 기반입니다. 전화 클릭·페이지 방문 등 <b>유입 단계 전환</b>은
+                  <a href="/admin/settings" style="color:var(--accent-d);text-decoration:underline"> 설정에서 GA4를 연결</a>하면
+                  Google Analytics에서 정밀하게 측정됩니다. (전화·예약·카카오·길찾기 자동 추적)
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    </Layout>
+  )
+}

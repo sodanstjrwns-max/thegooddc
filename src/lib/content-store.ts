@@ -510,3 +510,122 @@ export async function saveSettings(env: any, input: Partial<SiteSettings>): Prom
   await writeList(env, KV_SETTINGS, next as any) // writeList JSON.stringify 재사용 (객체도 직렬화)
   return next
 }
+
+// ============================================================
+// RESERVATIONS — 예약 운영 (KV: reservation:*)
+// 상태: new(신규) → confirmed(확정) → done(완료) / canceled(취소)
+// ============================================================
+export interface Reservation {
+  key: string
+  name: string
+  phone: string
+  treatment?: string
+  date?: string
+  message?: string
+  status: 'new' | 'confirmed' | 'done' | 'canceled'
+  createdAt: number
+  memo?: string // 관리자 메모
+}
+
+export const RES_STATUS_LABEL: Record<string, string> = {
+  new: '신규', confirmed: '확정', done: '완료', canceled: '취소',
+}
+
+export async function listReservations(env: any): Promise<Reservation[]> {
+  const kv = getKV(env)
+  if (!kv) return []
+  const out: Reservation[] = []
+  const list = await kv.list({ prefix: 'reservation:' })
+  for (const k of list.keys) {
+    const raw = await kv.get(k.name)
+    if (!raw) continue
+    try {
+      const d = JSON.parse(raw)
+      out.push({
+        key: k.name,
+        name: d.name || '',
+        phone: d.phone || '',
+        treatment: d.treatment || '',
+        date: d.date || '',
+        message: d.message || '',
+        status: (d.status as Reservation['status']) || 'new',
+        createdAt: d.createdAt || 0,
+        memo: d.memo || '',
+      })
+    } catch {}
+  }
+  out.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+  return out
+}
+
+export async function updateReservation(env: any, key: string, patch: Partial<Pick<Reservation, 'status' | 'memo'>>): Promise<boolean> {
+  const kv = getKV(env)
+  if (!kv || !key.startsWith('reservation:')) return false
+  const raw = await kv.get(key)
+  if (!raw) return false
+  let d: any = {}
+  try { d = JSON.parse(raw) } catch { return false }
+  if (patch.status !== undefined) d.status = patch.status
+  if (patch.memo !== undefined) d.memo = patch.memo
+  await kv.put(key, JSON.stringify(d))
+  return true
+}
+
+export async function deleteReservation(env: any, key: string): Promise<boolean> {
+  const kv = getKV(env)
+  if (!kv || !key.startsWith('reservation:')) return false
+  await kv.delete(key)
+  return true
+}
+
+// 운영 통계 집계 (대시보드/분석 공용)
+export interface ResStats {
+  total: number
+  byStatus: Record<string, number>
+  today: number      // 오늘 접수 건수
+  last7: number       // 최근 7일 접수
+  byTreatment: { name: string; count: number }[]
+  byWeekday: number[] // 0(일)~6(토) 접수 건수
+  byHour: number[]    // 0~23시 접수 건수
+}
+
+export function buildResStats(list: Reservation[]): ResStats {
+  const byStatus: Record<string, number> = { new: 0, confirmed: 0, done: 0, canceled: 0 }
+  const treatMap: Record<string, number> = {}
+  const byWeekday = [0, 0, 0, 0, 0, 0, 0]
+  const byHour = new Array(24).fill(0)
+  const now = Date.now()
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  let today = 0, last7 = 0
+  for (const r of list) {
+    byStatus[r.status] = (byStatus[r.status] || 0) + 1
+    const t = (r.treatment || '기타/상담').trim() || '기타/상담'
+    treatMap[t] = (treatMap[t] || 0) + 1
+    if (r.createdAt) {
+      const d = new Date(r.createdAt)
+      byWeekday[d.getDay()]++
+      byHour[d.getHours()]++
+      if (r.createdAt >= startOfToday.getTime()) today++
+      if (now - r.createdAt <= 7 * 86400000) last7++
+    }
+  }
+  const byTreatment = Object.entries(treatMap)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+  return { total: list.length, byStatus, today, last7, byTreatment, byWeekday, byHour }
+}
+
+// CSV 직렬화 (엑셀 한글 깨짐 방지: UTF-8 BOM 호출측에서 부착)
+export function reservationsToCsv(list: Reservation[]): string {
+  const esc = (v: any) => {
+    const s = (v ?? '').toString().replace(/"/g, '""')
+    return /[",\n]/.test(s) ? `"${s}"` : s
+  }
+  const header = ['접수일시', '이름', '연락처', '희망진료', '희망날짜', '상태', '문의내용', '메모']
+  const rows = list.map((r) => [
+    r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 16).replace('T', ' ') : '',
+    r.name, r.phone, r.treatment || '', r.date || '',
+    RES_STATUS_LABEL[r.status] || r.status, r.message || '', r.memo || '',
+  ].map(esc).join(','))
+  return [header.join(','), ...rows].join('\n')
+}

@@ -359,11 +359,20 @@
     }
   }
 
+  /* PWA: 서비스 워커 등록 (오프라인 + 앱 설치) */
+  function initPWA() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.pathname.indexOf('/admin') === 0) return; /* 관리자 화면 제외 */
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+    });
+  }
+
   function init() {
     initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
     initGrain(); initFableSpine(); initFunnel();
-    initTracking();
+    initTracking(); initPWA();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

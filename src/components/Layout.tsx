@@ -130,16 +130,25 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
-        <meta name="theme-color" content="#0C7CA4" />
+        <meta name="theme-color" content="#1E6FB8" />
+        {/* PWA: 홈 화면 설치 */}
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="더착한치과" />
 
         {/* Fonts & Icons */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link rel="stylesheet" href={PRETENDARD} />
-        {/* Editorial serif pairing — Newsreader (Latin) + Nanum Myeongjo (Korean) */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" />
-        <link rel="stylesheet" href={FA} />
+        {/* Editorial serif pairing — Newsreader (Latin) + Nanum Myeongjo (Korean) — 비차단 로드 */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" media="print" onload="this.media='all'" />
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" /></noscript>
+        {/* Font Awesome 아이콘 — 비차단 로드 */}
+        <link rel="stylesheet" href={FA} media="print" onload="this.media='all'" />
+        <noscript><link rel="stylesheet" href={FA} /></noscript>
         <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
 
         {/* JSON-LD */}
