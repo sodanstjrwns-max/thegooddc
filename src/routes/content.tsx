@@ -98,7 +98,7 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
                   )
                 })()}
                 <div style="padding:22px 24px">
-                  <h3 style="font-size:18px;margin-bottom:8px">{cs.title}</h3>
+                  <h2 style="font-size:18px;margin-bottom:8px">{cs.title}</h2>
                   <p style="color:var(--ink-soft);font-size:14px;margin:0 0 14px;line-height:1.6">{cs.desc}</p>
                   <div class="chip-row" style="gap:7px">
                     <span class="chip" style="font-size:12px;padding:6px 12px">{cs.age} {cs.gender}</span>
@@ -156,7 +156,7 @@ export const ColumnListPage: FC<{ columns?: Column[] }> = ({ columns = SEED_COLU
                 )}
                 <div class="col-list-body">
                   <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{c.date}</div>
-                  <h3 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h3>
+                  <h2 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h2>
                   <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{c.excerpt}</p>
                   <span style="color:var(--brand);font-weight:700;font-size:14px">{dr?.name} {dr?.title} · 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
@@ -331,7 +331,7 @@ export const EncyclopediaListPage: FC<{ category?: string }> = ({ category }) =>
                     <span style="margin-left:8px;font-size:11px;background:var(--brand);color:#fff;padding:2px 8px;border-radius:999px">상세</span>
                   )}
                 </div>
-                <h3 style="font-size:18px;margin-bottom:6px">{term.term}</h3>
+                <h2 style="font-size:18px;margin-bottom:6px">{term.term}</h2>
                 <p style="color:var(--ink-soft);font-size:14px;margin:0;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{term.def}</p>
               </a>
             ))}

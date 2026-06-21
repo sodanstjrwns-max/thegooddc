@@ -15,7 +15,7 @@ export const MissionPage: FC = () => {
   return (
     <Layout
       title={`병원소개 | ${CLINIC.name} — ${CLINIC.brandSlogan}`}
-      description={`${CLINIC.name}는 "${CLINIC.philosophy.mission}"는 미션으로 강서구 명지에서 정확하고 편안한 진료를 제공합니다. ${CLINIC.philosophy.vision}.`}
+      description={`${CLINIC.name}는 「${CLINIC.philosophy.mission}」는 미션으로 강서구 명지에서 정확하고 편안한 진료를 제공합니다. ${CLINIC.philosophy.vision}.`}
       path="/mission"
       keywords={['강서구 치과 소개', '명지 치과 철학', '더착한치과 미션']}
       schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema()]}
@@ -397,7 +397,7 @@ export const NoticePage: FC<{ notices?: Notice[] }> = ({ notices = SEED_NOTICES 
 export const ReservationPage: FC = () => (
   <Layout
     title={`진료 예약 | ${CLINIC.name} 강서구 명지 치과`}
-    description="더착한치과 온라인 진료 예약. 원하시는 진료와 날짜를 남겨주시면 빠르게 연락드립니다."
+    description="부산 강서구 명지 더착한치과 온라인 진료 예약. 임플란트·투명교정·미니쉬·충치·잇몸 진료를 원하시는 날짜와 시간으로 신청하시면 확인 후 빠르게 연락드립니다."
     path="/reservation"
     keywords={['강서구 치과 예약', '명지 치과 예약', '더착한치과 예약']}
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료 예약', path: '/reservation' }])]}
