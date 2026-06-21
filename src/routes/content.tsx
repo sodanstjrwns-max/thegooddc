@@ -45,12 +45,12 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
 
     <section class="sec" style={!loggedIn ? 'padding-top:20px' : ''}>
       <div class="container">
-        <div class="tlist-grid">
+        <div class="ba-grid">
           {cases.map((cs) => {
             const t = getTreatment(cs.category)
             const dr = getDoctor(cs.doctor)
             return (
-              <div class="card reveal" style="overflow:hidden">
+              <div class="ba-card reveal">
                 {/* Before/After slider — 업로드된 사진 우선, 없으면 플레이스홀더 */}
                 <div class="ba-slider">
                   {cs.photoPanoBefore || cs.photoOralBefore ? (
