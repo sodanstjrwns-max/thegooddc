@@ -430,9 +430,10 @@ export interface SiteSettings {
   gtm: string          // GTM 컨테이너ID (GTM-XXXXXXX)
   naverVerify: string  // 네이버 서치어드바이저 소유확인
   googleVerify: string // 구글 서치콘솔 소유확인
+  bingVerify: string   // 빙 웹마스터도구 소유확인 (msvalidate.01)
 }
 
-const EMPTY_SETTINGS: SiteSettings = { ga4: '', gtm: '', naverVerify: '', googleVerify: '' }
+const EMPTY_SETTINGS: SiteSettings = { ga4: '', gtm: '', naverVerify: '', googleVerify: '', bingVerify: '' }
 
 function pick(...vals: (string | undefined | null)[]): string {
   for (const v of vals) {
@@ -466,6 +467,7 @@ export async function getSettings(env: any, seed?: Partial<SiteSettings>): Promi
     gtm: pick(e.GTM_ID, kvSet.gtm, s.gtm),
     naverVerify: pick(e.NAVER_VERIFY, kvSet.naverVerify, s.naverVerify),
     googleVerify: pick(e.GOOGLE_VERIFY, kvSet.googleVerify, s.googleVerify),
+    bingVerify: pick(e.BING_VERIFY, kvSet.bingVerify, s.bingVerify),
   }
 }
 
@@ -493,6 +495,7 @@ export async function getSettingsDiagnostic(env: any, seed?: Partial<SiteSetting
       gtm: srcOf('gtm', 'GTM_ID'),
       naverVerify: srcOf('naverVerify', 'NAVER_VERIFY'),
       googleVerify: srcOf('googleVerify', 'GOOGLE_VERIFY'),
+      bingVerify: srcOf('bingVerify', 'BING_VERIFY'),
     },
   }
 }
@@ -506,6 +509,7 @@ export async function saveSettings(env: any, input: Partial<SiteSettings>): Prom
     gtm: input.gtm !== undefined ? norm(input.gtm).toUpperCase() : norm(cur.gtm),
     naverVerify: input.naverVerify !== undefined ? norm(input.naverVerify) : norm(cur.naverVerify),
     googleVerify: input.googleVerify !== undefined ? norm(input.googleVerify) : norm(cur.googleVerify),
+    bingVerify: input.bingVerify !== undefined ? norm(input.bingVerify) : norm(cur.bingVerify),
   }
   await writeList(env, KV_SETTINGS, next as any) // writeList JSON.stringify 재사용 (객체도 직렬화)
   return next

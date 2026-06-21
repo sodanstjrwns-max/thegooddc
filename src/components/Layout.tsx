@@ -26,7 +26,7 @@ const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/di
 // • 빈 ID면 아무 스크립트도 출력 안 함 → 성능·프라이버시 무영향
 // ============================================================
 const Analytics: FC = () => {
-  const { ga4, gtm, naverVerify, googleVerify } = getActiveSettings()
+  const { ga4, gtm, naverVerify, googleVerify, bingVerify } = getActiveSettings()
   const useGtm = !!gtm
   const useGa4 = !!ga4
 
@@ -42,6 +42,7 @@ gtag('js',new Date());`
       {/* 검색엔진 사이트 소유확인 (있을 때만) */}
       {naverVerify && <meta name="naver-site-verification" content={naverVerify} />}
       {googleVerify && <meta name="google-site-verification" content={googleVerify} />}
+      {bingVerify && <meta name="msvalidate.01" content={bingVerify} />}
 
       {/* Consent Mode v2 + dataLayer 선행 부트스트랩 */}
       {bootstrap && <script dangerouslySetInnerHTML={{ __html: bootstrap }} />}

@@ -42,6 +42,7 @@ type Bindings = {
   GTM_ID?: string
   NAVER_VERIFY?: string
   GOOGLE_VERIFY?: string
+  BING_VERIFY?: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -329,6 +330,7 @@ app.post('/api/admin/settings', async (c) => {
     gtm: String(f.gtm ?? ''),
     naverVerify: String(f.naverVerify ?? ''),
     googleVerify: String(f.googleVerify ?? ''),
+    bingVerify: String(f.bingVerify ?? ''),
   })
   return c.redirect('/admin/settings?ok=saved')
 })

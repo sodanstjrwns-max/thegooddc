@@ -247,6 +247,7 @@ const TrackStatus: FC<{ diag: SettingsDiag }> = ({ diag }) => {
     { key: 'gtm', name: 'GTM (태그매니저)' },
     { key: 'naverVerify', name: '네이버 서치어드바이저' },
     { key: 'googleVerify', name: '구글 서치콘솔' },
+    { key: 'bingVerify', name: '빙 웹마스터도구' },
   ]
   const ga4On = !!diag.effective.ga4
   return (
@@ -266,7 +267,7 @@ const TrackStatus: FC<{ diag: SettingsDiag }> = ({ diag }) => {
                 <span class="ti-name"><span class="ti-dot"></span> {it.name}</span>
                 <span class={`ti-badge ${src === 'env' ? 'env' : src === 'kv' || src === 'seed' ? 'kv' : 'none'}`}>{SRC_LABEL[src]}</span>
               </div>
-              <div class="ti-val">{on ? (it.key === 'naverVerify' || it.key === 'googleVerify' ? val.slice(0, 14) + '…' : val) : '연결 안 됨'}</div>
+              <div class="ti-val">{on ? (it.key === 'naverVerify' || it.key === 'googleVerify' || it.key === 'bingVerify' ? val.slice(0, 14) + '…' : val) : '연결 안 됨'}</div>
             </div>
           )
         })}
@@ -339,6 +340,11 @@ export const AdminSettingsPage: FC<{ diag: SettingsDiag; ok?: string }> = ({ dia
                 <label>구글 서치콘솔 소유확인 {locked('googleVerify') && <span class="set-locked">환경변수 잠금</span>}</label>
                 <input name="googleVerify" value={v.googleVerify || ''} placeholder="메타태그의 content 값만 붙여넣기" autocomplete="off" />
                 <p class="hint"><a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> → HTML 태그 방식의 <code>content="..."</code> 값.</p>
+              </div>
+              <div class="set-field">
+                <label>빙 웹마스터도구 소유확인 {locked('bingVerify') && <span class="set-locked">환경변수 잠금</span>}</label>
+                <input name="bingVerify" value={v.bingVerify || ''} placeholder="메타태그의 content 값만 붙여넣기" autocomplete="off" />
+                <p class="hint"><a href="https://www.bing.com/webmasters" target="_blank" rel="noopener">bing.com/webmasters</a> → HTML 메타태그 <code>msvalidate.01</code>의 <code>content="..."</code> 값. (구글 서치콘솔 연동 시 자동 가져오기 가능)</p>
               </div>
               <div class="set-actions">
                 <button type="submit" class="btn btn-gold"><i class="fa-solid fa-floppy-disk"></i> 저장</button>

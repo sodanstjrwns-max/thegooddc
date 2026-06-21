@@ -99,6 +99,7 @@ export const CLINIC = {
     gtm: '',          // 예: 'GTM-XXXXXXX' — GTM을 쓸 경우(GA4와 택1 권장)
     naverVerify: '',  // 네이버 서치어드바이저 사이트 소유확인 메타값
     googleVerify: '', // 구글 서치콘솔 사이트 소유확인 메타값
+    bingVerify: '',   // 빙 웹마스터도구 사이트 소유확인 메타값 (msvalidate.01)
   },
 
   domain: 'thegooddc.kr',

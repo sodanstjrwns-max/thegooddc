@@ -6,7 +6,7 @@
 // ============================================================
 import type { SiteSettings } from './content-store'
 
-const EMPTY: SiteSettings = { ga4: '', gtm: '', naverVerify: '', googleVerify: '' }
+const EMPTY: SiteSettings = { ga4: '', gtm: '', naverVerify: '', googleVerify: '', bingVerify: '' }
 
 let _active: SiteSettings = { ...EMPTY }
 
