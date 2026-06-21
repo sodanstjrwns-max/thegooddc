@@ -4,9 +4,10 @@ import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA, CASE_STORIES } from '../data/story'
-import { HeroToothVector, JourneyPathVector } from '../components/vectors'
+import { JourneyPathVector } from '../components/vectors'
 import { speakableSchema, faqSchema, reviewSchema, aggregateRatingSchema } from '../lib/seo'
 import { REVIEWS, REVIEW_STATS } from '../data/reviews'
+import { ASSET_VERSION } from '../lib/asset-version'
 
 // 의료기관 집계 평점 — MedicalClinic(#medicalclinic)에 별점 연결 → 리치 스니펫
 const ratingSchema = {
@@ -100,8 +101,12 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
             </ul>
           </div>
           <aside class="hero-visual reveal reveal-d1">
-            <figure class="hero-frame">
-              <HeroToothVector />
+            <figure class="hero-frame hero-portrait">
+              <img src={`/images/doctor-hwang.webp?v=${ASSET_VERSION}`} width="900" height="1200" alt={`${CLINIC.name} 대표원장 ${DOCTORS[0]?.name || ''} — 통합치의학 전문의`} loading="eager" fetchpriority="high" />
+              <figcaption class="hero-caption">
+                <span class="hc-name">{DOCTORS[0]?.name || '대표원장'} <em>대표원장</em></span>
+                <span class="hc-role">치의학박사 · 통합치의학 전문의</span>
+              </figcaption>
             </figure>
             <div class="hero-stat s1">
               <div class="n"><span data-count="24">24</span><span class="u">년</span></div>
