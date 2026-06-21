@@ -4,6 +4,7 @@ import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { AREAS } from '../data/areas'
 import { canonical, dentistSchema, organizationSchema, medicalClinicSchema, webSiteSchema } from '../lib/seo'
 import { ASSET_VERSION } from '../lib/asset-version'
+import { getActiveSettings } from '../lib/runtime-settings'
 
 interface LayoutProps {
   title: string
@@ -17,6 +18,70 @@ interface LayoutProps {
 
 const FA = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css'
 const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css'
+
+// ============================================================
+// Analytics — GA4 + GTM + 검색엔진 소유확인 (ID 있을 때만 렌더)
+// • Google Consent Mode v2: 기본 denied → 의료 개인정보·법규 안전 (페이지 조회/익명 통계는 측정 가능)
+// • dataLayer/gtag 부트스트랩 → app.js의 전환 이벤트(전화·예약·카카오·길찾기)가 자동 수집됨
+// • 빈 ID면 아무 스크립트도 출력 안 함 → 성능·프라이버시 무영향
+// ============================================================
+const Analytics: FC = () => {
+  const { ga4, gtm, naverVerify, googleVerify } = getActiveSettings()
+  const useGtm = !!gtm
+  const useGa4 = !!ga4
+
+  // Consent Mode v2 + dataLayer 부트스트랩 (GA4/GTM 공통 선행)
+  const bootstrap = useGa4 || useGtm
+    ? `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);} 
+gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'granted',wait_for_update:500});
+gtag('js',new Date());`
+    : ''
+
+  return (
+    <>
+      {/* 검색엔진 사이트 소유확인 (있을 때만) */}
+      {naverVerify && <meta name="naver-site-verification" content={naverVerify} />}
+      {googleVerify && <meta name="google-site-verification" content={googleVerify} />}
+
+      {/* Consent Mode v2 + dataLayer 선행 부트스트랩 */}
+      {bootstrap && <script dangerouslySetInnerHTML={{ __html: bootstrap }} />}
+
+      {/* GA4 (gtag.js) */}
+      {useGa4 && (
+        <>
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${ga4}`}></script>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `gtag('config','${ga4}',{anonymize_ip:true,send_page_view:true});`,
+            }}
+          />
+        </>
+      )}
+
+      {/* GTM 컨테이너 (GA4와 병행 가능하나 보통 택1 권장) */}
+      {useGtm && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');`,
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+// GTM noscript (body 최상단용 — JS 비활성 환경 fallback)
+const GtmNoscript: FC = () => {
+  const { gtm } = getActiveSettings()
+  if (!gtm) return null
+  return (
+    <noscript
+      dangerouslySetInnerHTML={{
+        __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtm}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+      }}
+    />
+  )
+}
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
@@ -32,6 +97,8 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
     <html lang="ko">
       <head>
         <meta charset="UTF-8" />
+        {/* 분석·추적 — 가능한 한 head 상단에서 부팅 (검색엔진 인증 메타 포함) */}
+        <Analytics />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
         <title>{title}</title>
         <meta name="description" content={description} />
@@ -81,11 +148,13 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         ))}
       </head>
       <body>
+        <GtmNoscript />
+        <a href="#main" class="skip-link">본문 바로가기</a>
         {/* 2026: scroll-driven reading progress (pure CSS animation-timeline: scroll) */}
         <div class="scroll-progress" aria-hidden="true"></div>
         <Header />
         <MobileDrawer />
-        <main>{children}</main>
+        <main id="main" tabindex={-1}>{children}</main>
         <Footer />
         <FloatingCTA />
         <script src={`/static/app.js?v=${ASSET_VERSION}`} defer></script>
@@ -98,7 +167,7 @@ const Header: FC = () => (
   <header class="site-header">
     <div class="bar">
       <a href="/" class="brand" aria-label={`${CLINIC.name} 홈`}>
-        <img class="logo-img" src="/static/logo-mark.png" srcset="/static/logo-mark.png 1x, /static/logo-mark@2x.png 2x" width="40" height="40" alt={CLINIC.name} />
+        <img class="logo-img" src="/static/logo-mark.png" srcset="/static/logo-mark.png 1x, /static/logo-mark@2x.png 2x" width="40" height="40" alt={CLINIC.name} fetchpriority="high" decoding="async" />
         <span class="nm"><b>{CLINIC.name}</b><small>The Good Dental Clinic</small></span>
       </a>
       <nav aria-label="주 메뉴">
@@ -136,11 +205,11 @@ const Header: FC = () => (
         </ul>
       </nav>
       <div class="header-cta">
-        <a href={`tel:${CLINIC.phoneRaw}`} class="header-phone">
+        <a href={`tel:${CLINIC.phoneRaw}`} class="header-phone" data-track="phone" data-track-loc="header">
           <span class="lbl">상담·예약</span>
           <span class="num">{CLINIC.phone}</span>
         </a>
-        <a href="/reservation" class="btn btn-gold btn-nav"><i class="fa-solid fa-calendar-check"></i> 예약</a>
+        <a href="/reservation" class="btn btn-gold btn-nav" data-track="reservation" data-track-loc="header"><i class="fa-solid fa-calendar-check"></i> 예약</a>
         <button class="nav-toggle" aria-label="메뉴 열기"><i class="fa-solid fa-bars"></i></button>
       </div>
     </div>
@@ -170,8 +239,8 @@ const MobileDrawer: FC = () => (
         <a href="/faq">자주 묻는 질문</a>
       </nav>
       <div class="drawer-foot">
-        <a href="/reservation" class="btn btn-gold"><i class="fa-solid fa-calendar-check"></i> 진료 예약</a>
-        <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+        <a href="/reservation" class="btn btn-gold" data-track="reservation" data-track-loc="drawer"><i class="fa-solid fa-calendar-check"></i> 진료 예약</a>
+        <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost" data-track="phone" data-track-loc="drawer"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
       </div>
     </aside>
   </>
@@ -186,13 +255,13 @@ const Footer: FC = () => (
           <p>{CLINIC.brandSlogan}</p>
           <p style="opacity:.7;font-size:13px">{CLINIC.address}</p>
           <div class="footer-social">
-            <a href={`tel:${CLINIC.phoneRaw}`} aria-label="전화"><i class="fa-solid fa-phone"></i></a>
-            <a href="/directions" aria-label="오시는 길"><i class="fa-solid fa-location-dot"></i></a>
-            <a href="/reservation" aria-label="예약"><i class="fa-regular fa-calendar-check"></i></a>
+            <a href={`tel:${CLINIC.phoneRaw}`} aria-label="전화" data-track="phone" data-track-loc="footer"><i class="fa-solid fa-phone"></i></a>
+            <a href="/directions" aria-label="오시는 길" data-track="directions" data-track-loc="footer"><i class="fa-solid fa-location-dot"></i></a>
+            <a href="/reservation" aria-label="예약" data-track="reservation" data-track-loc="footer"><i class="fa-regular fa-calendar-check"></i></a>
             {CLINIC.sns.instagram && <a href={CLINIC.sns.instagram} target="_blank" rel="noopener" aria-label="인스타그램"><i class="fa-brands fa-instagram"></i></a>}
             {CLINIC.sns.youtube && <a href={CLINIC.sns.youtube} target="_blank" rel="noopener" aria-label="유튜브"><i class="fa-brands fa-youtube"></i></a>}
             {CLINIC.sns.blog && <a href={CLINIC.sns.blog} target="_blank" rel="noopener" aria-label="블로그"><i class="fa-solid fa-blog"></i></a>}
-            {CLINIC.sns.kakao && <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" aria-label="카카오톡 채널"><i class="fa-solid fa-comment"></i></a>}
+            {CLINIC.sns.kakao && <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" aria-label="카카오톡 채널" data-track="kakao" data-track-loc="footer"><i class="fa-solid fa-comment"></i></a>}
           </div>
         </div>
         <div class="footer-col">
@@ -247,7 +316,8 @@ const Footer: FC = () => (
 
 const FloatingCTA: FC = () => (
   <div class="floating-cta">
-    <a href={`tel:${CLINIC.phoneRaw}`} class="call" aria-label="전화 상담"><i class="fa-solid fa-phone"></i></a>
-    <a href="/reservation" class="book" aria-label="진료 예약"><i class="fa-regular fa-calendar-check"></i></a>
+    {CLINIC.sns.kakao && <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" class="kakao" aria-label="카카오톡 상담" data-track="kakao" data-track-loc="float"><i class="fa-solid fa-comment"></i></a>}
+    <a href={`tel:${CLINIC.phoneRaw}`} class="call" aria-label="전화 상담" data-track="phone" data-track-loc="float"><i class="fa-solid fa-phone"></i></a>
+    <a href="/reservation" class="book" aria-label="진료 예약" data-track="reservation" data-track-loc="float"><i class="fa-regular fa-calendar-check"></i></a>
   </div>
 )

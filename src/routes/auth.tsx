@@ -4,8 +4,16 @@ import { Breadcrumb } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
-import type { Notice, Column, CaseItem } from '../lib/content-store'
+import type { Notice, Column, CaseItem, SiteSettings } from '../lib/content-store'
 import { bodyToText } from '../lib/content-store'
+
+// 추적 설정 진단 타입 (대시보드/설정 화면 공용)
+export type SettingsSource = 'env' | 'kv' | 'seed' | 'none'
+export interface SettingsDiag {
+  kv: Partial<SiteSettings>
+  effective: SiteSettings
+  source: Record<keyof SiteSettings, SettingsSource>
+}
 
 const AuthShell: FC<{ title: string; children: any }> = ({ title, children }) => (
   <section class="sec">
@@ -144,9 +152,9 @@ const DASH_CSS = `
 .dash-sec-title{font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin:0 0 14px}
 `
 
-export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number }; popup?: Notice | null }> = ({ stats, popup }) => (
+export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number }; popup?: Notice | null; diag?: SettingsDiag }> = ({ stats, popup, diag }) => (
   <Layout title="관리자 대시보드" description="관리자 전용" path="/admin/dashboard">
-    <style dangerouslySetInnerHTML={{ __html: DASH_CSS }} />
+    <style dangerouslySetInnerHTML={{ __html: DASH_CSS + TRACK_CARD_CSS }} />
     <section class="page-hero" style="padding:130px 0 50px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-gauge"></i> DASHBOARD</div><h1>관리자 대시보드</h1></div></section>
     <section class="sec">
       <div class="container">
@@ -162,6 +170,9 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
           </div>
           <a href="/admin/notices" class="btn btn-gold btn-sm"><i class="fa-solid fa-bullhorn"></i> 공지 관리</a>
         </div>
+
+        {/* 추적·분석 연결 상태 */}
+        {diag && <TrackStatus diag={diag} />}
 
         {/* 빠른 작업 */}
         <p class="dash-sec-title">빠른 작업</p>
@@ -189,6 +200,7 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
           <a href="/admin/cases" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-images"></i></div><h3>비포/애프터</h3><p>케이스 작성 및 관리</p></a>
           <a href="/admin/columns" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>원장 칼럼</h3><p>칼럼 작성 및 관리</p></a>
           <a href="/admin/notices" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-bullhorn"></i></div><h3>공지사항 · 팝업</h3><p>공지 작성 및 홈 팝업 설정</p></a>
+          <a href="/admin/settings" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-chart-line"></i></div><h3>추적 · 분석 설정</h3><p>GA4 · 네이버 · 구글 연동</p></a>
           <a href="/api/admin/logout" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-right-from-bracket"></i></div><h3>로그아웃</h3><p>관리자 세션 종료</p></a>
         </div>
       </div>
@@ -204,6 +216,155 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
     ` }} />
   </Layout>
 )
+
+// ============================================================
+// 추적·분석 연결 상태 카드 (대시보드 상단)
+// ============================================================
+const TRACK_CARD_CSS = `
+.track-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px 24px;margin:18px 0 6px;box-shadow:var(--sh-sm)}
+.track-card .tc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.track-card .tc-head h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.track-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.track-item{border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px;background:var(--bg)}
+.track-item .ti-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.track-item .ti-name{font-size:13px;font-weight:700;color:var(--ink-2)}
+.track-item .ti-val{font-size:12px;color:var(--ink-faint);font-family:ui-monospace,monospace;word-break:break-all}
+.ti-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.ti-on .ti-dot{background:#16a34a;box-shadow:0 0 0 3px color-mix(in oklab,#16a34a 22%,transparent)}
+.ti-off .ti-dot{background:#cbd2da}
+.ti-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;letter-spacing:.02em}
+.ti-badge.env{background:#e8f0fe;color:#1a56db}
+.ti-badge.kv{background:#e7f8ef;color:#0f7a3d}
+.ti-badge.none{background:#f1f3f5;color:#868e96}
+`
+
+const SRC_LABEL: Record<SettingsSource, string> = { env: '환경변수', kv: '관리자입력', seed: '코드', none: '미설정' }
+
+const TrackStatus: FC<{ diag: SettingsDiag }> = ({ diag }) => {
+  const items: { key: keyof SiteSettings; name: string }[] = [
+    { key: 'ga4', name: 'GA4 (방문·전환 분석)' },
+    { key: 'gtm', name: 'GTM (태그매니저)' },
+    { key: 'naverVerify', name: '네이버 서치어드바이저' },
+    { key: 'googleVerify', name: '구글 서치콘솔' },
+  ]
+  const ga4On = !!diag.effective.ga4
+  return (
+    <div class="track-card">
+      <div class="tc-head">
+        <h3><i class="fa-solid fa-chart-line" style="color:var(--accent)"></i> 추적 · 분석 연결 상태</h3>
+        <a href="/admin/settings" class="btn btn-gold btn-sm"><i class="fa-solid fa-sliders"></i> 설정 관리</a>
+      </div>
+      <div class="track-grid">
+        {items.map((it) => {
+          const val = (diag.effective[it.key] || '').toString()
+          const src = diag.source[it.key]
+          const on = !!val
+          return (
+            <div class={`track-item ${on ? 'ti-on' : 'ti-off'}`}>
+              <div class="ti-top">
+                <span class="ti-name"><span class="ti-dot"></span> {it.name}</span>
+                <span class={`ti-badge ${src === 'env' ? 'env' : src === 'kv' || src === 'seed' ? 'kv' : 'none'}`}>{SRC_LABEL[src]}</span>
+              </div>
+              <div class="ti-val">{on ? (it.key === 'naverVerify' || it.key === 'googleVerify' ? val.slice(0, 14) + '…' : val) : '연결 안 됨'}</div>
+            </div>
+          )
+        })}
+      </div>
+      {!ga4On && (
+        <p style="margin:14px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.6">
+          <i class="fa-solid fa-circle-info" style="color:var(--accent)"></i> 아직 방문자 추적이 켜지지 않았습니다. <b>[설정 관리]</b>에서 GA4 측정ID(G-로 시작)를 입력하면 즉시 방문·전화·예약 전환이 수집됩니다.
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// ADMIN — 추적·분석 설정 페이지
+// ============================================================
+const SETTINGS_CSS = `
+.set-wrap{max-width:760px;margin:0 auto}
+.set-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:26px 28px;margin-bottom:18px;box-shadow:var(--sh-sm)}
+.set-card h2{font-size:18px;margin:0 0 4px}
+.set-card .desc{color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 20px}
+.set-field{margin-bottom:18px}
+.set-field label{display:block;font-size:14px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.set-field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius-sm);font:inherit;background:var(--bg);color:var(--ink);font-family:ui-monospace,monospace}
+.set-field .hint{font-size:12.5px;color:var(--ink-faint);margin-top:6px;line-height:1.6}
+.set-field .hint a{color:var(--accent-d);text-decoration:underline}
+.set-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.set-toast{padding:12px 16px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;margin-bottom:18px}
+.set-toast.ok{background:var(--accent-soft);color:var(--accent-d);border:1px solid color-mix(in oklab,var(--accent) 30%,transparent)}
+.set-guide{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px 18px;font-size:13.5px;line-height:1.75;color:var(--ink-2)}
+.set-guide b{color:var(--ink)}
+.set-guide ol{margin:8px 0 0;padding-left:20px}
+.set-locked{font-size:12px;color:#1a56db;background:#e8f0fe;border-radius:100px;padding:2px 9px;font-weight:700}
+`
+
+export const AdminSettingsPage: FC<{ diag: SettingsDiag; ok?: string }> = ({ diag, ok }) => {
+  const v = diag.kv // 편집창에는 관리자가 KV에 저장한 값만 표시 (env는 잠금 표시)
+  const locked = (k: keyof SiteSettings) => diag.source[k] === 'env'
+  return (
+    <Layout title="추적 · 분석 설정 | 관리자" description="관리자 전용" path="/admin/settings">
+      <style dangerouslySetInnerHTML={{ __html: SETTINGS_CSS }} />
+      <section class="page-hero" style="padding:120px 0 40px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-chart-line"></i> ANALYTICS</div><h1>추적 · 분석 설정</h1></div></section>
+      <section class="sec">
+        <div class="container set-wrap">
+          <div class="chip-row" style="margin-bottom:24px">
+            <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
+          </div>
+          {ok === 'saved' && <div class="set-toast ok"><i class="fa-solid fa-circle-check"></i> 저장되었습니다. 사이트 전체에 즉시 반영됩니다(새로고침 후 확인).</div>}
+
+          <div class="set-card">
+            <h2><i class="fa-solid fa-chart-simple" style="color:var(--accent)"></i> 방문자 · 전환 추적</h2>
+            <p class="desc">ID만 입력하면 사이트 전체에 즉시 적용됩니다. 코드 수정·재배포가 필요 없습니다. 전화·예약·카카오·길찾기 클릭이 자동으로 전환 이벤트로 수집됩니다.</p>
+            <form method="post" action="/api/admin/settings" class="set-form">
+              <div class="set-field">
+                <label>GA4 측정 ID {locked('ga4') && <span class="set-locked">환경변수 잠금</span>}</label>
+                <input name="ga4" value={v.ga4 || ''} placeholder="G-XXXXXXXXXX" autocomplete="off" />
+                <p class="hint"><a href="https://analytics.google.com" target="_blank" rel="noopener">analytics.google.com</a> → 관리 → 데이터 스트림 → ‘G-’로 시작하는 측정 ID. 입력 즉시 방문/전환 추적 시작.</p>
+              </div>
+              <div class="set-field">
+                <label>GTM 컨테이너 ID <span style="font-weight:400;color:var(--ink-faint)">(선택)</span> {locked('gtm') && <span class="set-locked">환경변수 잠금</span>}</label>
+                <input name="gtm" value={v.gtm || ''} placeholder="GTM-XXXXXXX" autocomplete="off" />
+                <p class="hint">구글 태그매니저를 별도로 쓸 때만 입력하세요. (GA4와 택1 권장)</p>
+              </div>
+              <div class="set-field">
+                <label>네이버 서치어드바이저 소유확인 {locked('naverVerify') && <span class="set-locked">환경변수 잠금</span>}</label>
+                <input name="naverVerify" value={v.naverVerify || ''} placeholder="메타태그의 content 값만 붙여넣기" autocomplete="off" />
+                <p class="hint"><a href="https://searchadvisor.naver.com" target="_blank" rel="noopener">searchadvisor.naver.com</a> → 사이트 등록 → HTML 태그의 <code>content="..."</code> 값.</p>
+              </div>
+              <div class="set-field">
+                <label>구글 서치콘솔 소유확인 {locked('googleVerify') && <span class="set-locked">환경변수 잠금</span>}</label>
+                <input name="googleVerify" value={v.googleVerify || ''} placeholder="메타태그의 content 값만 붙여넣기" autocomplete="off" />
+                <p class="hint"><a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> → HTML 태그 방식의 <code>content="..."</code> 값.</p>
+              </div>
+              <div class="set-actions">
+                <button type="submit" class="btn btn-gold"><i class="fa-solid fa-floppy-disk"></i> 저장</button>
+                <a href="/" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> 사이트에서 확인</a>
+              </div>
+            </form>
+          </div>
+
+          <div class="set-card">
+            <h2><i class="fa-solid fa-circle-question" style="color:var(--accent)"></i> 어떻게 측정되나요?</h2>
+            <div class="set-guide">
+              <b>페이션트 퍼널 핵심 전환점이 자동 측정됩니다.</b>
+              <ol>
+                <li><b>전화 클릭</b> → <code>click_phone</code> (헤더·플로팅·푸터 위치 구분)</li>
+                <li><b>예약 페이지/버튼</b> → <code>click_reservation</code></li>
+                <li><b>예약 폼 제출</b> → <code>reservation_submit</code> + <code>generate_lead</code> (최상위 전환)</li>
+                <li><b>카카오 채널</b> → <code>click_kakao</code></li>
+                <li><b>길찾기</b> → <code>click_directions</code></li>
+              </ol>
+              <p style="margin:12px 0 0">개인정보 보호를 위해 <b>Google Consent Mode v2</b>가 적용되어 광고 식별자는 기본 차단, 익명 방문 통계만 수집합니다. (의료광고·개인정보 안전)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </Layout>
+  )
+}
 
 // ============================================================
 // ADMIN — 콘텐츠 관리 (공지 / 칼럼)

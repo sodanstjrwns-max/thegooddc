@@ -19,12 +19,14 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage, AreaHubPage } from './routes/area'
-import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage } from './routes/auth'
+import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
   listCases, createCase, updateCase, deleteCase,
+  getSettings, getSettingsDiagnostic, saveSettings,
 } from './lib/content-store'
+import { setActiveSettings } from './lib/runtime-settings'
 
 type Bindings = {
   KV?: KVNamespace
@@ -34,10 +36,30 @@ type Bindings = {
   SESSION_SECRET?: string
   RESEND_API_KEY?: string
   NOTIFICATION_EMAIL?: string
+  // 분석·검색엔진 인증 (배포 시 환경변수로 고정 가능 — KV/clinic 시드보다 우선)
+  GA4_ID?: string
+  GTM_ID?: string
+  NAVER_VERIFY?: string
+  GOOGLE_VERIFY?: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 app.use('/api/*', cors())
+
+// 모든 HTML 요청 전에 분석 설정을 prefetch → 런타임 홀더에 주입 (Layout이 동기 read)
+// API/정적 라우트는 건너뛰어 KV 읽기 오버헤드 최소화
+app.use('*', async (c, next) => {
+  const p = c.req.path
+  if (!p.startsWith('/api/') && !p.startsWith('/static/')) {
+    try {
+      const s = await getSettings(c.env, CLINIC.analytics)
+      setActiveSettings(s)
+    } catch {
+      setActiveSettings(null)
+    }
+  }
+  await next()
+})
 
 const SECRET = (c: any) => c.env?.SESSION_SECRET || 'dev-session-secret-change-me'
 const ADMIN_SECRET = (c: any) => c.env?.ADMIN_SESSION_SECRET || 'dev-admin-secret-change-me'
@@ -127,8 +149,16 @@ app.get('/admin/dashboard', async (c) => {
     const r = await c.env.KV.list({ prefix: 'reservation:' })
     reservations = r.keys.length
   }
-  const [notices, columns, cases, popup] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env), getActivePopupNotice(c.env)])
-  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} popup={popup} />)
+  const [notices, columns, cases, popup, diag] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env), getActivePopupNotice(c.env), getSettingsDiagnostic(c.env, CLINIC.analytics)])
+  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} popup={popup} diag={diag} />)
+})
+
+// Admin settings (추적·분석)
+app.get('/admin/settings', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  const diag = await getSettingsDiagnostic(c.env, CLINIC.analytics)
+  return c.html(<AdminSettingsPage diag={diag} ok={c.req.query('ok')} />)
 })
 
 // Admin content management UI
@@ -253,6 +283,19 @@ async function requireAdmin(c: any): Promise<boolean> {
 }
 
 // ----- NOTICES -----
+// 추적·분석 설정 저장 (KV)
+app.post('/api/admin/settings', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const f = await c.req.parseBody()
+  await saveSettings(c.env, {
+    ga4: String(f.ga4 ?? ''),
+    gtm: String(f.gtm ?? ''),
+    naverVerify: String(f.naverVerify ?? ''),
+    googleVerify: String(f.googleVerify ?? ''),
+  })
+  return c.redirect('/admin/settings?ok=saved')
+})
+
 app.post('/api/admin/notices/create', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
   const f = await c.req.parseBody()
@@ -931,6 +974,7 @@ function notFoundPage() {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="noindex, follow" />
         <title>페이지를 찾을 수 없습니다 | {CLINIC.name}</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" />
         <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
@@ -938,14 +982,21 @@ function notFoundPage() {
       <body>
         <section class="hero" style="min-height:100vh">
           <div class="hero-bg"></div><div class="hero-overlay"></div>
-          <div class="container" style="text-align:center;color:#fff;position:relative">
+          <div class="container" style="text-align:center;color:#fff;position:relative;max-width:680px">
             <div style="font-size:120px;font-weight:900;line-height:1;opacity:0.3">404</div>
             <h1 style="font-size:36px;margin:20px 0">페이지를 찾을 수 없습니다</h1>
-            <p style="opacity:0.9;margin-bottom:30px">요청하신 페이지가 존재하지 않거나 이동되었습니다.</p>
-            <div class="hero-actions" style="justify-content:center">
+            <p style="opacity:0.9;margin-bottom:30px">요청하신 페이지가 존재하지 않거나 이동되었습니다.<br />아래 메뉴에서 원하시는 정보를 찾아보세요.</p>
+            <div class="hero-actions" style="justify-content:center;margin-bottom:28px">
               <a href="/" class="btn btn-accent"><i class="fa-solid fa-house"></i> 홈으로</a>
-              <a href="/treatments" class="btn btn-ghost"><i class="fa-solid fa-tooth"></i> 진료 안내</a>
+              <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost" data-track="phone" data-track-loc="404"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
             </div>
+            <nav aria-label="추천 링크" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+              <a href="/treatments" class="chip" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">진료 안내</a>
+              <a href="/doctors" class="chip" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">의료진</a>
+              <a href="/cases" class="chip" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">비포/애프터</a>
+              <a href="/directions" class="chip" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">오시는 길</a>
+              <a href="/reservation" class="chip" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">진료 예약</a>
+            </nav>
           </div>
         </section>
       </body>

@@ -417,3 +417,96 @@ export async function deleteCase(env: any, id: string): Promise<boolean> {
   await writeList(env, KV_CASES, next)
   return true
 }
+
+// ============================================================
+// SETTINGS — 분석·추적·검색엔진 인증 (env → KV → clinic.ts fallback)
+// 우선순위: 환경변수(빌드/배포 시 고정) > KV(관리자가 입력) > 코드 시드
+// 관리자페이지에서 ID만 넣으면 즉시 작동. 코드 수정·재배포 불필요.
+// ============================================================
+const KV_SETTINGS = 'content:settings'
+
+export interface SiteSettings {
+  ga4: string          // GA4 측정ID (G-XXXXXXXXXX)
+  gtm: string          // GTM 컨테이너ID (GTM-XXXXXXX)
+  naverVerify: string  // 네이버 서치어드바이저 소유확인
+  googleVerify: string // 구글 서치콘솔 소유확인
+}
+
+const EMPTY_SETTINGS: SiteSettings = { ga4: '', gtm: '', naverVerify: '', googleVerify: '' }
+
+function pick(...vals: (string | undefined | null)[]): string {
+  for (const v of vals) {
+    const s = (v ?? '').toString().trim()
+    if (s) return s
+  }
+  return ''
+}
+
+// 관리자가 KV에 저장한 값만 반환 (env/시드 미반영 — 편집 화면 표시용)
+async function readSettingsKV(env: any): Promise<Partial<SiteSettings>> {
+  const kv = getKV(env)
+  if (!kv) return {}
+  try {
+    const raw = await kv.get(KV_SETTINGS)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return (parsed && typeof parsed === 'object') ? parsed as Partial<SiteSettings> : {}
+  } catch {
+    return {}
+  }
+}
+
+// 실제 사이트에 적용되는 최종 설정값 (env > KV > clinic 시드)
+export async function getSettings(env: any, seed?: Partial<SiteSettings>): Promise<SiteSettings> {
+  const kvSet = await readSettingsKV(env)
+  const e = env ?? {}
+  const s = seed ?? {}
+  return {
+    ga4: pick(e.GA4_ID, kvSet.ga4, s.ga4),
+    gtm: pick(e.GTM_ID, kvSet.gtm, s.gtm),
+    naverVerify: pick(e.NAVER_VERIFY, kvSet.naverVerify, s.naverVerify),
+    googleVerify: pick(e.GOOGLE_VERIFY, kvSet.googleVerify, s.googleVerify),
+  }
+}
+
+// 관리자 화면에서 현재 KV에 저장된 raw 값 + 각 항목의 소스(env/kv/none) 진단
+export async function getSettingsDiagnostic(env: any, seed?: Partial<SiteSettings>): Promise<{
+  kv: Partial<SiteSettings>
+  effective: SiteSettings
+  source: Record<keyof SiteSettings, 'env' | 'kv' | 'seed' | 'none'>
+}> {
+  const kvSet = await readSettingsKV(env)
+  const e = env ?? {}
+  const s = seed ?? {}
+  const effective = await getSettings(env, seed)
+  const srcOf = (k: keyof SiteSettings, envKey: string): 'env' | 'kv' | 'seed' | 'none' => {
+    if (pick((e as any)[envKey])) return 'env'
+    if (pick(kvSet[k])) return 'kv'
+    if (pick(s[k])) return 'seed'
+    return 'none'
+  }
+  return {
+    kv: kvSet,
+    effective,
+    source: {
+      ga4: srcOf('ga4', 'GA4_ID'),
+      gtm: srcOf('gtm', 'GTM_ID'),
+      naverVerify: srcOf('naverVerify', 'NAVER_VERIFY'),
+      googleVerify: srcOf('googleVerify', 'GOOGLE_VERIFY'),
+    },
+  }
+}
+
+// 관리자 저장 (입력값 정규화 — GA4/GTM 형식 가벼운 보정)
+export async function saveSettings(env: any, input: Partial<SiteSettings>): Promise<SiteSettings> {
+  const cur = await readSettingsKV(env)
+  const norm = (v: any) => (v ?? '').toString().trim()
+  const next: SiteSettings = {
+    ga4: input.ga4 !== undefined ? norm(input.ga4).toUpperCase() : norm(cur.ga4),
+    gtm: input.gtm !== undefined ? norm(input.gtm).toUpperCase() : norm(cur.gtm),
+    naverVerify: input.naverVerify !== undefined ? norm(input.naverVerify) : norm(cur.naverVerify),
+    googleVerify: input.googleVerify !== undefined ? norm(input.googleVerify) : norm(cur.googleVerify),
+  }
+  await writeList(env, KV_SETTINGS, next as any) // writeList JSON.stringify 재사용 (객체도 직렬화)
+  return next
+}

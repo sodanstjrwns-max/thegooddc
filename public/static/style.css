@@ -792,6 +792,7 @@ section{position:relative}
 .floating-cta a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;min-height:54px;border-radius:var(--radius);font-weight:600;font-size:1.02rem;box-shadow:var(--sh-md);-webkit-tap-highlight-color:transparent}
 .floating-cta .call{background:#fff;color:var(--ink);border:1px solid var(--line-2)}
 .floating-cta .book{background:var(--accent);color:#fff}
+.floating-cta .kakao{flex:0 0 54px;max-width:54px;background:#FEE500;color:#3A1D1D;font-size:1.25rem;padding:16px 0}
 
 /* ============================================================
    PAGE HERO (inner pages) — minimal light grey stage
@@ -1451,3 +1452,14 @@ section{position:relative}
 .home-faq-item summary::after{content:"\002B";margin-left:auto;color:var(--brand);font-weight:800;font-size:20px;transition:transform .2s ease}
 .home-faq-item[open] summary::after{content:"\2212"}
 .home-faq-item p{margin:0 0 18px;padding-left:28px;color:var(--ink-soft);line-height:1.75}
+
+/* ============================================================
+   접근성(a11y) 마감 — skip-link + 키보드 포커스 가시성
+   (2000만원 납품 품질: 키보드/스크린리더 사용자 보장)
+   ============================================================ */
+.skip-link{position:absolute;left:-9999px;top:0;z-index:2000;background:var(--accent,#1E6FB8);color:#fff;padding:12px 20px;border-radius:0 0 8px 0;font-weight:700;font-size:15px;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.skip-link:focus{left:0}
+main:focus{outline:none}
+/* 키보드 사용자에게만 명확한 포커스 링 (마우스 클릭엔 미표시) */
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:3px solid color-mix(in oklab,var(--accent,#1E6FB8) 70%,transparent);outline-offset:2px;border-radius:4px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in oklab,var(--accent,#1E6FB8) 55%,transparent);outline-offset:1px}

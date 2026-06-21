@@ -445,7 +445,16 @@ export const ReservationPage: FC = () => (
         try {
           const res = await fetch('/api/reservation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
           const j = await res.json();
-          if (j.ok) { r.textContent = '예약 신청이 접수되었습니다. 곧 연락드리겠습니다.'; r.style.color = 'var(--brand)'; f.reset(); }
+          if (j.ok) {
+            r.textContent = '예약 신청이 접수되었습니다. 곧 연락드리겠습니다.'; r.style.color = 'var(--brand)'; f.reset();
+            try {
+              var g = window.gtag;
+              if (typeof g === 'function') {
+                g('event', 'reservation_submit', { event_category:'conversion', event_label:'reservation_form', conversion_type:'reservation_submit' });
+                g('event', 'generate_lead', { event_category:'conversion', value:1, currency:'KRW' });
+              } else if (window.dataLayer) { window.dataLayer.push({ event:'reservation_submit' }); }
+            } catch(_) {}
+          }
           else { r.textContent = j.error || '오류가 발생했습니다. 전화로 문의해 주세요.'; r.style.color = '#c0392b'; }
         } catch(err) { r.textContent = '오류가 발생했습니다. 전화로 문의해 주세요.'; r.style.color = '#c0392b'; }
       });

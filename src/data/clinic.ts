@@ -91,10 +91,14 @@ export const CLINIC = {
     legacySite: 'http://thegooddc.com', // 기존(구) 홈페이지
   },
 
-  // GA4 / GTM (배포 시 교체)
+  // 분석·검색엔진 인증 (관리자페이지 또는 환경변수에서 주입 — 빈 값이면 미설치)
+  // GA4 측정ID 발급: analytics.google.com → 관리 → 데이터 스트림 → 'G-' 코드
+  // 네이버: searchadvisor.naver.com / 구글: search.google.com/search-console
   analytics: {
-    ga4: 'G-XXXXXXXXXX',
-    gtm: 'GTM-XXXXXXX',
+    ga4: '',          // 예: 'G-ABCD123XYZ' — 입력 즉시 방문/전환 추적 시작
+    gtm: '',          // 예: 'GTM-XXXXXXX' — GTM을 쓸 경우(GA4와 택1 권장)
+    naverVerify: '',  // 네이버 서치어드바이저 사이트 소유확인 메타값
+    googleVerify: '', // 구글 서치콘솔 사이트 소유확인 메타값
   },
 
   domain: 'thegooddc.kr',

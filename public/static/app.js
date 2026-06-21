@@ -318,10 +318,52 @@
     });
   }
 
+  /* ---- CONVERSION TRACKING ----
+     data-track="phone|reservation|kakao|directions" 가 달린 요소 클릭을
+     GA4 이벤트로 전송. gtag 미설치 시(=ID 미입력) 조용히 무시.
+     페이션트 퍼널: 인지→방문→상담의 핵심 전환점을 측정한다. */
+  function track(name, params) {
+    try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', name, params || {});
+      } else if (window.dataLayer && typeof window.dataLayer.push === 'function') {
+        window.dataLayer.push(Object.assign({ event: name }, params || {}));
+      }
+    } catch (e) { /* 추적 실패는 사용자 경험에 영향 없음 */ }
+  }
+
+  var TRACK_EVENT = {
+    phone:       'click_phone',        // 전화 상담
+    reservation: 'click_reservation',  // 예약 페이지 진입
+    kakao:       'click_kakao',         // 카카오 채널 상담
+    directions:  'click_directions'    // 길찾기
+  };
+
+  function initTracking() {
+    document.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('[data-track]') : null;
+      if (!el) return;
+      var kind = el.getAttribute('data-track');
+      var loc = el.getAttribute('data-track-loc') || 'unknown';
+      var evt = TRACK_EVENT[kind] || ('click_' + kind);
+      track(evt, { event_category: 'engagement', event_label: loc, conversion_type: kind, location: loc });
+    }, { passive: true });
+
+    /* 예약 폼 제출 = 최상위 전환. data-track-form 으로 표시된 폼 */
+    var resForm = document.querySelector('form[data-track-form="reservation"]');
+    if (resForm) {
+      resForm.addEventListener('submit', function () {
+        track('reservation_submit', { event_category: 'conversion', event_label: 'reservation_form', conversion_type: 'reservation_submit' });
+        track('generate_lead', { event_category: 'conversion', value: 1, currency: 'KRW' });
+      });
+    }
+  }
+
   function init() {
     initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
     initGrain(); initFableSpine(); initFunnel();
+    initTracking();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
