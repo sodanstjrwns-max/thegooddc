@@ -6,6 +6,9 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "vars": {
+    "NAVER_VERIFY": "bc474e9f1eb8334ec49e83b88de83a052c7a871e"
+  },
   "kv_namespaces": [
     {
       "binding": "KV",
