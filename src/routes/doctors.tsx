@@ -86,6 +86,30 @@ export const DoctorDetailPage: FC<{ slug: string }> = ({ slug }) => {
         </div>
       </section>
 
+      {d.videoId && (
+        <section class="sec doc-video" aria-label="원장 소개 영상">
+          <div class="container">
+            <div class="shead center" style="margin-bottom:34px">
+              <span class="eyebrow center">Introduction Film</span>
+              <h2>{d.videoTitle || `영상으로 만나는 ${d.name} ${d.title}`}</h2>
+              <p>진료 철학과 진료실의 모습을 영상으로 직접 확인해 보세요.</p>
+            </div>
+            <div class="video-frame reveal" data-glow>
+              <div class="bento-glow"></div>
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${d.videoId}?rel=0&modestbranding=1`}
+                title={`${d.name} ${d.title} 소개 영상`}
+                loading="lazy"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section class="sec bg-sand">
         <div class="container article-body">
           <h2>학력 및 경력</h2>

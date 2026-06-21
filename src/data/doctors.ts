@@ -14,6 +14,8 @@ export interface Doctor {
   career: string[] // 학력·경력 (원문)
   specialties: string[] // 잘하는 진료 (treatments slug와 연결)
   philosophy: string
+  videoId?: string // YouTube 영상 ID (소개 영상)
+  videoTitle?: string // 영상 섹션 제목
 }
 
 export const DOCTORS: Doctor[] = [
@@ -50,6 +52,8 @@ export const DOCTORS: Doctor[] = [
     philosophy:
       '최소 침습, 최소 절개를 지향합니다. ' +
       '덜 자르고 덜 붓게, 한 번에 정확하게 — 꼭 필요한 진료만 충분히 설명드린 뒤에 시작합니다.',
+    videoId: 'cjRTwsNgyPM',
+    videoTitle: '영상으로 만나는 황우석 대표원장',
   },
 ]
 
