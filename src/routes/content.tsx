@@ -51,28 +51,44 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
             const dr = getDoctor(cs.doctor)
             return (
               <div class="ba-card reveal">
-                {/* Before/After slider — 업로드된 사진 우선, 없으면 플레이스홀더 */}
-                <div class="ba-slider">
-                  {cs.photoPanoBefore || cs.photoOralBefore ? (
-                    <img src={`/files/${cs.photoPanoBefore || cs.photoOralBefore}`} alt={`${cs.title} 진료 전`} loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
-                  ) : (
-                    <div style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#114A7E,#1E6FB8);color:rgba(255,255,255,0.7);font-size:14px;font-weight:700">진료 전 (Before)</div>
-                  )}
-                  {loggedIn ? (
-                    cs.photoPanoAfter || cs.photoOralAfter ? (
-                      <img src={`/files/${cs.photoPanoAfter || cs.photoOralAfter}`} alt={`${cs.title} 진료 후`} loading="lazy" class="ba-after" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 50%)" />
-                    ) : (
-                      <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#1E6FB8,#2DD4BF);color:#fff;font-size:14px;font-weight:700;clip-path:inset(0 0 0 50%)">진료 후 (After)</div>
-                    )
-                  ) : (
-                    <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:rgba(255,255,255,0.8);font-size:13px;font-weight:700;clip-path:inset(0 0 0 50%);text-align:center;padding:20px">
-                      <span><i class="fa-solid fa-lock" style="display:block;font-size:24px;margin-bottom:8px"></i>로그인 후<br />열람 가능</span>
+              {(() => {
+                const hasBefore = !!(cs.photoPanoBefore || cs.photoOralBefore)
+                const hasAfter = !!(cs.photoPanoAfter || cs.photoOralAfter)
+                /* 사진이 한 장도 없으면 슬라이더 대신 '준비 중' 카드 */
+                if (!hasBefore && !hasAfter) {
+                  return (
+                    <div class="ba-coming" aria-label="진료 사진 준비 중">
+                      <i class="fa-regular fa-images"></i>
+                      <span class="bc-title">진료 사진 준비 중</span>
+                      <span class="bc-sub">실제 진료 전·후 사진을 정리하여 곧 공개할 예정입니다.</span>
                     </div>
-                  )}
-                  <div class="ba-handle"></div>
-                  <span class="ba-label before">Before</span>
-                  <span class="ba-label after">After</span>
-                </div>
+                  )
+                }
+                /* 사진이 있으면 기존 Before/After 슬라이더 */
+                return (
+                  <div class="ba-slider">
+                    {hasBefore ? (
+                      <img src={`/files/${cs.photoPanoBefore || cs.photoOralBefore}`} alt={`${cs.title} 진료 전`} loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+                    ) : (
+                      <div style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#114A7E,#1E6FB8);color:rgba(255,255,255,0.7);font-size:14px;font-weight:700">진료 전 (Before)</div>
+                    )}
+                    {loggedIn ? (
+                      hasAfter ? (
+                        <img src={`/files/${cs.photoPanoAfter || cs.photoOralAfter}`} alt={`${cs.title} 진료 후`} loading="lazy" class="ba-after" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 50%)" />
+                      ) : (
+                        <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#1E6FB8,#2DD4BF);color:#fff;font-size:14px;font-weight:700;clip-path:inset(0 0 0 50%)">진료 후 (After)</div>
+                      )
+                    ) : (
+                      <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:rgba(255,255,255,0.8);font-size:13px;font-weight:700;clip-path:inset(0 0 0 50%);text-align:center;padding:20px">
+                        <span><i class="fa-solid fa-lock" style="display:block;font-size:24px;margin-bottom:8px"></i>로그인 후<br />열람 가능</span>
+                      </div>
+                    )}
+                    <div class="ba-handle"></div>
+                    <span class="ba-label before">Before</span>
+                    <span class="ba-label after">After</span>
+                  </div>
+                )
+              })()}
                 {/* 추가 사진 그리드 (업로드된 것만 노출, 애프터는 로그인 게이팅) */}
                 {(() => {
                   const photos: { key?: string; label: string; after: boolean }[] = [
