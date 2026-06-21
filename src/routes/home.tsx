@@ -45,8 +45,8 @@ const ASSURE = [
 
 const STATS = [
   { n: 24, u: '년', l: '대표원장 임상 경력' },
+  { n: 15000, u: '여 케이스', l: '임플란트 식립 경험' },
   { n: 10, u: '개 진료과', l: '대학병원급 통합 진료' },
-  { n: 6, u: '개', l: '독립 진료·디지털 장비' },
   { n: 2015, u: '', l: '명지 지역 개원', year: true },
 ]
 
@@ -262,7 +262,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
               <div class="bento-body">
                 <span class="bento-kicker"><i class="fa-solid fa-microchip"></i> AI Guided</span>
                 <h3>AI 디지털 가이드<br />임플란트</h3>
-                <p>3D CT 데이터로 식립 위치·깊이·각도를 컴퓨터에서 미리 설계하고, 수술용 가이드로 계획한 위치에 정밀하게 식립합니다.</p>
+                <p>인공지능이 최적의 식립 경로를 제안하면 의사가 최종 확인합니다. 좁고 신경관과 가까운 부위도 계획대로 — 절개와 붓기를 줄이는 방향으로 진행합니다.</p>
               </div>
             </article>
 
@@ -274,8 +274,8 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
                 <div class="ring-num"><span data-count="98">0</span><i>%</i></div>
               </div>
               <div class="bento-body">
-                <h4>디지털 설계 정확도</h4>
-                <p>계획 대비 식립 오차를 최소화</p>
+                <h4>계획대로 정확하게</h4>
+                <p>수술 전 설계한 위치 그대로, 오차를 최소화하는 디지털 가이드 방식</p>
               </div>
             </article>
 

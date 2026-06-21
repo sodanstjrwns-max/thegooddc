@@ -172,7 +172,7 @@ export const TREATMENTS: Treatment[] = [
     ],
     doctorSlug: 'hwang-wooseok',
     relatedTreatments: ['prosthodontics', 'periodontics', 'oral-surgery'],
-    keywords: ['강서구 임플란트', '명지 임플란트', '디지털 임플란트', '부산 임플란트', '임플란트 치과'],
+    keywords: ['강서구 임플란트', '명지 임플란트', '국제신도시 임플란트', '디지털 임플란트', '부산 임플란트', '임플란트 치과'],
   },
 
   // ========================= 핵심 #2 투명교정 =========================
@@ -298,7 +298,7 @@ export const TREATMENTS: Treatment[] = [
     ],
     doctorSlug: 'hwang-wooseok',
     relatedTreatments: ['orthodontics', 'minish', 'preventive'],
-    keywords: ['강서구 투명교정', '명지 투명교정', '부산 투명교정', '투명교정 치과', '눈에 안띄는 교정'],
+    keywords: ['강서구 투명교정', '명지 투명교정', '국제신도시 교정', '부산 투명교정', '투명교정 치과', '눈에 안띄는 교정'],
   },
 
   // ========================= 핵심 #3 미니쉬(라미네이트) =========================
@@ -482,7 +482,7 @@ export const TREATMENTS: Treatment[] = [
     ],
     doctorSlug: 'hwang-wooseok',
     relatedTreatments: ['conservative', 'periodontics', 'preventive'],
-    keywords: ['강서구 치과', '명지 치과', '통합치의학과', '치과 종합검진'],
+    keywords: ['강서구 치과', '명지 치과', '국제신도시 치과', '통합치의학과', '치과 종합검진'],
   },
   {
     slug: 'conservative',
@@ -686,7 +686,7 @@ export const TREATMENTS: Treatment[] = [
     ],
     doctorSlug: 'hwang-wooseok',
     relatedTreatments: ['clear-aligner', 'preventive', 'integrated'],
-    keywords: ['강서구 교정', '명지 치아교정', '부산 교정치과', '치과교정과'],
+    keywords: ['강서구 교정', '명지 치아교정', '국제신도시 교정', '부산 교정치과', '치과교정과'],
   },
   {
     slug: 'periodontics',
