@@ -1463,3 +1463,87 @@ main:focus{outline:none}
 /* 키보드 사용자에게만 명확한 포커스 링 (마우스 클릭엔 미표시) */
 a:focus-visible,button:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:3px solid color-mix(in oklab,var(--accent,#1E6FB8) 70%,transparent);outline-offset:2px;border-radius:4px}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in oklab,var(--accent,#1E6FB8) 55%,transparent);outline-offset:1px}
+
+/* ============================================================
+   환자 후기 (Reviews) — 신뢰 밀도 (3000만원 가치 업그레이드)
+   ============================================================ */
+.reviews{padding:clamp(64px,9vw,120px) 0;background:linear-gradient(180deg,var(--bg-2,#f5f8fc) 0%,var(--card,#fff) 100%)}
+.rv-stat{display:flex;align-items:center;gap:22px;justify-content:center;margin:0 auto 40px;max-width:440px;background:var(--card,#fff);border:1px solid var(--line);border-radius:var(--radius-xl,20px);padding:22px 30px;box-shadow:var(--sh-sm,0 6px 24px rgba(17,74,126,.08))}
+.rv-score{font-size:54px;font-weight:800;line-height:1;color:var(--accent,#1E6FB8);font-family:var(--serif,inherit)}
+.rv-stat-meta{text-align:left}
+.rv-stat-meta p{margin:6px 0 0;font-size:14px;color:var(--ink-soft)}
+.rv-stars{display:inline-flex;gap:3px;color:#F5A623;font-size:18px}
+.rv-stars.sm{font-size:14px}
+.rv-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.rv-card{background:var(--card,#fff);border:1px solid var(--line);border-radius:var(--radius-lg,18px);padding:26px 26px 22px;box-shadow:var(--sh-sm,0 4px 18px rgba(17,74,126,.06));display:flex;flex-direction:column;transition:transform .35s var(--ease,ease),box-shadow .35s,border-color .35s;position:relative;overflow:hidden}
+.rv-card::before{content:'\201C';position:absolute;top:6px;right:18px;font-size:80px;line-height:1;color:color-mix(in oklab,var(--accent,#1E6FB8) 10%,transparent);font-family:Georgia,serif;pointer-events:none}
+.rv-card:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(17,74,126,.14);border-color:color-mix(in oklab,var(--accent,#1E6FB8) 35%,var(--line))}
+.rv-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rv-verified{font-size:12px;font-weight:700;color:var(--accent,#1E6FB8);display:inline-flex;align-items:center;gap:4px}
+.rv-title{font-size:17px;font-weight:700;margin:0 0 10px;color:var(--ink);line-height:1.45;letter-spacing:-.01em}
+.rv-body{font-size:14.5px;line-height:1.72;color:var(--ink-soft);margin:0 0 18px;flex:1}
+.rv-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line)}
+.rv-author{font-size:13px;font-weight:600;color:var(--ink-3,var(--ink-soft))}
+.rv-tag{font-size:12px;font-weight:700;padding:5px 11px;border-radius:var(--radius-pill,999px);background:color-mix(in oklab,var(--accent,#1E6FB8) 8%,transparent);color:var(--accent-d,#114A7E);text-decoration:none;white-space:nowrap;transition:background .25s}
+.rv-tag:hover{background:color-mix(in oklab,var(--accent,#1E6FB8) 18%,transparent)}
+.rv-tag.plain{background:var(--bg-2);color:var(--ink-soft)}
+.rv-disclaimer{margin:32px auto 0;max-width:760px;text-align:center;font-size:12.5px;line-height:1.7;color:var(--ink-faint,var(--ink-soft));display:flex;align-items:flex-start;gap:8px;justify-content:center}
+.rv-disclaimer i{color:var(--accent,#1E6FB8);margin-top:2px;flex-shrink:0}
+.rv-cta{display:flex;gap:12px;justify-content:center;margin-top:34px;flex-wrap:wrap}
+@media(max-width:640px){
+  .rv-grid{grid-template-columns:1fr}
+  .rv-stat{flex-direction:column;text-align:center;gap:12px;padding:24px}
+  .rv-stat-meta{text-align:center}
+  .rv-cta .btn{width:100%;justify-content:center}
+}
+
+/* ============================================================
+   예약 폼 UX 업그레이드 (퍼널 단계 + 칩 선택)
+   ============================================================ */
+.rsv-wrap{max-width:680px;margin:0 auto}
+.rsv-steps{list-style:none;display:flex;justify-content:space-between;padding:0;margin:0 0 36px;position:relative;counter-reset:none}
+.rsv-steps::before{content:'';position:absolute;top:18px;left:9%;right:9%;height:2px;background:var(--line);z-index:0}
+.rsv-step{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;position:relative;z-index:1;text-align:center}
+.rsv-num{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;background:var(--card,#fff);border:2px solid var(--line);color:var(--ink-faint,#9aa);transition:all .35s var(--ease,ease)}
+.rsv-lbl{font-size:12.5px;font-weight:600;color:var(--ink-faint,#9aa);transition:color .35s}
+.rsv-step.active .rsv-num{background:var(--accent,#1E6FB8);border-color:var(--accent,#1E6FB8);color:#fff;box-shadow:0 0 0 5px color-mix(in oklab,var(--accent,#1E6FB8) 16%,transparent)}
+.rsv-step.active .rsv-lbl{color:var(--accent-d,#114A7E)}
+.rsv-step.done .rsv-num{background:color-mix(in oklab,var(--accent,#1E6FB8) 18%,transparent);border-color:var(--accent,#1E6FB8);color:var(--accent,#1E6FB8)}
+.rsv-step.done .rsv-lbl{color:var(--ink-soft)}
+.rsv-fieldset{border:none;margin:0 0 26px;padding:0}
+.rsv-fieldset legend{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:16px;display:flex;align-items:center;gap:10px;padding:0}
+.rsv-badge{width:26px;height:26px;border-radius:50%;background:var(--accent,#1E6FB8);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.rsv-chips{display:flex;flex-wrap:wrap;gap:10px}
+.rsv-chips.time{margin-top:6px}
+.rsv-chip{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--card,#fff);color:var(--ink);padding:11px 16px;border-radius:var(--radius-pill,999px);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:all .22s var(--ease,ease)}
+.rsv-chip i{color:var(--accent,#1E6FB8);transition:color .22s}
+.rsv-chip.sm{padding:9px 14px;font-size:13px}
+.rsv-chip:hover{border-color:color-mix(in oklab,var(--accent,#1E6FB8) 45%,var(--line));transform:translateY(-1px)}
+.rsv-chip.on{background:var(--accent,#1E6FB8);border-color:var(--accent,#1E6FB8);color:#fff}
+.rsv-chip.on i{color:#fff}
+.rsv-sublabel{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:18px 0 4px}
+.rsv-hint{font-size:12.5px;color:var(--ink-soft);margin:12px 0 0;display:flex;align-items:center;gap:6px}
+.rsv-hint i{color:var(--accent,#1E6FB8)}
+.rsv-submit{width:100%;justify-content:center;font-size:16px;padding:16px}
+.rsv-trust{text-align:center;font-size:12.5px;color:var(--ink-soft);margin:14px 0 0;display:flex;align-items:center;justify-content:center;gap:6px}
+.rsv-trust i{color:var(--accent,#1E6FB8)}
+#reservation-result i{margin-right:5px}
+@media(max-width:560px){
+  .rsv-lbl{font-size:11px}
+  .rsv-num{width:34px;height:34px;font-size:14px}
+  .rsv-steps::before{top:16px}
+}
+
+/* ============================================================
+   진료 여정 (How It Works) — 예약 안심 프로세스
+   ============================================================ */
+.journey{padding:clamp(56px,8vw,100px) 0;background:var(--bg-2,#f5f8fc)}
+.jn-track{list-style:none;margin:46px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:jn}
+.jn-step{position:relative;background:var(--card,#fff);border:1px solid var(--line);border-radius:var(--radius-lg,18px);padding:30px 24px 26px;box-shadow:var(--sh-sm,0 4px 18px rgba(17,74,126,.06));transition:transform .35s var(--ease,ease),box-shadow .35s}
+.jn-step:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(17,74,126,.13)}
+.jn-no{position:absolute;top:18px;right:22px;font-size:34px;font-weight:800;line-height:1;color:color-mix(in oklab,var(--accent,#1E6FB8) 12%,transparent);font-family:var(--serif,Georgia,serif)}
+.jn-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:color-mix(in oklab,var(--accent,#1E6FB8) 10%,transparent);color:var(--accent,#1E6FB8);margin-bottom:16px}
+.jn-step h3{font-size:17px;font-weight:700;margin:0 0 8px;color:var(--ink);letter-spacing:-.01em}
+.jn-step p{font-size:14px;line-height:1.66;color:var(--ink-soft);margin:0}
+@media(max-width:880px){.jn-track{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.jn-track{grid-template-columns:1fr;gap:14px}.jn-no{font-size:30px}}

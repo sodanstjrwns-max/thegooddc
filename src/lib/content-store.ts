@@ -521,6 +521,7 @@ export interface Reservation {
   phone: string
   treatment?: string
   date?: string
+  timeSlot?: string // 희망 시간대
   message?: string
   status: 'new' | 'confirmed' | 'done' | 'canceled'
   createdAt: number
@@ -621,10 +622,10 @@ export function reservationsToCsv(list: Reservation[]): string {
     const s = (v ?? '').toString().replace(/"/g, '""')
     return /[",\n]/.test(s) ? `"${s}"` : s
   }
-  const header = ['접수일시', '이름', '연락처', '희망진료', '희망날짜', '상태', '문의내용', '메모']
+  const header = ['접수일시', '이름', '연락처', '희망진료', '희망날짜', '희망시간대', '상태', '문의내용', '메모']
   const rows = list.map((r) => [
     r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 16).replace('T', ' ') : '',
-    r.name, r.phone, r.treatment || '', r.date || '',
+    r.name, r.phone, r.treatment || '', r.date || '', r.timeSlot || '',
     RES_STATUS_LABEL[r.status] || r.status, r.message || '', r.memo || '',
   ].map(esc).join(','))
   return [header.join(','), ...rows].join('\n')

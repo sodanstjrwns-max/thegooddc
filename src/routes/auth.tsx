@@ -1066,7 +1066,7 @@ export const AdminReservationsPage: FC<{ items: Reservation[]; stats: ResStats }
                         <span class={`res-badge ${r.status}`}>{RES_STATUS_LABEL[r.status] || r.status}</span>
                       </div>
                       <p class="res-info">
-                        희망 진료: <b>{r.treatment || '-'}</b> · 희망 날짜: <b>{r.date || '-'}</b><br />
+                        희망 진료: <b>{r.treatment || '-'}</b> · 희망 날짜: <b>{r.date || '-'}</b>{r.timeSlot ? <> · 시간대: <b>{r.timeSlot}</b></> : ''}<br />
                         {r.message && <>문의: {r.message}<br /></>}
                         <span class="meta">접수: {fmt(r.createdAt)}</span>
                       </p>

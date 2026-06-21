@@ -324,9 +324,9 @@ const Footer: FC = () => (
 )
 
 const FloatingCTA: FC = () => (
-  <div class="floating-cta">
+  <div class="floating-cta" role="navigation" aria-label="빠른 상담">
     {CLINIC.sns.kakao && <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" class="kakao" aria-label="카카오톡 상담" data-track="kakao" data-track-loc="float"><i class="fa-solid fa-comment"></i></a>}
-    <a href={`tel:${CLINIC.phoneRaw}`} class="call" aria-label="전화 상담" data-track="phone" data-track-loc="float"><i class="fa-solid fa-phone"></i></a>
-    <a href="/reservation" class="book" aria-label="진료 예약" data-track="reservation" data-track-loc="float"><i class="fa-regular fa-calendar-check"></i></a>
+    <a href={`tel:${CLINIC.phoneRaw}`} class="call" aria-label="전화 상담" data-track="phone" data-track-loc="float"><i class="fa-solid fa-phone"></i><span>전화상담</span></a>
+    <a href="/reservation" class="book" aria-label="진료 예약" data-track="reservation" data-track-loc="float"><i class="fa-regular fa-calendar-check"></i><span>예약하기</span></a>
   </div>
 )

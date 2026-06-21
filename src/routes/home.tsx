@@ -5,7 +5,20 @@ import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import { STORY_CHAPTERS, PATIENT_FUNNEL, FUNNEL_PHASES, STORY_CTA, CASE_STORIES } from '../data/story'
 import { HeroToothVector, JourneyPathVector } from '../components/vectors'
-import { speakableSchema, faqSchema } from '../lib/seo'
+import { speakableSchema, faqSchema, reviewSchema, aggregateRatingSchema } from '../lib/seo'
+import { REVIEWS, REVIEW_STATS } from '../data/reviews'
+
+// 의료기관 집계 평점 — MedicalClinic(#medicalclinic)에 별점 연결 → 리치 스니펫
+const ratingSchema = {
+  '@context': 'https://schema.org',
+  '@type': ['MedicalClinic', 'Dentist'],
+  '@id': `https://${CLINIC.domain}/#medicalclinic`,
+  aggregateRating: aggregateRatingSchema({ value: REVIEW_STATS.average, count: REVIEW_STATS.count, best: 5 }),
+}
+// 개별 후기 스키마 (상위 4건 — 과도한 마크업 방지)
+const reviewSchemas = REVIEWS.slice(0, 4).map((r) =>
+  reviewSchema({ author: r.author, rating: r.rating, body: r.body, date: `${r.date}-01` }),
+)
 
 // 홈 핵심 FAQ — 검색·AI 답변 노출도가 가장 높은 페이지의 직답형 FAQPage
 const HOME_FAQS = [
@@ -59,7 +72,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
       description="부산 강서구 명지 더착한치과. 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만."
       keywords={['명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과']}
       path="/"
-      schemas={[speakableSchema(), faqSchema(HOME_FAQS)]}
+      schemas={[speakableSchema(), faqSchema(HOME_FAQS), ratingSchema, ...reviewSchemas]}
     >
       {popup && <NoticePopup notice={popup} />}
       {/* ===================== HERO — editorial asymmetric ===================== */}
@@ -489,10 +502,66 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
         </div>
       </section>
 
+      {/* ===================== REVIEWS (환자 후기) ===================== */}
+      <section class="reviews" id="reviews" aria-label="환자 후기">
+        <div class="container">
+          <div class="shead center" data-index="08">
+            <span class="eyebrow center">Patient Voices</span>
+            <h2>환자분들이 남겨주신 <span class="gold">진짜 이야기</span></h2>
+            <p>치료보다 오래 남는 건 경험입니다. 더착한치과를 거쳐간 분들의 후기입니다.</p>
+          </div>
+          <div class="rv-stat reveal" role="img" aria-label={`평균 평점 ${REVIEW_STATS.average}점, 후기 ${REVIEW_STATS.count}건`}>
+            <div class="rv-score">{REVIEW_STATS.average.toFixed(1)}</div>
+            <div class="rv-stat-meta">
+              <div class="rv-stars" aria-hidden="true">
+                {[1, 2, 3, 4, 5].map(() => <i class="fa-solid fa-star"></i>)}
+              </div>
+              <p><b>{REVIEW_STATS.count}건</b>의 내원 환자 후기 · 비식별 처리</p>
+            </div>
+          </div>
+          <ul class="rv-grid">
+            {REVIEWS.map((r, i) => (
+              <li class={`rv-card reveal reveal-d${(i % 3) + 1}`}>
+                <div class="rv-top">
+                  <div class="rv-stars sm" aria-hidden="true">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <i class={n <= r.rating ? 'fa-solid fa-star' : 'fa-regular fa-star'}></i>
+                    ))}
+                  </div>
+                  {r.verified && <span class="rv-verified"><i class="fa-solid fa-circle-check"></i> 내원 확인</span>}
+                </div>
+                <h3 class="rv-title">{r.title}</h3>
+                <p class="rv-body">{r.body}</p>
+                <div class="rv-foot">
+                  <span class="rv-author">{r.author} · {r.ageGroup}{r.area ? ` · ${r.area}` : ''}</span>
+                  {r.treatmentSlug ? (
+                    <a class="rv-tag" href={`/treatments/${r.treatmentSlug}`}>{r.treatment}</a>
+                  ) : (
+                    <span class="rv-tag plain">{r.treatment}</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p class="rv-disclaimer">
+            <i class="fa-solid fa-shield-halved"></i>
+            실제 내원 환자의 동의를 받아 게재하며, 개인정보 보호를 위해 이름·정보는 비식별 처리되었습니다. 치료 결과는 개인에 따라 다를 수 있습니다.
+          </p>
+          <div class="rv-cta">
+            <a href="/reservation" class="btn btn-primary" data-track="reservation" data-track-loc="reviews">
+              <i class="fa-regular fa-calendar-check"></i> 나도 상담받기
+            </a>
+            <a href="/cases" class="btn btn-ghost" data-track="cases" data-track-loc="reviews">
+              <i class="fa-regular fa-images"></i> 비포/애프터 보기
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ===================== ALL TREATMENTS ===================== */}
       <section class="tlist">
         <div class="container">
-          <div class="shead center" data-index="08">
+          <div class="shead center" data-index="09">
             <span class="eyebrow center">All Departments</span>
             <h2>한 곳에서 받는 <em>모든 치과 진료</em></h2>
             <p>대학병원과 동일한 진료 시스템으로 10개 진료과를 통합 운영합니다.</p>

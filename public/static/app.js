@@ -135,8 +135,9 @@
   /* ---- BEFORE/AFTER slider ---- */
   function initBA() {
     document.querySelectorAll('.ba-slider').forEach(function (slider) {
-      var after = slider.querySelector('.after') || slider.querySelector('.ba-after');
-      var handle = slider.querySelector('.handle') || slider.querySelector('.ba-handle');
+      // .ba-after(이미지/패널)를 우선 선택. (.after 단독은 'After' 라벨과 충돌하므로 제외)
+      var after = slider.querySelector('.ba-after');
+      var handle = slider.querySelector('.ba-handle') || slider.querySelector('.handle');
       if (!after || !handle) return;
       var dragging = false;
       function move(clientX) {

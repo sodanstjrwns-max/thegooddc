@@ -411,53 +411,164 @@ export const ReservationPage: FC = () => (
     </section>
     <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료 예약', path: '/reservation' }]} />
 
-    <section class="sec">
+    {/* 진료 여정 — 예약 후 이렇게 진행됩니다 (안심 프로세스) */}
+    <section class="journey" aria-label="진료 진행 과정">
       <div class="container">
-        <form class="form-card" id="reservation-form" method="post" action="/api/reservation">
-          <div class="field"><label>이름 *</label><input name="name" required placeholder="성함을 입력해 주세요" /></div>
-          <div class="field"><label>연락처 *</label><input name="phone" required type="tel" placeholder="010-0000-0000" /></div>
-          <div class="field">
-            <label>희망 진료</label>
-            <select name="treatment">
-              <option value="">선택해 주세요</option>
-              {TREATMENTS.map((t) => <option value={t.shortName}>{t.name}</option>)}
-              <option value="기타/상담">기타 / 상담</option>
-            </select>
-          </div>
-          <div class="field"><label>희망 날짜</label><input name="date" type="date" /></div>
-          <div class="field"><label>문의 내용</label><textarea name="message" rows={4} placeholder="궁금하신 점을 자유롭게 적어주세요"></textarea></div>
-          <div class="field checkbox-row">
-            <input type="checkbox" name="agree" required id="agree" />
-            <label for="agree" style="font-weight:400">개인정보 수집·이용에 동의합니다. 수집된 정보는 예약 상담 목적으로만 사용됩니다. *</label>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center"><i class="fa-regular fa-paper-plane"></i> 예약 신청하기</button>
+        <div class="shead center">
+          <span class="eyebrow center">How It Works</span>
+          <h2>예약하시면, <span class="gold">이렇게 진행됩니다</span></h2>
+          <p>처음 오셔도 당황하지 않으시도록 진료 흐름을 미리 안내해 드립니다.</p>
+        </div>
+        <ol class="jn-track">
+          {[
+            { ic: 'phone-volume', t: '예약·확인 연락', d: '신청 내용을 확인하고 가장 편한 시간으로 예약을 잡아드립니다.' },
+            { ic: 'comments', t: '충분한 상담', d: '증상과 걱정을 충분히 듣고, 서두르지 않고 설명드립니다.' },
+            { ic: 'cube', t: '3D 정밀 진단', d: '3D CT·구강스캔으로 현재 상태를 함께 화면으로 확인합니다.' },
+            { ic: 'list-check', t: '맞춤 치료 계획', d: '꼭 필요한 진료만, 우선순위와 비용을 투명하게 안내합니다.' },
+            { ic: 'tooth', t: '정밀 치료', d: '계획한 대로 단계를 나눠 부담 없이 진행합니다.' },
+            { ic: 'heart-pulse', t: '사후 관리', d: '치료 후에도 정기 점검으로 건강을 오래 지켜드립니다.' },
+          ].map((s, i) => (
+            <li class="jn-step reveal">
+              <span class="jn-no">{String(i + 1).padStart(2, '0')}</span>
+              <span class="jn-ico"><i class={`fa-solid fa-${s.ic}`}></i></span>
+              <h3>{s.t}</h3>
+              <p>{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="container rsv-wrap">
+        {/* 진행 단계 표시 — 퍼널 시각화 */}
+        <ol class="rsv-steps" aria-label="예약 진행 단계">
+          <li class="rsv-step active" data-step="1"><span class="rsv-num">1</span><span class="rsv-lbl">진료 선택</span></li>
+          <li class="rsv-step" data-step="2"><span class="rsv-num">2</span><span class="rsv-lbl">일정 선택</span></li>
+          <li class="rsv-step" data-step="3"><span class="rsv-num">3</span><span class="rsv-lbl">연락처 입력</span></li>
+          <li class="rsv-step done-step" data-step="4"><span class="rsv-num"><i class="fa-solid fa-check"></i></span><span class="rsv-lbl">신청 완료</span></li>
+        </ol>
+
+        <form class="form-card rsv-form" id="reservation-form" method="post" action="/api/reservation" data-track-form="reservation">
+          {/* STEP 1 — 진료 선택 (칩) */}
+          <fieldset class="rsv-fieldset">
+            <legend><span class="rsv-badge">1</span> 어떤 진료가 필요하세요?</legend>
+            <div class="rsv-chips" id="treatment-chips" role="radiogroup" aria-label="희망 진료">
+              {TREATMENTS.map((t) => (
+                <button type="button" class="rsv-chip" data-value={t.shortName} role="radio" aria-checked="false">
+                  <i class={`fa-solid fa-${t.icon || 'tooth'}`}></i> {t.shortName}
+                </button>
+              ))}
+              <button type="button" class="rsv-chip" data-value="기타/상담" role="radio" aria-checked="false">
+                <i class="fa-solid fa-comments"></i> 기타 / 상담
+              </button>
+            </div>
+            <input type="hidden" name="treatment" id="treatment-input" />
+          </fieldset>
+
+          {/* STEP 2 — 일정 (날짜 + 시간대 칩) */}
+          <fieldset class="rsv-fieldset">
+            <legend><span class="rsv-badge">2</span> 언제 방문하고 싶으세요?</legend>
+            <div class="field"><label>희망 날짜</label><input name="date" type="date" id="rsv-date" /></div>
+            <label class="rsv-sublabel">희망 시간대</label>
+            <div class="rsv-chips time" id="time-chips" role="radiogroup" aria-label="희망 시간대">
+              {['오전 (09–12시)', '점심 (12–14시)', '오후 (14–17시)', '저녁 (17–20시)', '상관없음'].map((slot) => (
+                <button type="button" class="rsv-chip sm" data-value={slot} role="radio" aria-checked="false">{slot}</button>
+              ))}
+            </div>
+            <input type="hidden" name="timeSlot" id="time-input" />
+            <p class="rsv-hint"><i class="fa-regular fa-clock"></i> 월·수 야간 20시까지 / 토 오전 진료 / 일요일 휴무</p>
+          </fieldset>
+
+          {/* STEP 3 — 연락처 */}
+          <fieldset class="rsv-fieldset">
+            <legend><span class="rsv-badge">3</span> 어디로 연락드릴까요?</legend>
+            <div class="field"><label>이름 *</label><input name="name" required placeholder="성함을 입력해 주세요" /></div>
+            <div class="field"><label>연락처 *</label><input name="phone" required type="tel" placeholder="010-0000-0000" inputmode="numeric" /></div>
+            <div class="field"><label>문의 내용</label><textarea name="message" rows={3} placeholder="증상이나 궁금하신 점을 자유롭게 적어주세요 (선택)"></textarea></div>
+            <div class="field checkbox-row">
+              <input type="checkbox" name="agree" required id="agree" />
+              <label for="agree" style="font-weight:400">개인정보 수집·이용에 동의합니다. 수집된 정보는 예약 상담 목적으로만 사용됩니다. *</label>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn btn-primary rsv-submit" data-track="reservation" data-track-loc="reservation_form">
+            <i class="fa-regular fa-paper-plane"></i> 예약 신청하기
+          </button>
+          <p class="rsv-trust"><i class="fa-solid fa-lock"></i> 입력하신 정보는 안전하게 보호되며 예약 상담 목적으로만 사용됩니다.</p>
           <p id="reservation-result" style="text-align:center;margin-top:16px;font-weight:700"></p>
         </form>
       </div>
     </section>
 
     <script dangerouslySetInnerHTML={{ __html: `
-      document.getElementById('reservation-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const f = e.target; const r = document.getElementById('reservation-result');
-        const data = Object.fromEntries(new FormData(f));
-        r.textContent = '전송 중...'; r.style.color = 'var(--ink-soft)';
-        try {
-          const res = await fetch('/api/reservation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
-          const j = await res.json();
-          if (j.ok) {
-            r.textContent = '예약 신청이 접수되었습니다. 곧 연락드리겠습니다.'; r.style.color = 'var(--brand)'; f.reset();
-            try {
-              var g = window.gtag;
-              if (typeof g === 'function') {
-                g('event', 'reservation_submit', { event_category:'conversion', event_label:'reservation_form', conversion_type:'reservation_submit' });
-                g('event', 'generate_lead', { event_category:'conversion', value:1, currency:'KRW' });
-              } else if (window.dataLayer) { window.dataLayer.push({ event:'reservation_submit' }); }
-            } catch(_) {}
+      (function(){
+        var steps = Array.prototype.slice.call(document.querySelectorAll('.rsv-step'));
+        function setStep(n){
+          steps.forEach(function(s){
+            var sn = parseInt(s.getAttribute('data-step'),10);
+            s.classList.toggle('active', sn === n);
+            s.classList.toggle('done', sn < n);
+          });
+        }
+        // 칩 라디오 그룹 (진료 / 시간대)
+        function bindChips(groupId, inputId, onpick){
+          var group = document.getElementById(groupId);
+          var input = document.getElementById(inputId);
+          if(!group||!input) return;
+          group.addEventListener('click', function(e){
+            var chip = e.target.closest('.rsv-chip');
+            if(!chip) return;
+            group.querySelectorAll('.rsv-chip').forEach(function(c){ c.classList.remove('on'); c.setAttribute('aria-checked','false'); });
+            chip.classList.add('on'); chip.setAttribute('aria-checked','true');
+            input.value = chip.getAttribute('data-value');
+            if(onpick) onpick();
+          });
+        }
+        bindChips('treatment-chips','treatment-input', function(){ setStep(2); });
+        bindChips('time-chips','time-input', function(){ setStep(3); });
+        var dateEl = document.getElementById('rsv-date');
+        if(dateEl){
+          var t=new Date(); t.setDate(t.getDate()); dateEl.min = t.toISOString().split('T')[0];
+          dateEl.addEventListener('change', function(){ setStep(3); });
+        }
+        var phoneEl = document.querySelector('#reservation-form input[name=phone]');
+        if(phoneEl){ phoneEl.addEventListener('focus', function(){ setStep(3); }); }
+
+        var form = document.getElementById('reservation-form');
+        form.addEventListener('submit', async function(e){
+          e.preventDefault();
+          var f = e.target; var r = document.getElementById('reservation-result');
+          var data = Object.fromEntries(new FormData(f));
+          var btn = f.querySelector('.rsv-submit');
+          r.textContent = '전송 중...'; r.style.color = 'var(--ink-soft)';
+          if(btn){ btn.disabled = true; btn.style.opacity = '.6'; }
+          try {
+            var res = await fetch('/api/reservation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            var j = await res.json();
+            if (j.ok) {
+              r.innerHTML = '<i class="fa-solid fa-circle-check"></i> 예약 신청이 접수되었습니다. 확인 후 빠르게 연락드리겠습니다.';
+              r.style.color = 'var(--brand)';
+              setStep(4);
+              f.reset();
+              document.querySelectorAll('.rsv-chip.on').forEach(function(c){ c.classList.remove('on'); c.setAttribute('aria-checked','false'); });
+              try {
+                var g = window.gtag;
+                if (typeof g === 'function') {
+                  g('event', 'reservation_submit', { event_category:'conversion', event_label:'reservation_form', conversion_type:'reservation_submit' });
+                  g('event', 'generate_lead', { event_category:'conversion', value:1, currency:'KRW' });
+                } else if (window.dataLayer) { window.dataLayer.push({ event:'reservation_submit' }); }
+              } catch(_) {}
+            } else {
+              r.textContent = j.error || '오류가 발생했습니다. 전화로 문의해 주세요.'; r.style.color = '#c0392b';
+              if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+            }
+          } catch(err) {
+            r.textContent = '오류가 발생했습니다. 전화(051-203-2875)로 문의해 주세요.'; r.style.color = '#c0392b';
+            if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
           }
-          else { r.textContent = j.error || '오류가 발생했습니다. 전화로 문의해 주세요.'; r.style.color = '#c0392b'; }
-        } catch(err) { r.textContent = '오류가 발생했습니다. 전화로 문의해 주세요.'; r.style.color = '#c0392b'; }
-      });
+        });
+      })();
     `}}></script>
   </Layout>
 )
