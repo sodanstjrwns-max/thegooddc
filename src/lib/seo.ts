@@ -143,19 +143,27 @@ export function breadcrumbSchema(items: { name: string; path: string }[]) {
 export function articleSchema(a: {
   title: string; description: string; slug: string
   datePublished: string; dateModified: string; authorSlug: string; authorName: string
+  image?: string; wordCount?: number; section?: string
 }) {
-  return {
+  const img = a.image ? (/^https?:\/\//.test(a.image) ? a.image : canonical(a.image)) : `${BASE}/images/og-default.jpg`
+  const schema: any = {
     '@context': 'https://schema.org',
     '@type': 'MedicalWebPage',
     headline: a.title,
     description: a.description,
     url: `${BASE}/column/${a.slug}`,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE}/column/${a.slug}` },
+    image: { '@type': 'ImageObject', url: img, width: 1200, height: 630 },
     datePublished: a.datePublished,
     dateModified: a.dateModified,
     author: { '@type': 'Person', name: a.authorName, url: `${BASE}/doctors/${a.authorSlug}` },
     reviewedBy: { '@type': 'Person', name: a.authorName },
     publisher: { '@id': `${BASE}/#organization` },
+    inLanguage: 'ko-KR',
   }
+  if (a.wordCount) schema.wordCount = a.wordCount
+  if (a.section) schema.articleSection = a.section
+  return schema
 }
 
 // City / AdministrativeArea (지역 SEO)

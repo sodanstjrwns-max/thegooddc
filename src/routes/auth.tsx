@@ -318,73 +318,218 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
   </AdminShell>
 )
 
-// 블로그 에디터: H태그 툴바 + 다중 이미지 드래그앤드롭 업로드 (섭션 6)
+// ============================================================
+// 슈퍼 블로그 에디터: 리치 툴바 + 드래그/붙여넣기 이미지(alt 입력) + 실시간 미리보기 + 글자수
+// ============================================================
 const EDITOR_CSS = `
-.ed-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:8px;background:var(--bg-2);border:1px solid var(--line);border-bottom:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0}
-.ed-btn{padding:6px 12px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--ink-2);border-radius:6px;cursor:pointer;font-family:inherit}
+.ed-wrap{position:relative}
+.ed-toolbar{display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:8px;background:var(--bg-2);border:1px solid var(--line);border-bottom:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0;position:sticky;top:0;z-index:2}
+.ed-btn{padding:6px 11px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--ink-2);border-radius:6px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:all .12s}
 .ed-btn:hover{background:var(--accent-soft);color:var(--accent-d);border-color:var(--accent)}
-.ed-area{border-radius:0 0 var(--radius-sm) var(--radius-sm) !important;border-top:none !important}
-.ed-area.dragover{border-color:var(--accent) !important;background:var(--accent-soft) !important}
-.ed-hint2{font-size:12px;color:var(--ink-faint);margin-top:6px;line-height:1.6}
+.ed-btn.is-on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ed-sep{width:1px;height:20px;background:var(--line);margin:0 3px}
+.ed-spacer{flex:1}
+.ed-area{border-radius:0 0 var(--radius-sm) var(--radius-sm) !important;border-top:none !important;font-size:14.5px;line-height:1.75}
+.ed-area.dragover{border-color:var(--accent) !important;background:var(--accent-soft) !important;outline:2px dashed var(--accent);outline-offset:-4px}
+.ed-hint2{font-size:12px;color:var(--ink-faint);margin-top:6px;line-height:1.7}
+.ed-hint2 code{background:var(--bg-2);padding:1px 6px;border-radius:4px;font-size:11.5px;color:var(--accent-d)}
+.ed-statusbar{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--ink-faint);margin-top:6px;flex-wrap:wrap}
+.ed-count b{color:var(--ink-2)}
+.ed-uploading{color:var(--accent-d);font-weight:600}
+/* 실시간 미리보기 */
+.ed-preview-toggle{cursor:pointer;font-weight:700;color:var(--accent-d);background:none;border:none;font-size:12px;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.ed-preview{display:none;margin-top:14px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:22px 24px;background:var(--card);max-height:520px;overflow-y:auto}
+.ed-preview.show{display:block;animation:edfade .2s ease}
+@keyframes edfade{from{opacity:0}to{opacity:1}}
+.ed-preview h2{font-size:21px;margin:24px 0 10px;line-height:1.4}
+.ed-preview h2:first-child{margin-top:0}
+.ed-preview h3{font-size:17px;margin:18px 0 8px;color:var(--ink-2)}
+.ed-preview p{font-size:15px;line-height:1.8;margin:0 0 14px;color:var(--ink)}
+.ed-preview ul{margin:0 0 14px;padding-left:22px}.ed-preview li{margin:4px 0;line-height:1.7}
+.ed-preview img{max-width:100%;border-radius:12px;margin:10px 0;display:block}
+.ed-preview blockquote{border-left:4px solid var(--accent);background:var(--accent-soft);margin:14px 0;padding:12px 18px;border-radius:0 10px 10px 0;color:var(--ink-2);font-style:italic}
+.ed-preview a{color:var(--accent-d);text-decoration:underline}
+.ed-preview .ed-prev-empty{color:var(--ink-faint);font-style:italic}
+/* 대표이미지 */
+.ed-cover{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.ed-cover-thumb{width:140px;height:90px;border-radius:10px;border:1px solid var(--line);object-fit:cover;background:var(--bg-2);flex-shrink:0}
+.ed-cover-thumb.empty{display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:22px}
+.ed-cover-ctl{flex:1;min-width:200px;display:grid;gap:8px}
 `
 const EDITOR_JS = `
-// 에디터 툴바: 커서 위치에 마크업 삽입
-document.querySelectorAll('.ed-toolbar').forEach((bar) => {
-  const ta = bar.parentNode.querySelector('textarea');
-  const insert = (before, after, placeholder) => {
-    const s = ta.selectionStart, e = ta.selectionEnd;
-    const sel = ta.value.slice(s, e) || placeholder;
-    ta.value = ta.value.slice(0, s) + before + sel + (after || '') + ta.value.slice(e);
-    ta.focus(); ta.selectionStart = s + before.length; ta.selectionEnd = s + before.length + sel.length;
-  };
-  bar.querySelectorAll('.ed-btn').forEach((btn) => btn.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    const cmd = btn.dataset.cmd;
-    if (cmd === 'h2') insert('\\n\\n', '\\n', '소제목을 입력하세요');
-    else if (cmd === 'h3') insert('\\n### ', '\\n', '작은 소제목');
-    else if (cmd === 'bold') insert('**', '**', '강조할 텍스트');
-    else if (cmd === 'list') insert('\\n- ', '', '목록 항목');
-    else if (cmd === 'img') bar.parentNode.querySelector('.ed-imgfile').click();
-  }));
-  // 이미지 업로드 공통 함수 (다중 파일 지원)
-  const uploadImages = async (files) => {
-    for (const file of files) {
-      if (!file.type.startsWith('image/')) continue;
-      const s = ta.selectionStart;
-      const marker = '\\n![업로드 중...]\\n';
-      ta.value = ta.value.slice(0, s) + marker + ta.value.slice(s);
-      const fd = new FormData(); fd.append('file', file); fd.append('kind', 'media');
-      try {
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
-        const j = await res.json();
-        ta.value = j.ok ? ta.value.replace(marker, '\\n![사진](' + j.url + ')\\n') : ta.value.replace(marker, '');
-        if (!j.ok) alert(j.error || '업로드 실패');
-      } catch { ta.value = ta.value.replace(marker, ''); alert('업로드 중 오류'); }
+(function(){
+  // ---------- 마크다운→HTML 간이 렌더 (미리보기용) ----------
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function inline(s){
+    s = esc(s);
+    s = s.replace(/!\\[(.*?)\\]\\((.*?)\\)/g, ''); // 이미지는 라인 단위로 별도 처리
+    s = s.replace(/\\[(.+?)\\]\\((https?:[^)]+)\\)/g, '<a href="$2">$1</a>');
+    s = s.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\\*([^*]+?)\\*(?!\\*)/g, '$1<em>$2</em>');
+    return s;
+  }
+  function renderPreview(text){
+    var blocks = text.replace(/\\r\\n/g,'\\n').split(/\\n{2,}/);
+    var html = '';
+    blocks.forEach(function(blk){
+      var lines = blk.split('\\n');
+      var firstTrim = (lines[0]||'').trim();
+      var richFirst = /^(###\\s|-\\s|!\\[|>\\s)/.test(firstTrim);
+      var startIdx = 0;
+      // 단락 첫 줄이 마커가 아니면 H2 소제목 취급
+      if(lines.length>=2 && !richFirst){ html += '<h2>'+inline(firstTrim)+'</h2>'; startIdx=1; }
+      var listBuf=[];
+      function flush(){ if(listBuf.length){ html+='<ul>'+listBuf.map(function(li){return '<li>'+inline(li)+'</li>';}).join('')+'</ul>'; listBuf=[]; } }
+      for(var i=startIdx;i<lines.length;i++){
+        var ln=lines[i].trim();
+        if(!ln){ flush(); continue; }
+        var img=ln.match(/^!\\[(.*?)\\]\\((.*?)\\)$/);
+        if(img){ flush(); html+='<img src="'+img[2]+'" alt="'+esc(img[1])+'">'; continue; }
+        if(ln.indexOf('### ')===0){ flush(); html+='<h3>'+inline(ln.slice(4))+'</h3>'; continue; }
+        if(ln.indexOf('> ')===0){ flush(); html+='<blockquote>'+inline(ln.slice(2))+'</blockquote>'; continue; }
+        if(ln.indexOf('- ')===0){ listBuf.push(ln.slice(2)); continue; }
+        flush(); html+='<p>'+inline(ln)+'</p>';
+      }
+      flush();
+    });
+    return html || '<p class="ed-prev-empty">본문을 입력하면 여기에 실제 게시 모습이 미리 보입니다.</p>';
+  }
+
+  document.querySelectorAll('.ed-wrap').forEach(function(wrap){
+    var ta = wrap.querySelector('textarea.ed-area');
+    if(!ta) return;
+    var bar = wrap.querySelector('.ed-toolbar');
+    var preview = wrap.querySelector('.ed-preview');
+    var countEl = wrap.querySelector('.ed-count');
+    var statusEl = wrap.querySelector('.ed-upstatus');
+
+    function insert(before, after, placeholder){
+      var s=ta.selectionStart, e=ta.selectionEnd;
+      var sel=ta.value.slice(s,e)||placeholder||'';
+      ta.value = ta.value.slice(0,s)+before+sel+(after||'')+ta.value.slice(e);
+      ta.focus(); ta.selectionStart=s+before.length; ta.selectionEnd=s+before.length+sel.length;
+      sync();
     }
-  };
-  const imgInput = bar.parentNode.querySelector('.ed-imgfile');
-  if (imgInput) imgInput.addEventListener('change', () => { uploadImages(Array.from(imgInput.files)); imgInput.value = ''; });
-  // 드래그앤드롭
-  ta.addEventListener('dragover', (e) => { e.preventDefault(); ta.classList.add('dragover'); });
-  ta.addEventListener('dragleave', () => ta.classList.remove('dragover'));
-  ta.addEventListener('drop', (e) => {
-    e.preventDefault(); ta.classList.remove('dragover');
-    uploadImages(Array.from(e.dataTransfer.files));
+    function sync(){
+      if(preview && preview.classList.contains('show')) preview.innerHTML = renderPreview(ta.value);
+      if(countEl){ var len=ta.value.length; var words=ta.value.trim()?ta.value.trim().split(/\\s+/).length:0; countEl.innerHTML='<b>'+len+'</b>자 · 약 <b>'+words+'</b>단어'; }
+    }
+
+    if(bar) bar.querySelectorAll('.ed-btn').forEach(function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        var cmd=btn.dataset.cmd;
+        if(cmd==='h2') insert('\\n\\n','\\n','소제목을 입력하세요');
+        else if(cmd==='h3') insert('\\n### ','\\n','작은 소제목');
+        else if(cmd==='bold') insert('**','**','강조할 텍스트');
+        else if(cmd==='italic') insert('*','*','기울인 텍스트');
+        else if(cmd==='list') insert('\\n- ','','목록 항목');
+        else if(cmd==='quote') insert('\\n> ','','인용할 문장');
+        else if(cmd==='link'){ var url=prompt('링크 주소(URL)를 입력하세요','https://'); if(url) insert('[','](' +url+ ')','링크 텍스트'); }
+        else if(cmd==='img'){ wrap.querySelector('.ed-imgfile').click(); }
+      });
+    });
+
+    // ---------- 이미지 업로드(alt 입력) ----------
+    var upCount=0;
+    function setStatus(){ if(statusEl) statusEl.textContent = upCount>0 ? ('사진 '+upCount+'장 업로드 중...') : ''; }
+    function uploadImages(files, askAlt){
+      Array.prototype.forEach.call(files, function(file){
+        if(!file.type || file.type.indexOf('image/')!==0) return;
+        var alt = '';
+        if(askAlt){ alt = (prompt('이 사진의 설명(검색·접근성용 대체텍스트)을 입력하세요\\n예: 디지털 가이드 임플란트 수술 장면', '')||'').trim(); }
+        var s=ta.selectionStart;
+        var marker='\\n![업로드 중...]('+Date.now()+Math.random()+')\\n';
+        ta.value = ta.value.slice(0,s)+marker+ta.value.slice(s);
+        upCount++; setStatus(); sync();
+        var fd=new FormData(); fd.append('file',file); fd.append('kind','media');
+        fetch('/api/admin/upload',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(j){
+          upCount--; setStatus();
+          if(j.ok){ ta.value = ta.value.replace(marker, '\\n!['+(alt||'본문 이미지')+']('+j.url+')\\n'); }
+          else { ta.value = ta.value.replace(marker,''); alert(j.error||'업로드 실패'); }
+          sync();
+        }).catch(function(){ upCount--; setStatus(); ta.value=ta.value.replace(marker,''); alert('업로드 중 오류'); sync(); });
+      });
+    }
+    var imgInput = wrap.querySelector('.ed-imgfile');
+    if(imgInput) imgInput.addEventListener('change', function(){ uploadImages(imgInput.files, true); imgInput.value=''; });
+    // 드래그앤드롭
+    ta.addEventListener('dragover', function(e){ e.preventDefault(); ta.classList.add('dragover'); });
+    ta.addEventListener('dragleave', function(){ ta.classList.remove('dragover'); });
+    ta.addEventListener('drop', function(e){ e.preventDefault(); ta.classList.remove('dragover'); if(e.dataTransfer.files.length) uploadImages(e.dataTransfer.files, true); });
+    // 클립보드 붙여넣기 이미지
+    ta.addEventListener('paste', function(e){
+      var items=(e.clipboardData||{}).items||[];
+      var imgs=[];
+      for(var i=0;i<items.length;i++){ if(items[i].type && items[i].type.indexOf('image/')===0){ var f=items[i].getAsFile(); if(f) imgs.push(f); } }
+      if(imgs.length){ e.preventDefault(); uploadImages(imgs, true); }
+    });
+
+    // 글자수/미리보기 동기화
+    ta.addEventListener('input', sync);
+    var toggle = wrap.querySelector('.ed-preview-toggle');
+    if(toggle && preview) toggle.addEventListener('click', function(ev){
+      ev.preventDefault();
+      preview.classList.toggle('show');
+      toggle.innerHTML = preview.classList.contains('show') ? '<i class="fa-solid fa-eye-slash"></i> 미리보기 닫기' : '<i class="fa-solid fa-eye"></i> 실시간 미리보기';
+      sync();
+    });
+    sync();
   });
-});
+
+  // ---------- 대표이미지 업로드 ----------
+  document.querySelectorAll('.ed-cover').forEach(function(box){
+    var fileInput = box.querySelector('.ed-coverfile');
+    var urlInput = box.querySelector('input[name=cover]');
+    var thumb = box.querySelector('.ed-cover-thumb');
+    var btn = box.querySelector('.ed-cover-btn');
+    function setThumb(url){
+      if(url){ thumb.style.backgroundImage=''; thumb.classList.remove('empty'); thumb.innerHTML=''; thumb.style.backgroundSize='cover'; thumb.style.backgroundPosition='center'; thumb.style.backgroundImage='url('+url+')'; }
+      else { thumb.classList.add('empty'); thumb.style.backgroundImage=''; thumb.innerHTML='<i class="fa-regular fa-image"></i>'; }
+    }
+    if(urlInput && urlInput.value) setThumb(urlInput.value);
+    if(btn && fileInput) btn.addEventListener('click', function(e){ e.preventDefault(); fileInput.click(); });
+    if(fileInput) fileInput.addEventListener('change', function(){
+      var file=fileInput.files[0]; if(!file) return;
+      if(btn){ btn.disabled=true; var ot=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 업로드 중'; }
+      var fd=new FormData(); fd.append('file',file); fd.append('kind','media');
+      fetch('/api/admin/upload',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(j){
+        if(j.ok){ urlInput.value=j.url; setThumb(j.url); } else alert(j.error||'업로드 실패');
+      }).catch(function(){ alert('업로드 중 오류'); }).finally(function(){ if(btn){ btn.disabled=false; btn.innerHTML=ot; } fileInput.value=''; });
+    });
+  });
+})();
 `
 
 const EditorToolbar: FC = () => (
-  <>
-    <div class="ed-toolbar">
-      <button type="button" class="ed-btn" data-cmd="h2" title="소제목(H2)"><i class="fa-solid fa-heading"></i> 소제목</button>
-      <button type="button" class="ed-btn" data-cmd="h3" title="작은 소제목(H3)">H3</button>
-      <button type="button" class="ed-btn" data-cmd="bold" title="굵게"><i class="fa-solid fa-bold"></i> 굵게</button>
-      <button type="button" class="ed-btn" data-cmd="list" title="목록"><i class="fa-solid fa-list-ul"></i> 목록</button>
-      <button type="button" class="ed-btn" data-cmd="img" title="사진 삽입"><i class="fa-solid fa-image"></i> 사진</button>
+  <div class="ed-toolbar">
+    <button type="button" class="ed-btn" data-cmd="h2" title="소제목(H2)"><i class="fa-solid fa-heading"></i> 소제목</button>
+    <button type="button" class="ed-btn" data-cmd="h3" title="작은 소제목(H3)">H3</button>
+    <span class="ed-sep" />
+    <button type="button" class="ed-btn" data-cmd="bold" title="굵게"><i class="fa-solid fa-bold"></i></button>
+    <button type="button" class="ed-btn" data-cmd="italic" title="기울임"><i class="fa-solid fa-italic"></i></button>
+    <button type="button" class="ed-btn" data-cmd="list" title="목록"><i class="fa-solid fa-list-ul"></i></button>
+    <button type="button" class="ed-btn" data-cmd="quote" title="인용구"><i class="fa-solid fa-quote-right"></i></button>
+    <button type="button" class="ed-btn" data-cmd="link" title="링크"><i class="fa-solid fa-link"></i></button>
+    <span class="ed-sep" />
+    <button type="button" class="ed-btn" data-cmd="img" title="사진 삽입(드래그·붙여넣기 가능)"><i class="fa-solid fa-image"></i> 사진</button>
+    <span class="ed-spacer" />
+    <button type="button" class="ed-preview-toggle"><i class="fa-solid fa-eye"></i> 실시간 미리보기</button>
+  </div>
+)
+
+// 대표이미지 업로드 위젯
+const CoverField: FC<{ cover?: string; coverAlt?: string }> = ({ cover, coverAlt }) => (
+  <div class="ed-cover">
+    <div class={`ed-cover-thumb ${cover ? '' : 'empty'}`} style={cover ? `background-image:url(${cover});background-size:cover;background-position:center` : ''}>{cover ? '' : <i class="fa-regular fa-image"></i>}</div>
+    <div class="ed-cover-ctl">
+      <input type="hidden" name="cover" value={cover || ''} />
+      <input type="file" accept="image/*" class="ed-coverfile" style="display:none" />
+      <button type="button" class="btn btn-outline btn-sm ed-cover-btn"><i class="fa-solid fa-upload"></i> 대표이미지 업로드</button>
+      <input type="text" name="coverAlt" value={coverAlt || ''} placeholder="대표이미지 설명(검색·접근성용 대체텍스트)" />
+      <p class="adm-hint">목록 썸네일·카카오/네이버 공유 미리보기·구글 검색 이미지에 사용됩니다. (권장 1200×630)</p>
     </div>
-    <input type="file" accept="image/*" multiple class="ed-imgfile" style="display:none" />
-  </>
+  </div>
 )
 
 export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Record<string, number> }> = ({ columns, ok, views = {} }) => {
@@ -397,7 +542,8 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
         <summary><i class="fa-solid fa-plus"></i> 새 칼럼 작성</summary>
         <form class="adm-form" method="post" action="/api/admin/columns/create">
           <div><label>제목</label><input type="text" name="title" required placeholder="예: 디지털 임플란트, 왜 정확할까요?" /></div>
-          <div><label>요약(목록·검색에 노출)</label><textarea name="excerpt" style="min-height:60px" placeholder="한두 문장으로 요약"></textarea></div>
+          <div><label>요약(목록·검색·공유 미리보기에 노출 · SEO 핵심)</label><textarea name="excerpt" style="min-height:60px" placeholder="한두 문장으로 요약 (검색결과 설명문으로 쓰입니다)"></textarea></div>
+          <div><label>대표이미지</label><CoverField /></div>
           <div class="row">
             <div><label>URL slug(비우면 자동)</label><input type="text" name="slug" placeholder="why-digital-implant" /></div>
             <div><label>날짜</label><input type="date" name="date" /></div>
@@ -406,11 +552,13 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
             <div><label>작성 의료진</label><select name="author">{DOCTORS.map((d) => <option value={d.slug}>{d.name} {d.title}</option>)}</select></div>
             <div><label>관련 진료</label><select name="related"><option value="">선택 안 함</option>{treatOpts.map((t) => <option value={t.slug}>{t.name}</option>)}</select></div>
           </div>
-          <div>
+          <div class="ed-wrap">
             <label>본문</label>
             <EditorToolbar />
-            <textarea name="bodyText" class="ed-area" style="min-height:240px" placeholder={'소제목\n본문 내용...\n\n다음 소제목\n다음 단락...'}></textarea>
-            <p class="ed-hint2">빈 줄로 단락 구분 · 단락 첫 줄 = 소제목(H2) · <code>### 텍스트</code> = H3 · <code>**텍스트**</code> = 굵게 · <code>- 항목</code> = 목록 · 사진은 툴바 버튼 또는 드래그앤드롭으로 여러 장 업로드 가능</p>
+            <textarea name="bodyText" class="ed-area" style="min-height:280px" placeholder={'소제목\n본문 내용...\n\n다음 소제목\n다음 단락...'}></textarea>
+            <div class="ed-statusbar"><span class="ed-count"></span><span class="ed-upstatus ed-uploading"></span></div>
+            <div class="ed-preview"></div>
+            <p class="ed-hint2">빈 줄로 단락 구분 · 단락 첫 줄 = 소제목(H2) · <code>### 텍스트</code> = H3 · <code>**굵게**</code> · <code>*기울임*</code> · <code>- 목록</code> · <code>&gt; 인용구</code> · <code>[링크](url)</code> · 사진은 <b>툴바·드래그·붙여넣기</b>로 업로드(설명 입력 시 SEO 자동 반영)</p>
           </div>
           <div><button type="submit" class="btn btn-gold"><i class="fa-solid fa-check"></i> 발행하기</button></div>
         </form>
@@ -429,6 +577,7 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
                 <input type="hidden" name="id" value={c.id} />
                 <div><label>제목</label><input type="text" name="title" value={c.title} required /></div>
                 <div><label>요약</label><textarea name="excerpt" style="min-height:60px">{c.excerpt}</textarea></div>
+                <div><label>대표이미지</label><CoverField cover={c.cover} coverAlt={c.coverAlt} /></div>
                 <div class="row">
                   <div><label>URL slug</label><input type="text" name="slug" value={c.slug} /></div>
                   <div><label>날짜</label><input type="date" name="date" value={c.date} /></div>
@@ -437,7 +586,7 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
                   <div><label>작성 의료진</label><select name="author">{DOCTORS.map((d) => <option value={d.slug} selected={d.slug === c.author}>{d.name} {d.title}</option>)}</select></div>
                   <div><label>관련 진료</label><select name="related"><option value="" selected={!c.related}>선택 안 함</option>{treatOpts.map((t) => <option value={t.slug} selected={t.slug === c.related}>{t.name}</option>)}</select></div>
                 </div>
-                <div><label>본문</label><EditorToolbar /><textarea name="bodyText" class="ed-area" style="min-height:240px">{bodyToText(c.body)}</textarea><p class="ed-hint2">빈 줄 = 단락 구분 · 첫 줄 = 소제목 · ###/**/- 마크업 · 사진 드래그앤드롭 지원</p></div>
+                <div class="ed-wrap"><label>본문</label><EditorToolbar /><textarea name="bodyText" class="ed-area" style="min-height:260px">{bodyToText(c.body)}</textarea><div class="ed-statusbar"><span class="ed-count"></span><span class="ed-upstatus ed-uploading"></span></div><div class="ed-preview"></div><p class="ed-hint2">빈 줄 = 단락 구분 · 첫 줄 = 소제목 · <code>### / ** / * / - / &gt; / [링크](url)</code> · 사진 드래그·붙여넣기 지원</p></div>
                 <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
               </form>
             </details>

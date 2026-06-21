@@ -21,7 +21,9 @@ const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/di
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
   const url = canonical(path)
-  const img = ogImage ? canonical(ogImage) : canonical('/images/og-default.jpg')
+  const img = ogImage
+    ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
+    : canonical('/images/og-default.jpg')
   // 전역 기반 스키마: WebSite(SearchAction) + MedicalClinic(NAP·@id 정의) + Dentist + Organization
   // medicalClinicSchema가 #medicalclinic @id를 정의 → 각 페이지 procedure/review의 provider 참조 해소
   const allSchemas = [webSiteSchema(), medicalClinicSchema(), dentistSchema(), organizationSchema(), ...schemas]

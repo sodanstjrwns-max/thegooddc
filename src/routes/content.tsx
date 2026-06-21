@@ -148,11 +148,18 @@ export const ColumnListPage: FC<{ columns?: Column[] }> = ({ columns = SEED_COLU
           {columns.map((c) => {
             const dr = getDoctor(c.author)
             return (
-              <a href={`/column/${c.slug}`} class="card reveal" style="padding:32px;text-decoration:none">
-                <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{c.date}</div>
-                <h3 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h3>
-                <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{c.excerpt}</p>
-                <span style="color:var(--brand);font-weight:700;font-size:14px">{dr?.name} {dr?.title} · 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+              <a href={`/column/${c.slug}`} class={`card reveal col-list-card ${c.cover ? 'has-thumb' : ''}`} style="text-decoration:none">
+                {c.cover && (
+                  <div class="col-list-thumb">
+                    <img src={c.cover} alt={c.coverAlt || c.title} loading="lazy" width="600" height="315" />
+                  </div>
+                )}
+                <div class="col-list-body">
+                  <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{c.date}</div>
+                  <h3 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h3>
+                  <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{c.excerpt}</p>
+                  <span style="color:var(--brand);font-weight:700;font-size:14px">{dr?.name} {dr?.title} · 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
               </a>
             )
           })}
@@ -167,10 +174,24 @@ const RichBody: FC<{ text: string }> = ({ text }) => {
   const lines = text.split('\n')
   const out: any[] = []
   let listBuf: string[] = []
-  const renderInline = (s: string) => {
-    // **bold** 처리 후 인링크
-    const parts = s.split(/\*\*(.+?)\*\*/g)
-    return parts.map((p, i) => (i % 2 === 1 ? <strong>{p}</strong> : <InlinkText text={p} max={2} />))
+  const renderInline = (s: string): any => {
+    // [링크](url) → <a>, **bold** → <strong>, *italic* → <em>, 나머지 인링크
+    const linkParts = s.split(/(\[[^\]]+\]\((?:https?:\/\/|\/)[^)]+\))/g)
+    return linkParts.map((seg) => {
+      const lm = seg.match(/^\[([^\]]+)\]\(((?:https?:\/\/|\/)[^)]+)\)$/)
+      if (lm) {
+        const ext = /^https?:\/\//.test(lm[2])
+        return <a href={lm[2]} {...(ext ? { target: '_blank', rel: 'noopener' } : {})} style="color:var(--accent-d);text-decoration:underline">{lm[1]}</a>
+      }
+      // bold
+      const boldParts = seg.split(/\*\*(.+?)\*\*/g)
+      return boldParts.map((bp, i) => {
+        if (i % 2 === 1) return <strong>{bp}</strong>
+        // italic
+        const itParts = bp.split(/(?<!\*)\*(?!\*)([^*]+?)(?<!\*)\*(?!\*)/g)
+        return itParts.map((ip, j) => (j % 2 === 1 ? <em>{ip}</em> : <InlinkText text={ip} max={2} />))
+      })
+    })
   }
   const flushList = () => {
     if (listBuf.length) {
@@ -184,6 +205,7 @@ const RichBody: FC<{ text: string }> = ({ text }) => {
     const img = line.match(/^!\[(.*?)\]\((.*?)\)$/)
     if (img) { flushList(); out.push(<img src={img[2]} alt={img[1] || '본문 이미지'} style="max-width:100%;border-radius:12px;margin:8px 0" loading="lazy" />); continue }
     if (line.startsWith('### ')) { flushList(); out.push(<h3>{line.slice(4)}</h3>); continue }
+    if (line.startsWith('> ')) { flushList(); out.push(<blockquote class="col-quote">{renderInline(line.slice(2))}</blockquote>); continue }
     if (line.startsWith('- ')) { listBuf.push(line.slice(2)); continue }
     flushList()
     out.push(<p>{renderInline(line)}</p>)
@@ -201,18 +223,30 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       </Layout>
     )
   }
-  const dr = getDoctor(c.author)!
+  const dr = getDoctor(c.author) ?? getDoctor('hwang-wooseok')!
   const t = getTreatment(c.related)
+  // 대표이미지: 지정값 → 본문 첫 이미지 fallback
+  const firstBodyImg = (() => {
+    for (const b of c.body) {
+      const m = (b.p || '').match(/!\[(.*?)\]\((.*?)\)/)
+      if (m) return m[2]
+    }
+    return ''
+  })()
+  const cover = c.cover || firstBodyImg || ''
+  // 본문 글자수(SEO wordCount)
+  const wordCount = c.body.reduce((acc, b) => acc + (b.h?.length || 0) + (b.p?.replace(/!\[.*?\]\(.*?\)/g, '').length || 0), 0)
   return (
     <Layout
       title={`${c.title} | ${CLINIC.name} 원장 칼럼`}
       description={c.excerpt}
       path={`/column/${c.slug}`}
       ogType="article"
+      ogImage={cover || undefined}
       keywords={['치과 칼럼', t?.shortName || '', '강서구 치과']}
       schemas={[
         breadcrumbSchema([{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }, { name: c.title, path: `/column/${c.slug}` }]),
-        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name }),
+        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || '치과 칼럼' }),
         speakableSchema(),
       ]}
     >
@@ -225,6 +259,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }, { name: c.title, path: `/column/${c.slug}` }]} />
       <section class="sec">
         <div class="container article-body">
+          {c.cover && <img src={c.cover} alt={c.coverAlt || c.title} class="col-cover" loading="eager" width="1200" height="630" />}
           <div style="display:flex;align-items:center;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:32px">
             <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;color:#fff"><i class="fa-solid fa-user-doctor"></i></div>
             <div>

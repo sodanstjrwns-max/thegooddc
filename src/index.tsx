@@ -297,6 +297,8 @@ app.post('/api/admin/columns/create', async (c) => {
     date: String(f.date || ''),
     author: String(f.author || 'hwang-wooseok'),
     related: String(f.related || ''),
+    cover: String(f.cover || ''),
+    coverAlt: String(f.coverAlt || ''),
     bodyText: String(f.bodyText || ''),
   })
   return c.redirect('/admin/columns?ok=created')
@@ -311,6 +313,8 @@ app.post('/api/admin/columns/update', async (c) => {
     date: String(f.date || ''),
     author: String(f.author || 'hwang-wooseok'),
     related: String(f.related || ''),
+    cover: String(f.cover || ''),
+    coverAlt: String(f.coverAlt || ''),
     bodyText: String(f.bodyText || ''),
   })
   return c.redirect('/admin/columns?ok=updated')

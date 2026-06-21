@@ -29,6 +29,8 @@ export interface Column {
   modified: string
   author: string // doctor id
   related: string // treatment slug
+  cover?: string // 대표이미지 URL (OG/스키마/목록 썸네일)
+  coverAlt?: string // 대표이미지 대체텍스트
   body: ColumnBlock[]
 }
 
@@ -280,9 +282,9 @@ export function parseBodyText(raw: string): ColumnBlock[] {
     if (lines.length >= 2) {
       const first = lines[0].trim()
       const rest = lines.slice(1)
-      const hasRich = rest.some((l) => /^(###\s|-\s|!\[)/.test(l.trim()))
+      const hasRich = rest.some((l) => /^(###\s|-\s|>\s|!\[)/.test(l.trim()))
       // 첫 줄 자체가 리치 마커면 소제목 없는 블록
-      if (/^(###\s|-\s|!\[)/.test(first)) return { h: '', p: lines.join('\n').trim() }
+      if (/^(###\s|-\s|>\s|!\[)/.test(first)) return { h: '', p: lines.join('\n').trim() }
       return { h: first, p: hasRich ? rest.join('\n').trim() : rest.join(' ').trim() }
     }
     return { h: '', p: lines[0].trim() }
@@ -307,6 +309,8 @@ export async function createColumn(env: any, input: Partial<Column> & { bodyText
     modified: today(),
     author: (input.author || 'hwang-wooseok').toString(),
     related: (input.related || '').toString(),
+    cover: (input.cover || '').toString().trim(),
+    coverAlt: (input.coverAlt || '').toString().trim(),
     body: input.bodyText !== undefined ? parseBodyText(input.bodyText) : (input.body || []),
   }
   await writeList(env, KV_COLUMNS, [c, ...list])
@@ -334,6 +338,8 @@ export async function updateColumn(env: any, id: string, input: Partial<Column> 
     date: input.date !== undefined ? input.date.toString() : list[idx].date,
     author: input.author !== undefined ? input.author.toString() : list[idx].author,
     related: input.related !== undefined ? input.related.toString() : list[idx].related,
+    cover: input.cover !== undefined ? input.cover.toString().trim() : list[idx].cover,
+    coverAlt: input.coverAlt !== undefined ? input.coverAlt.toString().trim() : list[idx].coverAlt,
     body: input.bodyText !== undefined ? parseBodyText(input.bodyText) : (input.body !== undefined ? input.body : list[idx].body),
     modified: today(),
   }
