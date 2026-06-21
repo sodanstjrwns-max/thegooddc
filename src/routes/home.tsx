@@ -82,13 +82,16 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
           <div class="hero-text reveal">
             <span class="hero-badge"><i class="fa-solid fa-location-dot"></i> 부산 강서구 명지 · 통합치의학 전문의 진료</span>
             <h1 class="kinetic">
-              <span class="line">치과의 두려움을</span>
+              <span class="line">치과 통증의 두려움을</span>
               <span class="line"><span class="accent-word">안심</span>으로</span>
               <span class="line">바꿉니다</span>
             </h1>
             <p class="lead">
-              치의학박사·통합치의학 전문의가 24년의 임상 경험과 디지털 기술로
-              꼭 필요한 진료만 정확하게. 명지에서 오래 믿고 다니는 치과를 만듭니다.
+              24년 임상, 임플란트 15,000여 케이스. 말은 적어도 실력으로 안심시키는 진료를 약속합니다.
+            </p>
+            <p class="lead-sub">
+              치의학박사·통합치의학 전문의가 디지털 가이드로 꼭 필요한 진료만 정확하게.
+              명지에서 오래 믿고 다니는 치과를 만듭니다.
             </p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> {STORY_CTA.reserve}</a>

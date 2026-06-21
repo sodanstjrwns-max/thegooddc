@@ -380,7 +380,8 @@ section{position:relative}
 .hero h1 .accent-word{
   font-style:normal;color:var(--accent);font-weight:700;
 }
-.hero .lead{font-size:var(--fs-lead);color:var(--ink-soft);line-height:1.62;margin:0 0 38px;max-width:520px;font-weight:400}
+.hero .lead{font-size:var(--fs-lead);color:var(--ink);line-height:1.55;margin:0 0 14px;max-width:540px;font-weight:600;letter-spacing:-.01em}
+.hero .lead-sub{font-size:calc(var(--fs-lead) - 3px);color:var(--ink-soft);line-height:1.62;margin:0 0 38px;max-width:520px;font-weight:400}
 .hero-actions{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:34px;justify-content:flex-start}
 .hero-trust{display:flex;flex-wrap:wrap;gap:14px 28px;justify-content:flex-start;margin:0;list-style:none;padding-top:30px;border-top:1px solid var(--line)}
 .hero-trust .tc{display:flex;align-items:center;gap:9px;font-size:.92rem;font-weight:500;color:var(--ink-3)}
