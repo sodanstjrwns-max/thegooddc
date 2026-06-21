@@ -913,8 +913,8 @@ section{position:relative}
 .stat .num,.num-tag{font-size:2.4rem;font-weight:700;color:var(--ink);letter-spacing:-.04em}
 .stat .lbl{color:var(--ink-soft);font-size:.9rem;margin-top:6px}
 
-.license{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh-xs);font-weight:500;color:var(--ink-2)}
-.license i{color:var(--ink-faint)}
+.license{display:inline-flex;align-items:center;gap:7px;background:rgba(30,111,184,.1);color:var(--blue);border-radius:var(--radius-pill);padding:7px 16px;font-weight:700;font-size:.82rem;letter-spacing:-.01em;margin-bottom:12px;width:auto;max-width:100%}
+.license i{color:var(--blue);font-size:.82rem}
 
 .doctor-card{display:grid;grid-template-columns:.7fr 1.3fr;gap:36px;background:#fff;border:1px solid var(--line);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--sh-xs);align-items:center}
 .career-timeline{position:relative;padding-left:28px}

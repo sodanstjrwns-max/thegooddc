@@ -29,7 +29,7 @@ export const DoctorsListPage: FC = () => (
           <a href={`/doctors/${d.slug}`} class="doctor-card reveal" style="text-decoration:none">
             <div class="doctor-photo" style={d.photo ? `background-image:url('${d.photo}')` : ''}>{!d.photo && <i class="fa-solid fa-user-doctor"></i>}</div>
             <div>
-              <span class="license">{d.license}</span>
+              <span class="license"><i class="fa-solid fa-certificate"></i>{d.license}</span>
               <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2rem);margin-bottom:8px;color:var(--ink)">{d.name} {d.title}</h2>
               <p class="section-lead" style="margin-bottom:18px;color:var(--blue);font-weight:700">{d.tagline}</p>
               <p style="color:var(--ink-soft);line-height:1.8;margin-bottom:22px">{d.philosophy}</p>
