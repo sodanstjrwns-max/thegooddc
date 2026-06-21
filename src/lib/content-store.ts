@@ -13,6 +13,8 @@ export interface Notice {
   modified: string
   popup?: boolean // 홈 히어로 팝업으로 노출할지
   popupUntil?: string // 팝업 노출 종료일(YYYY-MM-DD). 빈값이면 무기한
+  image?: string // 대표이미지 URL (목록 썸네일 · 팝업)
+  imageAlt?: string // 대표이미지 대체텍스트
 }
 
 export interface ColumnBlock {
@@ -213,6 +215,8 @@ export async function createNotice(env: any, input: Partial<Notice>): Promise<No
     modified: today(),
     popup: !!input.popup,
     popupUntil: (input.popupUntil || '').toString().trim(),
+    image: (input.image || '').toString().trim(),
+    imageAlt: (input.imageAlt || '').toString().trim(),
   }
   await writeList(env, KV_NOTICES, [n, ...list])
   return n
@@ -230,6 +234,8 @@ export async function updateNotice(env: any, id: string, input: Partial<Notice>)
     date: input.date !== undefined ? input.date.toString() : list[idx].date,
     popup: input.popup !== undefined ? !!input.popup : list[idx].popup,
     popupUntil: input.popupUntil !== undefined ? input.popupUntil.toString().trim() : list[idx].popupUntil,
+    image: input.image !== undefined ? input.image.toString().trim() : list[idx].image,
+    imageAlt: input.imageAlt !== undefined ? input.imageAlt.toString().trim() : list[idx].imageAlt,
     modified: today(),
   }
   list[idx] = updated

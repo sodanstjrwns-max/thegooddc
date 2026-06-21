@@ -472,11 +472,13 @@ const AdminShell: FC<{ active: 'notices' | 'columns' | 'cases'; title: string; o
 
 export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notices, ok }) => (
   <AdminShell active="notices" title="공지사항 관리" ok={ok}>
+    <style dangerouslySetInnerHTML={{ __html: EDITOR_CSS }} />
     {/* 새 공지 작성 */}
     <details class="adm-detail" style="margin-bottom:26px">
       <summary><i class="fa-solid fa-plus"></i> 새 공지 작성</summary>
       <form class="adm-form" method="post" action="/api/admin/notices/create">
         <div><label>제목</label><input type="text" name="title" required placeholder="예: 6월 휴진 안내" /></div>
+        <div><label>이미지(선택)</label><CoverField nameUrl="image" nameAlt="imageAlt" /></div>
         <div><label>내용</label><textarea name="body" required placeholder="공지 내용을 입력하세요"></textarea></div>
         <div class="row">
           <div><label>날짜</label><input type="date" name="date" /></div>
@@ -494,8 +496,9 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
     {notices.length === 0 && <p style="color:var(--ink-soft)">등록된 공지가 없습니다.</p>}
     {notices.map((n) => (
       <div class="adm-card">
-        <div class="adm-meta">{n.pinned && <span class="adm-pin">중요</span>}{n.popup && <span class="adm-pin" style="background:var(--accent-d)"><i class="fa-solid fa-window-restore"></i> 팝업</span>}<span>{n.date}</span>{n.popup && n.popupUntil && <span style="color:var(--accent-d)">팝업 ~{n.popupUntil}</span>}<span style="color:var(--ink-faint)">수정 {n.modified}</span></div>
+        <div class="adm-meta">{n.pinned && <span class="adm-pin">중요</span>}{n.popup && <span class="adm-pin" style="background:var(--accent-d)"><i class="fa-solid fa-window-restore"></i> 팝업</span>}{n.image && <span class="adm-pin" style="background:var(--brand)"><i class="fa-solid fa-image"></i> 이미지</span>}<span>{n.date}</span>{n.popup && n.popupUntil && <span style="color:var(--accent-d)">팝업 ~{n.popupUntil}</span>}<span style="color:var(--ink-faint)">수정 {n.modified}</span></div>
         <h3>{n.title}</h3>
+        {n.image && <img src={n.image} alt={n.imageAlt || n.title} style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:8px" />}
         <p class="adm-body-prev">{n.body}</p>
         <div class="adm-actions">
           <details class="adm-detail" style="flex:1">
@@ -503,6 +506,7 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
             <form class="adm-form" method="post" action="/api/admin/notices/update">
               <input type="hidden" name="id" value={n.id} />
               <div><label>제목</label><input type="text" name="title" value={n.title} required /></div>
+              <div><label>이미지(선택)</label><CoverField cover={n.image} coverAlt={n.imageAlt} nameUrl="image" nameAlt="imageAlt" /></div>
               <div><label>내용</label><textarea name="body" required>{n.body}</textarea></div>
               <div class="row">
                 <div><label>날짜</label><input type="date" name="date" value={n.date} /></div>
@@ -522,6 +526,7 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
         </div>
       </div>
     ))}
+    <script dangerouslySetInnerHTML={{ __html: EDITOR_JS }} />
   </AdminShell>
 )
 
@@ -687,7 +692,7 @@ const EDITOR_JS = `
   // ---------- 대표이미지 업로드 ----------
   document.querySelectorAll('.ed-cover').forEach(function(box){
     var fileInput = box.querySelector('.ed-coverfile');
-    var urlInput = box.querySelector('input[name=cover]');
+    var urlInput = box.querySelector('input[type=hidden]');
     var thumb = box.querySelector('.ed-cover-thumb');
     var btn = box.querySelector('.ed-cover-btn');
     function setThumb(url){
@@ -725,15 +730,15 @@ const EditorToolbar: FC = () => (
   </div>
 )
 
-// 대표이미지 업로드 위젯
-const CoverField: FC<{ cover?: string; coverAlt?: string }> = ({ cover, coverAlt }) => (
+// 대표이미지 업로드 위젯 (name 커스터마이징: 칼럼=cover/coverAlt, 공지=image/imageAlt)
+const CoverField: FC<{ cover?: string; coverAlt?: string; nameUrl?: string; nameAlt?: string }> = ({ cover, coverAlt, nameUrl = 'cover', nameAlt = 'coverAlt' }) => (
   <div class="ed-cover">
     <div class={`ed-cover-thumb ${cover ? '' : 'empty'}`} style={cover ? `background-image:url(${cover});background-size:cover;background-position:center` : ''}>{cover ? '' : <i class="fa-regular fa-image"></i>}</div>
     <div class="ed-cover-ctl">
-      <input type="hidden" name="cover" value={cover || ''} />
+      <input type="hidden" name={nameUrl} value={cover || ''} />
       <input type="file" accept="image/*" class="ed-coverfile" style="display:none" />
       <button type="button" class="btn btn-outline btn-sm ed-cover-btn"><i class="fa-solid fa-upload"></i> 대표이미지 업로드</button>
-      <input type="text" name="coverAlt" value={coverAlt || ''} placeholder="대표이미지 설명(검색·접근성용 대체텍스트)" />
+      <input type="text" name={nameAlt} value={coverAlt || ''} placeholder="대표이미지 설명(검색·접근성용 대체텍스트)" />
       <p class="adm-hint">목록 썸네일·카카오/네이버 공유 미리보기·구글 검색 이미지에 사용됩니다. (권장 1200×630)</p>
     </div>
   </div>

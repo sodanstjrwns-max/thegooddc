@@ -384,7 +384,10 @@ export const NoticePage: FC<{ notices?: Notice[] }> = ({ notices = SEED_NOTICES 
                 <span style="color:var(--ink-soft);font-size:14px">{n.date}</span>
               </div>
               <h3 style="font-size:20px;margin-bottom:8px">{n.title}</h3>
-              <p style="color:var(--ink-soft);margin:0;line-height:1.7">{n.body}</p>
+              {n.image && (
+                <img src={n.image} alt={n.imageAlt || n.title} loading="lazy" style="width:100%;max-height:420px;object-fit:cover;border-radius:12px;margin:6px 0 16px" />
+              )}
+              <p style="color:var(--ink-soft);margin:0;line-height:1.7;white-space:pre-line">{n.body}</p>
             </div>
           ))}
         </div>

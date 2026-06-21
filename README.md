@@ -139,6 +139,7 @@
 | 병원 기본정보 | `src/data/clinic.ts` (코드 — Single Source of Truth) |
 | 진료/의료진/지역/백과사전 | `src/data/*.ts` (코드 시드) |
 | 공지·칼럼·케이스 | **Cloudflare KV** (`content:notices` / `content:columns` / `content:cases`), 비었을 땐 코드 시드 fallback |
+| 공지 대표이미지 | `Notice.image` / `imageAlt` 필드 — 관리자 이미지 업로드 위젯(`CoverField`)으로 R2 업로드 후 자동 연결 |
 | 추적 설정 | **Cloudflare KV** (`content:settings`), 우선순위 = 환경변수 > KV > 코드 |
 | 회원·예약 | Cloudflare KV (`user:*` / `reservation:*`) |
 | 케이스 사진 | **Cloudflare R2** |

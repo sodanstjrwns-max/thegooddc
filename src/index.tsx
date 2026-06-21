@@ -351,6 +351,8 @@ app.post('/api/admin/notices/create', async (c) => {
     pinned: f.pinned === 'on' || f.pinned === 'true',
     popup: f.popup === 'on' || f.popup === 'true',
     popupUntil: String(f.popupUntil || ''),
+    image: String(f.image || ''),
+    imageAlt: String(f.imageAlt || ''),
   })
   return c.redirect('/admin/notices?ok=created')
 })
@@ -364,6 +366,8 @@ app.post('/api/admin/notices/update', async (c) => {
     pinned: f.pinned === 'on' || f.pinned === 'true',
     popup: f.popup === 'on' || f.popup === 'true',
     popupUntil: String(f.popupUntil || ''),
+    image: String(f.image || ''),
+    imageAlt: String(f.imageAlt || ''),
   })
   return c.redirect('/admin/notices?ok=updated')
 })
