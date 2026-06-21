@@ -28,6 +28,11 @@ import {
   listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
 } from './lib/content-store'
 import { setActiveSettings } from './lib/runtime-settings'
+import { notifyGoogleIndex, notifyGoogleIndexMany, isGoogleIndexingConfigured } from './lib/google-indexing'
+
+// 절대 URL 헬퍼 (자동 색인용)
+const SITE_ORIGIN = `https://${CLINIC.domain}`
+const absUrl = (path: string) => `${SITE_ORIGIN}${path.startsWith('/') ? path : '/' + path}`
 
 type Bindings = {
   KV?: KVNamespace
@@ -43,6 +48,7 @@ type Bindings = {
   NAVER_VERIFY?: string
   GOOGLE_VERIFY?: string
   BING_VERIFY?: string
+  GOOGLE_SA_JSON?: string  // 구글 Indexing API 서비스 계정 JSON (자동 색인용)
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -160,7 +166,7 @@ app.get('/admin/settings', async (c) => {
   const s = await getSession(c, 'admin')
   if (!s) return c.redirect('/admin')
   const diag = await getSettingsDiagnostic(c.env, CLINIC.analytics)
-  return c.html(<AdminSettingsPage diag={diag} ok={c.req.query('ok')} />)
+  return c.html(<AdminSettingsPage diag={diag} ok={c.req.query('ok')} googleIndexOn={isGoogleIndexingConfigured(c.env)} />)
 })
 
 // Admin content management UI
@@ -372,7 +378,7 @@ app.post('/api/admin/notices/delete', async (c) => {
 app.post('/api/admin/columns/create', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
   const f = await c.req.parseBody()
-  await createColumn(c.env, {
+  const col = await createColumn(c.env, {
     title: String(f.title || ''),
     slug: String(f.slug || ''),
     excerpt: String(f.excerpt || ''),
@@ -383,12 +389,14 @@ app.post('/api/admin/columns/create', async (c) => {
     coverAlt: String(f.coverAlt || ''),
     bodyText: String(f.bodyText || ''),
   })
+  // 새 칼럼 → 구글 자동 색인 요청 (백그라운드, 실패해도 발행에 영향 없음)
+  c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`/column/${col.slug}`), 'URL_UPDATED'))
   return c.redirect('/admin/columns?ok=created')
 })
 app.post('/api/admin/columns/update', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
   const f = await c.req.parseBody()
-  await updateColumn(c.env, String(f.id || ''), {
+  const upd = await updateColumn(c.env, String(f.id || ''), {
     title: String(f.title || ''),
     slug: String(f.slug || ''),
     excerpt: String(f.excerpt || ''),
@@ -399,12 +407,18 @@ app.post('/api/admin/columns/update', async (c) => {
     coverAlt: String(f.coverAlt || ''),
     bodyText: String(f.bodyText || ''),
   })
+  // 수정된 칼럼 → 구글 재색인 요청 (콘텐츠 갱신 신호)
+  if (upd) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`/column/${upd.slug}`), 'URL_UPDATED'))
   return c.redirect('/admin/columns?ok=updated')
 })
 app.post('/api/admin/columns/delete', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
   const f = await c.req.parseBody()
-  await deleteColumn(c.env, String(f.id || ''))
+  const id = String(f.id || '')
+  // 삭제 전 slug 확보 → 구글에 URL_DELETED 알림 (검색결과에서 빠르게 제거)
+  const target = (await listColumns(c.env)).find((x) => x.id === id)
+  await deleteColumn(c.env, id)
+  if (target?.slug) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`/column/${target.slug}`), 'URL_DELETED'))
   return c.redirect('/admin/columns?ok=deleted')
 })
 
@@ -426,6 +440,8 @@ app.post('/api/admin/cases/create', async (c) => {
     photoOralBefore: String(f.photoOralBefore || ''),
     photoOralAfter: String(f.photoOralAfter || ''),
   })
+  // 새 비포애프터 → /cases 목록 페이지 재색인 요청 (개별 URL 없음)
+  c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl('/cases'), 'URL_UPDATED'))
   return c.redirect('/admin/cases?ok=created')
 })
 app.post('/api/admin/cases/update', async (c) => {
@@ -445,13 +461,39 @@ app.post('/api/admin/cases/update', async (c) => {
     photoOralBefore: String(f.photoOralBefore || ''),
     photoOralAfter: String(f.photoOralAfter || ''),
   })
+  // 수정된 비포애프터 → /cases 재색인 요청
+  c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl('/cases'), 'URL_UPDATED'))
   return c.redirect('/admin/cases?ok=updated')
 })
 app.post('/api/admin/cases/delete', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
   const f = await c.req.parseBody()
   await deleteCase(c.env, String(f.id || ''))
+  // 케이스 삭제 후 /cases 목록 갱신 신호 (페이지 자체는 유지되므로 UPDATED)
+  c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl('/cases'), 'URL_UPDATED'))
   return c.redirect('/admin/cases?ok=deleted')
+})
+
+// ── 수동 일괄 색인: 주요 페이지 + 전체 칼럼을 구글에 재색인 요청 ──
+// 초기 등록 직후, 또는 대량 갱신 후 한 번에 밀어넣을 때 사용.
+app.post('/api/admin/index/reindex-all', async (c) => {
+  if (!(await requireAdmin(c))) return c.redirect('/admin')
+  const cols = await listColumns(c.env)
+  const urls = [
+    absUrl('/'), absUrl('/mission'), absUrl('/treatments'), absUrl('/doctors'),
+    absUrl('/cases'), absUrl('/column'), absUrl('/encyclopedia'),
+    absUrl('/directions'), absUrl('/faq'), absUrl('/pricing'),
+    ...cols.map((x) => absUrl(`/column/${x.slug}`)),
+  ]
+  c.executionCtx?.waitUntil(notifyGoogleIndexMany(c.env, urls, 'URL_UPDATED'))
+  return c.redirect('/admin/settings?ok=reindex')
+})
+
+// 색인 API 연결 진단 (JSON) — 단일 URL 테스트 색인
+app.get('/api/admin/index/test', async (c) => {
+  if (!(await requireAdmin(c))) return c.json({ ok: false, error: 'unauthorized' }, 401)
+  const r = await notifyGoogleIndex(c.env, absUrl('/'), 'URL_UPDATED')
+  return c.json(r)
 })
 
 // ============================================================

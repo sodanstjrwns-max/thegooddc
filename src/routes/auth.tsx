@@ -301,9 +301,20 @@ const SETTINGS_CSS = `
 .set-guide b{color:var(--ink)}
 .set-guide ol{margin:8px 0 0;padding-left:20px}
 .set-locked{font-size:12px;color:#1a56db;background:#e8f0fe;border-radius:100px;padding:2px 9px;font-weight:700}
+.gi-status{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--radius-sm);font-size:13.5px;line-height:1.55}
+.gi-status.on{background:color-mix(in oklab,#16a34a 12%,transparent);color:#15803d;border:1px solid color-mix(in oklab,#16a34a 30%,transparent)}
+.gi-status.off{background:var(--bg-2);color:var(--ink-soft);border:1px solid var(--line)}
+.gi-status .gi-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.gi-status.on .gi-dot{background:#16a34a;box-shadow:0 0 0 3px color-mix(in oklab,#16a34a 25%,transparent)}
+.gi-status.off .gi-dot{background:var(--ink-faint)}
+.gi-help{margin-top:16px;font-size:13px;color:var(--ink-2)}
+.gi-help summary{cursor:pointer;font-weight:700;color:var(--accent-d);padding:6px 0}
+.gi-help ol{margin:8px 0 0;padding-left:20px;line-height:1.85}
+.gi-help a{color:var(--accent-d);text-decoration:underline}
+.gi-help .hint{font-size:12.5px;color:var(--ink-faint);margin-top:10px;line-height:1.6}
 `
 
-export const AdminSettingsPage: FC<{ diag: SettingsDiag; ok?: string }> = ({ diag, ok }) => {
+export const AdminSettingsPage: FC<{ diag: SettingsDiag; ok?: string; googleIndexOn?: boolean }> = ({ diag, ok, googleIndexOn }) => {
   const v = diag.kv // 편집창에는 관리자가 KV에 저장한 값만 표시 (env는 잠금 표시)
   const locked = (k: keyof SiteSettings) => diag.source[k] === 'env'
   return (
@@ -316,6 +327,7 @@ export const AdminSettingsPage: FC<{ diag: SettingsDiag; ok?: string }> = ({ dia
             <a href="/admin/dashboard" class="chip"><i class="fa-solid fa-arrow-left"></i> 대시보드</a>
           </div>
           {ok === 'saved' && <div class="set-toast ok"><i class="fa-solid fa-circle-check"></i> 저장되었습니다. 사이트 전체에 즉시 반영됩니다(새로고침 후 확인).</div>}
+          {ok === 'reindex' && <div class="set-toast ok"><i class="fa-solid fa-paper-plane"></i> 구글 색인 요청을 전송했습니다. 주요 페이지 + 전체 칼럼을 재색인 요청했어요(반영까지 수 분~수 시간).</div>}
 
           <div class="set-card">
             <h2><i class="fa-solid fa-chart-simple" style="color:var(--accent)"></i> 방문자 · 전환 추적</h2>
@@ -351,6 +363,33 @@ export const AdminSettingsPage: FC<{ diag: SettingsDiag; ok?: string }> = ({ dia
                 <a href="/" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> 사이트에서 확인</a>
               </div>
             </form>
+          </div>
+
+          <div class="set-card">
+            <h2><i class="fa-solid fa-bolt" style="color:var(--accent)"></i> 구글 자동 색인 (Indexing API)</h2>
+            <p class="desc">새 <b>칼럼</b>이나 <b>비포애프터</b>를 발행하면 구글에 <b>자동으로 색인 요청</b>이 전송됩니다. 검색 노출까지 걸리는 시간이 며칠 → 수 시간으로 단축됩니다.</p>
+            <div class={`gi-status ${googleIndexOn ? 'on' : 'off'}`}>
+              <span class="gi-dot"></span>
+              {googleIndexOn
+                ? <span><b>연결됨</b> — 발행 시 자동 색인이 작동합니다.</span>
+                : <span><b>미연결</b> — 아래 절차로 서비스 계정을 연결하면 자동 색인이 켜집니다. (미연결이어도 발행은 정상 동작)</span>}
+            </div>
+            {googleIndexOn && (
+              <form method="post" action="/api/admin/index/reindex-all" style="margin-top:14px">
+                <button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-rotate"></i> 지금 전체 재색인 요청</button>
+                <span class="hint" style="margin-left:10px">주요 페이지 + 모든 칼럼을 한 번에 구글에 재색인 요청 (초기 등록·대량 갱신용)</span>
+              </form>
+            )}
+            <details class="gi-help">
+              <summary>서비스 계정 연결 방법 (최초 1회, 약 10분)</summary>
+              <ol>
+                <li><a href="https://console.cloud.google.com/apis/library/indexing.googleapis.com" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 <b>Indexing API</b> 사용 설정</li>
+                <li>IAM → 서비스 계정 생성 → <b>JSON 키</b> 발급 (파일 다운로드)</li>
+                <li><a href="https://search.google.com/search-console" target="_blank" rel="noopener">Search Console</a> → 설정 → 사용자/권한 → 그 서비스 계정 이메일을 <b>소유자</b>로 추가</li>
+                <li>Cloudflare Pages → 프로젝트 설정 → 환경변수에 <code>GOOGLE_SA_JSON</code> 이름으로 JSON 파일 <b>전체 내용</b>을 붙여넣기 (Secret 권장) → 재배포</li>
+              </ol>
+              <p class="hint">⚠️ JSON 키에는 비밀키가 들어있어 admin 화면에 직접 입력받지 않고 <b>환경변수(Secret)</b>로만 받습니다 — 보안상 가장 안전한 방식입니다.</p>
+            </details>
           </div>
 
           <div class="set-card">
