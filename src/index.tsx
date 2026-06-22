@@ -225,8 +225,8 @@ app.get('/admin/analytics', async (c) => {
 })
 
 // Legal pages
-app.get('/privacy', (c) => c.html(legalPage('개인정보처리방침', PRIVACY_TEXT)))
-app.get('/terms', (c) => c.html(legalPage('이용약관', TERMS_TEXT)))
+app.get('/privacy', (c) => c.html(legalPage('개인정보처리방침', PRIVACY_TEXT, '/privacy')))
+app.get('/terms', (c) => c.html(legalPage('이용약관', TERMS_TEXT, '/terms')))
 
 // ============================================================
 // API ROUTES
@@ -1149,14 +1149,15 @@ app.notFound((c) => c.html(notFoundPage(), 404))
 export default app
 
 // ===== helpers =====
-function legalPage(title: string, html: string) {
+function legalPage(title: string, html: string, path?: string) {
   return (
     <html lang="ko">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title} | {CLINIC.name}</title>
-        <meta name="robots" content="noindex" />
+        <meta name="robots" content="noindex, follow" />
+        {path && <link rel="canonical" href={`https://${CLINIC.domain}${path}`} />}
         <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
       </head>
       <body>

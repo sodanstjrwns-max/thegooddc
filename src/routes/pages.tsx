@@ -225,11 +225,11 @@ export const DirectionsPage: FC = () => (
         <div class="reveal" data-delay="2">
           <h2 class="section-title" style="font-size:30px;margin-bottom:24px">교통 안내</h2>
           <div class="sub-card" style="margin-bottom:16px">
-            <h4><i class="fa-solid fa-car" style="margin-right:8px"></i>자가용</h4>
+            <h3><i class="fa-solid fa-car" style="margin-right:8px"></i>자가용</h3>
             <p>{CLINIC.directions.car}</p>
           </div>
           <div class="sub-card">
-            <h4><i class="fa-solid fa-bus" style="margin-right:8px"></i>버스</h4>
+            <h3><i class="fa-solid fa-bus" style="margin-right:8px"></i>버스</h3>
             <p style="margin-bottom:6px"><strong>일반:</strong> {CLINIC.directions.bus.general.join(', ')}</p>
             <p style="margin-bottom:6px"><strong>좌석:</strong> {CLINIC.directions.bus.seat.join(', ')}</p>
             <p style="margin-bottom:6px"><strong>급행:</strong> {CLINIC.directions.bus.express.join(', ')}</p>
@@ -415,7 +415,7 @@ export const NoticePage: FC<{ notices?: Notice[] }> = ({ notices = SEED_NOTICES 
                 {n.pinned && <span class="license" style="margin:0;background:var(--brand);color:#fff">중요</span>}
                 <span style="color:var(--ink-soft);font-size:14px">{n.date}</span>
               </div>
-              <h3 style="font-size:20px;margin-bottom:8px">{n.title}</h3>
+              <h2 style="font-size:20px;margin-bottom:8px">{n.title}</h2>
               {n.image && (
                 <img src={n.image} alt={n.imageAlt || n.title} loading="lazy" style="width:100%;max-height:420px;object-fit:cover;border-radius:12px;margin:6px 0 16px" />
               )}

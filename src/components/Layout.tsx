@@ -275,12 +275,12 @@ const Footer: FC = () => (
           </div>
         </div>
         <div class="footer-col">
-          <h5>진료안내</h5>
+          <p class="footer-h">진료안내</p>
           {CORE_TREATMENTS.map((t) => <a href={`/treatments/${t.slug}`}>{t.shortName}</a>)}
           <a href="/treatments">전체 진료보기</a>
         </div>
         <div class="footer-col">
-          <h5>병원안내</h5>
+          <p class="footer-h">병원안내</p>
           <a href="/mission">병원소개</a>
           <a href="/doctors">의료진</a>
           <a href="/cases">비포/애프터</a>
@@ -288,7 +288,7 @@ const Footer: FC = () => (
           <a href="/directions">오시는 길</a>
         </div>
         <div class="footer-col">
-          <h5>고객지원</h5>
+          <p class="footer-h">고객지원</p>
           <a href="/reservation">진료예약</a>
           <a href="/faq">자주 묻는 질문</a>
           <a href="/pricing">비용 안내</a>
@@ -296,7 +296,7 @@ const Footer: FC = () => (
           <a href="/encyclopedia">치과 백과사전</a>
         </div>
         <div class="footer-col">
-          <h5>지역 안내</h5>
+          <p class="footer-h">지역 안내</p>
           {AREAS.slice(0, 8).map((a) => <a href={`/clinic/${a.slug}`}>{a.name} 치과</a>)}
         </div>
       </div>

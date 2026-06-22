@@ -266,7 +266,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
                 <div class="ring-num"><span data-count="98">0</span><i>%</i></div>
               </div>
               <div class="bento-body">
-                <h4>계획대로 정확하게</h4>
+                <h3>계획대로 정확하게</h3>
                 <p>수술 전 설계한 위치 그대로, 오차를 최소화하는 디지털 가이드 방식</p>
               </div>
             </article>
@@ -291,7 +291,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
               <div class="bento-glow"></div>
               <div class="bento-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
               <div class="bento-body">
-                <h4>플라젠 신경치료기</h4>
+                <h3>플라젠 신경치료기</h3>
                 <p>정밀 신경치료로 자연치아를 최대한 보존하는 진료를 지향합니다.</p>
               </div>
             </article>
@@ -301,7 +301,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
               <div class="bento-glow"></div>
               <div class="bento-icon"><i class="fa-solid fa-shield-heart"></i></div>
               <div class="bento-body">
-                <h4>편안한 마취 시스템</h4>
+                <h3>편안한 마취 시스템</h3>
                 <p>치료 중 통증을 최소화해, 치과가 무섭지 않은 곳을 만듭니다.</p>
               </div>
             </article>

@@ -325,7 +325,7 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                   <h2>세부 진료 안내</h2>
                   <div class="sub-grid">
                     {t.subProcedures.map((sp) => (
-                      <div class="sub-card"><h4>{sp.name}</h4><p>{sp.desc}</p></div>
+                      <div class="sub-card"><h3>{sp.name}</h3><p>{sp.desc}</p></div>
                     ))}
                   </div>
                 </div>

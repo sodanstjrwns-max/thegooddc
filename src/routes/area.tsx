@@ -215,7 +215,7 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
           <div class="sub-grid">
             {CORE_TREATMENTS.map((td) => (
               <a href={`/treatments/${td.slug}`} class="sub-card" style="text-decoration:none;display:block">
-                <h4><i class={`fa-solid fa-${td.icon}`} style="color:var(--brand);margin-right:6px"></i>{td.shortName}</h4>
+                <h3><i class={`fa-solid fa-${td.icon}`} style="color:var(--brand);margin-right:6px"></i>{td.shortName}</h3>
                 <p>{td.tagline}</p>
               </a>
             ))}
