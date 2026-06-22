@@ -30,31 +30,56 @@ export const MissionPage: FC = () => {
         </div>
       </section>
 
-      {/* OUR STORY — 텍스트 + 실제 인테리어 사진 */}
+      {/* 원장의 편지 — 원장 1인칭 발언(데이터 원문) 중심 */}
       <section class="sec">
         <div class="container">
-          <div class="mis-story">
-            <div class="ms-text reveal">
-              <div class="eyebrow">OUR STORY</div>
-              <h2>"치과가 무섭지 않은 곳"을<br />만들고 싶었습니다</h2>
-              <p>치과에 대한 막연한 두려움 때문에 꼭 받아야 할 진료를 미루는 분들이 많습니다. 더착한치과는 바로 그 두려움을 덜어드리기 위해 시작했습니다.</p>
-              <p>24년의 임상 경험과 디지털 기술을 더해, 정확하면서도 편안한 진료로 환자분의 두려움을 안심으로 바꾸어 드리는 것 — 그것이 우리의 약속입니다.</p>
-              <div class="ms-sign"><span class="line"></span> 더착한치과 의료진 일동</div>
+          <div class="mis-letter">
+            <div class="ml-photo reveal">
+              <img src={doctor.photo} alt={`${doctor.name} ${doctor.title}`} loading="lazy" />
+              <span class="ml-tag">{doctor.tagline}</span>
             </div>
-            <div class="mis-photo reveal reveal-d1">
-              <img src="/images/interior-lounge.webp" alt="더착한치과 대기 라운지 — 편안한 공간" loading="lazy" />
-              <span class="cap">환자분이 가장 먼저 마주하는 편안한 공간</span>
+            <div class="ml-text reveal reveal-d1">
+              <div class="eyebrow">A LETTER FROM THE DIRECTOR</div>
+              <h2>원장이 직접 드리는 말씀</h2>
+              {doctor.intro.map((para) => (
+                <p>{para}</p>
+              ))}
+              <div class="ms-sign"><span class="line"></span> {doctor.name} {doctor.title}</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CORE VALUES — 사진 배경 카드 */}
+      {/* 진료 원칙 — 원장 philosophy 원문 기반 */}
       <section class="sec bg-sand">
         <div class="container">
           <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
+            <div class="eyebrow center">PRINCIPLES</div>
+            <h2 class="section-title">제가 진료에서 지키는 원칙</h2>
+            <p style="color:var(--ink-soft)">{doctor.philosophy}</p>
+          </div>
+          <div class="mis-principles">
+            {[
+              { icon: 'scissors', title: '최소 침습 · 최소 절개', desc: '덜 자르고 덜 붓게. 디지털 가이드와 AI 기반 시스템을 도입한 이유도 오직 하나 — 한 번에 정확하게 끝내기 위해서입니다.' },
+              { icon: 'magnifying-glass-chart', title: '정확한 진단 · 정직한 설명', desc: '환자분의 마음을 안심시키는 건 화려한 말이 아니라, 정확한 진단과 정직한 설명, 그리고 결과로 보여드리는 진료라고 믿습니다.' },
+              { icon: 'circle-check', title: '꼭 필요한 진료만', desc: '꼭 필요한 진료만 충분히 설명드린 뒤에 시작합니다. 치과가 두려운 곳이 아니라 안심하고 맡길 수 있는 곳이 되도록 하겠습니다.' },
+            ].map((p, i) => (
+              <div class={`mis-principle reveal reveal-d${i + 1}`}>
+                <div class="p-ico"><i class={`fa-solid fa-${p.icon}`}></i></div>
+                <h3>{p.title}</h3>
+                <p>{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CORE VALUES — 사진 배경 카드 */}
+      <section class="sec">
+        <div class="container">
+          <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
             <div class="eyebrow center">CORE VALUES</div>
-            <h2 class="section-title">우리가 지키는 세 가지 가치</h2>
+            <h2 class="section-title">원칙을 진료실에서 지키는 방법</h2>
           </div>
           <div class="mis-values">
             {[
@@ -75,13 +100,13 @@ export const MissionPage: FC = () => {
         </div>
       </section>
 
-      {/* SPACE — 공간 갤러리 */}
-      <section class="sec">
+      {/* SPACE — 공간 갤러리 (신념을 뒷받침하는 환경) */}
+      <section class="sec bg-sand">
         <div class="container">
           <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
             <div class="eyebrow center">OUR SPACE</div>
-            <h2 class="section-title">정돈된 공간, 안심되는 첫인상</h2>
-            <p style="color:var(--ink-soft)">서울대학교 치과병원 시스템을 기준으로 설계한 진료 환경입니다.</p>
+            <h2 class="section-title">원칙을 뒷받침하는 환경</h2>
+            <p style="color:var(--ink-soft)">‘정확하게, 한 번에’라는 원칙을 지키기 위해 공간과 시스템을 그에 맞게 갖췄습니다.</p>
           </div>
           <div class="mis-gallery reveal">
             <figure class="wide tall">
@@ -105,7 +130,7 @@ export const MissionPage: FC = () => {
       </section>
 
       {/* ON-SITE — 진료 현장 */}
-      <section class="sec bg-sand">
+      <section class="sec">
         <div class="container">
           <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
             <div class="eyebrow center">ON-SITE</div>
@@ -129,27 +154,24 @@ export const MissionPage: FC = () => {
         </div>
       </section>
 
-      {/* 대표원장 (실사진) */}
-      <section class="sec">
+      {/* 대표원장 약력 요약 + CTA (사진은 상단 편지 섹션에 있으므로 중복 제거) */}
+      <section class="sec bg-sand">
         <div class="container">
           <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 40px">
             <div class="eyebrow center">DIRECTOR</div>
             <h2 class="section-title">진료를 책임지는 사람</h2>
+            <p style="color:var(--ink-soft)">{doctor.name} {doctor.title} · {doctor.license}</p>
           </div>
-          <div class="mis-doctor reveal">
-            <div class="md-photo">
-              <img src={doctor.photo} alt={`${doctor.name} ${doctor.title}`} loading="lazy" />
-              <span class="ribbon">임플란트 15,000+ 케이스</span>
-            </div>
-            <div class="md-body">
-              <span class="license">{doctor.license}</span>
-              <h2>{doctor.name} <small>{doctor.title}</small></h2>
-              <p>{doctor.philosophy}</p>
-              <div class="actions" style="display:flex;flex-wrap:wrap;gap:12px">
-                <a href={`/doctors/${doctor.slug}`} class="btn btn-accent"><i class="fa-solid fa-user-doctor"></i> 의료진 자세히 보기</a>
-                <a href="/reservation" class="btn btn-outline"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
-              </div>
-            </div>
+          <div class="mis-credits reveal">
+            <ul class="mc-list">
+              {doctor.career.map((c) => (
+                <li><i class="fa-solid fa-circle-check"></i> {c}</li>
+              ))}
+            </ul>
+          </div>
+          <div class="actions" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px">
+            <a href={`/doctors/${doctor.slug}`} class="btn btn-accent"><i class="fa-solid fa-user-doctor"></i> 의료진 자세히 보기</a>
+            <a href="/reservation" class="btn btn-outline"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
           </div>
         </div>
       </section>
