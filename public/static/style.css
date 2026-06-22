@@ -1384,12 +1384,12 @@ section{position:relative}
 .mis-values{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .mis-val{position:relative;border-radius:var(--radius-lg);overflow:hidden;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;padding:26px;color:#fff;box-shadow:var(--sh-sm);border:1px solid var(--line);transition:transform .4s var(--ease-out,ease),box-shadow .4s}
 .mis-val .bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center}
-.mis-val::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(11,30,46,.15) 0%,rgba(11,30,46,.55) 55%,rgba(11,30,46,.88) 100%)}
+.mis-val::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(11,30,46,.10) 0%,rgba(11,30,46,.55) 48%,rgba(11,30,46,.94) 100%)}
 .mis-val:hover{transform:translateY(-6px);box-shadow:var(--sh-md)}
 .mis-val .v-inner{position:relative;z-index:2}
-.mis-val .v-ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:rgba(67,200,244,.22);backdrop-filter:blur(6px);color:#fff;font-size:1.15rem;margin-bottom:16px;border:1px solid rgba(255,255,255,.25)}
-.mis-val h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:8px}
-.mis-val p{font-size:.94rem;line-height:1.7;color:rgba(255,255,255,.88)}
+.mis-val .v-ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:rgba(67,200,244,.28);backdrop-filter:blur(6px);color:#fff;font-size:1.15rem;margin-bottom:16px;border:1px solid rgba(255,255,255,.3)}
+.mis-val h3{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin-bottom:9px;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.45)}
+.mis-val p{font-size:.94rem;line-height:1.7;color:rgba(255,255,255,.92);text-shadow:0 1px 8px rgba(0,0,0,.35)}
 @media(max-width:880px){.mis-values{grid-template-columns:1fr;gap:14px}.mis-val{min-height:230px}}
 
 /* SPACE gallery */
@@ -1428,10 +1428,11 @@ section{position:relative}
 .mis-letter .ml-photo{position:relative;border-radius:var(--radius-xl);overflow:hidden;aspect-ratio:4/5;box-shadow:var(--sh-md)}
 .mis-letter .ml-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;transition:transform .9s var(--ease-out,ease)}
 .mis-letter .ml-photo:hover img{transform:scale(1.04)}
-.mis-letter .ml-photo .ml-tag{position:absolute;left:0;right:0;bottom:0;padding:34px 22px 18px;color:#fff;font-weight:600;font-size:.95rem;line-height:1.55;background:linear-gradient(to top,rgba(13,27,42,.86),transparent);word-break:keep-all}
+.mis-letter .ml-photo .ml-tag{position:absolute;left:0;right:0;bottom:0;padding:34px 22px 18px;color:#fff;font-weight:600;font-size:.95rem;line-height:1.55;background:linear-gradient(to top,rgba(13,27,42,.86),transparent);word-break:keep-all;overflow-wrap:anywhere}
+.mis-letter .ml-text{min-width:0}
 .mis-letter .ml-text .eyebrow{margin-bottom:14px}
 .mis-letter .ml-text h2{font-size:clamp(24px,3.2vw,34px);letter-spacing:-.035em;line-height:1.35;margin-bottom:22px;color:var(--ink)}
-.mis-letter .ml-text p{color:var(--ink-soft);line-height:1.95;font-size:1.04rem;margin-bottom:18px;word-break:keep-all}
+.mis-letter .ml-text p{color:var(--ink-soft);line-height:1.95;font-size:1.04rem;margin-bottom:18px;word-break:keep-all;overflow-wrap:anywhere}
 .mis-letter .ml-text p:first-of-type{font-weight:600;color:var(--ink)}
 .mis-letter .ms-sign{margin-top:26px;display:flex;align-items:center;gap:14px;font-weight:700;color:var(--ink)}
 .mis-letter .ms-sign .line{width:34px;height:2px;background:var(--accent);border-radius:2px}
@@ -1448,7 +1449,7 @@ section{position:relative}
 
 /* ── 약력 요약 (CREDENTIALS) ── */
 .mis-credits{max-width:720px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:clamp(24px,3vw,40px);box-shadow:var(--sh-sm)}
-.mis-credits .mc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px 28px}
+.mis-credits .mc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(6,auto);gap:14px 36px}
 .mis-credits .mc-list li{display:flex;align-items:flex-start;gap:10px;color:var(--ink-soft);line-height:1.6;font-size:.96rem;word-break:keep-all}
 .mis-credits .mc-list li i{color:var(--accent);margin-top:.28em;flex-shrink:0;font-size:.9em}
 @media(max-width:720px){.mis-credits .mc-list{grid-template-columns:1fr}}
