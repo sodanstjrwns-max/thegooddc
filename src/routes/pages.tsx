@@ -31,22 +31,32 @@ export const MissionPage: FC = () => {
       </section>
 
       {/* 원장의 편지 — 원장 1인칭 발언(데이터 원문) 중심 */}
-      <section class="sec">
+      <section class="sec mis-letter-sec">
         <div class="container">
-          <div class="mis-letter">
-            <div class="ml-photo reveal">
+          <article class="mis-letter">
+            <figure class="ml-photo reveal">
               <img src={doctor.photo} alt={`${doctor.name} ${doctor.title}`} loading="lazy" />
-              <span class="ml-tag">{doctor.tagline}</span>
-            </div>
+              <figcaption class="ml-tag">
+                <span class="ml-tag-line"></span>
+                {doctor.tagline}
+              </figcaption>
+            </figure>
             <div class="ml-text reveal reveal-d1">
               <div class="eyebrow">A LETTER FROM THE DIRECTOR</div>
               <h2>원장이 직접 드리는 말씀</h2>
-              {doctor.intro.map((para) => (
-                <p>{para}</p>
-              ))}
-              <div class="ms-sign"><span class="line"></span> {doctor.name} {doctor.title}</div>
+              <div class="ml-body">
+                <span class="ml-quote" aria-hidden="true">&ldquo;</span>
+                {doctor.intro.map((para, i) => (
+                  <p class={i === 0 ? 'ml-lead' : ''}>{para}</p>
+                ))}
+              </div>
+              <div class="ms-sign">
+                <span class="line"></span>
+                <span class="ms-sign-name">{doctor.name}</span>
+                <span class="ms-sign-title">{doctor.title}</span>
+              </div>
             </div>
-          </div>
+          </article>
         </div>
       </section>
 
