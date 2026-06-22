@@ -1144,6 +1144,10 @@ app.get('/llms-full.txt', (c) => {
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 
+// 납품 안내서 (정적 HTML, noindex)
+import handoverHtml from '../public/handover-thegooddc-2026.html?raw'
+app.get('/handover-thegooddc-2026.html', (c) => c.html(handoverHtml))
+
 // 404
 app.notFound((c) => c.html(notFoundPage(), 404))
 
