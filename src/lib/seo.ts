@@ -87,7 +87,13 @@ export function organizationSchema() {
 }
 
 // Person (의료진)
-export function personSchema(doctor: { name: string; license: string; career: string[]; slug: string }) {
+export function personSchema(doctor: { name: string; license: string; career: string[]; slug: string; photo?: string }) {
+  // 사진 주소는 데이터(doctor.photo)를 신뢰 — slug로 파일명을 추측하면 404가 난다
+  const img = doctor.photo
+    ? doctor.photo.startsWith('http')
+      ? doctor.photo
+      : `${BASE}${doctor.photo}`
+    : `${BASE}/images/og-default.jpg`
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -97,7 +103,7 @@ export function personSchema(doctor: { name: string; license: string; career: st
     worksFor: { '@id': `${BASE}/#dentist` },
     url: `${BASE}/doctors/${doctor.slug}`,
     description: doctor.career.join(', '),
-    image: `${BASE}/images/doctor-${doctor.slug}.jpg`,
+    image: img,
   }
 }
 
