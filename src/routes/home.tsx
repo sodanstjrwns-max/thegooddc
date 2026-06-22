@@ -75,7 +75,8 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
               <span class="line">바꿉니다</span>
             </h1>
             <p class="lead">
-              24년 임상, 임플란트 15,000여 케이스. 말은 적어도 실력으로 안심시키는 진료를 약속합니다.
+              24년 임상, 임플란트 15,000여 케이스.<br />
+              실력으로 안심시켜드리는 진료를 약속합니다.
             </p>
             <p class="lead-sub">
               치의학박사·통합치의학 전문의가 디지털 가이드로 꼭 필요한 진료만 정확하게.
