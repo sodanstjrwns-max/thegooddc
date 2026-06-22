@@ -599,11 +599,6 @@ app.post('/api/reservation', async (c) => {
   }
 })
 
-// Google OAuth placeholder
-app.get('/api/auth/google', (c) => {
-  return c.html(legalPage('Google 로그인 준비 중', '<p>Google OAuth 연동은 배포 시 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET 환경변수 설정 후 활성화됩니다.</p><p><a href="/auth/login">로그인으로 돌아가기</a></p>'))
-})
-
 // ============================================================
 // PWA (앱 설치 / 오프라인)
 // ============================================================

@@ -38,8 +38,6 @@ export const LoginPage: FC = () => (
         <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center"><i class="fa-solid fa-right-to-bracket"></i> 로그인</button>
         <p id="login-result" style="text-align:center;margin-top:14px;font-weight:700"></p>
       </form>
-      <div style="text-align:center;margin:20px 0;color:var(--ink-soft);font-size:14px">또는</div>
-      <a href="/api/auth/google" class="btn btn-outline" style="width:100%;justify-content:center"><i class="fa-brands fa-google"></i> Google로 로그인</a>
       <p style="text-align:center;margin-top:22px;font-size:14px;color:var(--ink-soft)">계정이 없으신가요? <a href="/auth/register" style="color:var(--brand);font-weight:700">회원가입</a></p>
     </AuthShell>
     <script dangerouslySetInnerHTML={{ __html: `
