@@ -491,6 +491,8 @@ section{position:relative}
 .case-kicker i{color:var(--accent-2,#6fd3c9)}
 .case-card h3{font-size:1.22rem;margin:0 0 12px;letter-spacing:-.03em;color:var(--ink)}
 .case-body{color:var(--ink-soft);line-height:1.72;font-size:.96rem;flex:1}
+.case-body p{margin:0 0 .85em}
+.case-body p:last-child{margin-bottom:0}
 .case-meta{display:inline-flex;align-items:center;gap:7px;margin-top:18px;font-size:.82rem;font-weight:600;
   color:var(--accent-2);padding-top:16px;border-top:1px solid var(--line);width:100%}
 .case-meta i{color:var(--accent-l)}

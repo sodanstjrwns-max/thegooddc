@@ -430,7 +430,11 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
                 </div>
                 <div class="case-text">
                   <h3>{c.title}</h3>
-                  <p class="case-body">{c.body}</p>
+                  <div class="case-body">
+                    {c.body.map((para) => (
+                      <p>{para}</p>
+                    ))}
+                  </div>
                   <span class="case-meta"><i class="fa-solid fa-tooth"></i> {c.meta}</span>
                 </div>
               </article>
