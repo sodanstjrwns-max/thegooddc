@@ -1002,7 +1002,10 @@ section{position:relative}
    ============================================================ */
 @media (max-width:1024px){
   .philo-grid,.digital-grid,.doctor-grid{grid-template-columns:1fr;gap:44px}
-  .doctor-photo{max-width:440px;margin:0 auto;aspect-ratio:4/4}
+  .doctor-photo{width:100%;max-width:440px;margin:0 auto;aspect-ratio:4/4}
+  .doctor-card{grid-template-columns:1fr;gap:0}
+  .doctor-card .doctor-photo{max-width:none;aspect-ratio:3/2;border-radius:0}
+  .doctor-card>div:last-child{padding:26px 26px 28px}
   .statband .grid{grid-template-columns:repeat(2,1fr)}
   .core-grid{grid-template-columns:repeat(2,1fr)}
   /* bento → 2 columns */
@@ -1033,7 +1036,10 @@ section{position:relative}
   .mq-item{font-size:1rem;padding:0 20px}
   .journey-grid{grid-template-columns:1fr 1fr}
   .tlist-grid{grid-template-columns:repeat(2,1fr)}
-  .doctor-card{grid-template-columns:1fr}
+  .doctor-card{grid-template-columns:1fr;gap:0}
+  .doctor-card .doctor-photo{width:100%;max-width:none;margin:0;aspect-ratio:3/2;border-radius:0;box-shadow:none}
+  .doctor-card>div:last-child{padding:24px 22px 26px}
+  .doctor-card .section-title{font-size:1.5rem!important}
   .hero{padding:140px 0 0}
   .hero-stat{padding:10px 14px}
   .hero-stat .n{font-size:1.4rem}
