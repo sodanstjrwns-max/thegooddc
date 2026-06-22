@@ -472,7 +472,7 @@ export const ReservationPage: FC = () => (
           {/* STEP 2 — 일정 (날짜 + 시간대 칩) */}
           <fieldset class="rsv-fieldset">
             <legend><span class="rsv-badge">2</span> 언제 방문하고 싶으세요?</legend>
-            <div class="field"><label>희망 날짜</label><input name="date" type="date" id="rsv-date" /></div>
+            <div class="field"><label for="rsv-date">희망 날짜</label><input name="date" type="date" id="rsv-date" /></div>
             <label class="rsv-sublabel">희망 시간대</label>
             <div class="rsv-chips time" id="time-chips" role="radiogroup" aria-label="희망 시간대">
               {['오전 (09–12시)', '점심 (12–14시)', '오후 (14–17시)', '저녁 (17–20시)', '상관없음'].map((slot) => (
@@ -486,9 +486,9 @@ export const ReservationPage: FC = () => (
           {/* STEP 3 — 연락처 */}
           <fieldset class="rsv-fieldset">
             <legend><span class="rsv-badge">3</span> 어디로 연락드릴까요?</legend>
-            <div class="field"><label>이름 *</label><input name="name" required placeholder="성함을 입력해 주세요" /></div>
-            <div class="field"><label>연락처 *</label><input name="phone" required type="tel" placeholder="010-0000-0000" inputmode="numeric" /></div>
-            <div class="field"><label>문의 내용</label><textarea name="message" rows={3} placeholder="증상이나 궁금하신 점을 자유롭게 적어주세요 (선택)"></textarea></div>
+            <div class="field"><label for="rsv-name">이름 *</label><input id="rsv-name" name="name" required placeholder="성함을 입력해 주세요" /></div>
+            <div class="field"><label for="rsv-phone">연락처 *</label><input id="rsv-phone" name="phone" required type="tel" placeholder="010-0000-0000" inputmode="numeric" /></div>
+            <div class="field"><label for="rsv-message">문의 내용</label><textarea id="rsv-message" name="message" rows={3} placeholder="증상이나 궁금하신 점을 자유롭게 적어주세요 (선택)"></textarea></div>
             <div class="field checkbox-row">
               <input type="checkbox" name="agree" required id="agree" />
               <label for="agree" style="font-weight:400">개인정보 수집·이용에 동의합니다. 수집된 정보는 예약 상담 목적으로만 사용됩니다. *</label>

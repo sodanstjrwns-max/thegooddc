@@ -20,6 +20,7 @@ export function canonical(path: string) {
 
 // LocalBusiness + Dentist 스키마 (전역)
 export function dentistSchema() {
+  const streetAddress = CLINIC.address.replace(/^부산\s*강서구\s*/, '').trim()
   return {
     '@context': 'https://schema.org',
     '@type': 'Dentist',
@@ -35,7 +36,7 @@ export function dentistSchema() {
     priceRange: '₩₩',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: '명지오션시티4로 59 스타빌딩 601·602호',
+      streetAddress,
       addressLocality: CLINIC.addressLocality,
       addressRegion: CLINIC.addressRegion,
       postalCode: CLINIC.postalCode,
