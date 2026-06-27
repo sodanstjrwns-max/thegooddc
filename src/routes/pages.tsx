@@ -225,8 +225,18 @@ export const DirectionsPage: FC = () => (
         <div class="reveal" data-delay="2">
           <h2 class="section-title" style="font-size:30px;margin-bottom:24px">교통 안내</h2>
           <div class="sub-card" style="margin-bottom:16px">
-            <h3><i class="fa-solid fa-car" style="margin-right:8px"></i>자가용</h3>
-            <p>{CLINIC.directions.car}</p>
+            <h3><i class="fa-solid fa-square-parking" style="margin-right:8px"></i>주차 안내</h3>
+            <p style="margin-bottom:10px"><strong>{CLINIC.directions.parkingTitle}</strong></p>
+            <p style="margin-bottom:14px;color:var(--ink-soft);line-height:1.7">건물 내 지하 1층·지하 2층에 <strong>30대 주차</strong>가 가능합니다.</p>
+            <div style="background:var(--brand-soft, #eef4fb);border-left:3px solid var(--brand);border-radius:8px;padding:14px 16px">
+              <p style="margin:0 0 6px;font-weight:700;color:var(--brand)"><i class="fa-solid fa-circle-info" style="margin-right:6px"></i>만차 시 주차비 지원</p>
+              <p style="margin:0;font-size:14px;line-height:1.7;color:var(--ink-soft)">
+                지하 1·2층이 만차일 경우, 주변 <strong>유료 주차장</strong>에 주차하신 뒤
+                영수증 사진과 이체받으실 계좌를
+                <a href={`tel:${CLINIC.directions.parkingSupportPhone.replace(/[^0-9]/g, '')}`} style="color:var(--brand);font-weight:700"> 더착한치과({CLINIC.directions.parkingSupportPhone})</a>로
+                보내주시면 <strong>주차비를 지원해 드립니다.</strong>
+              </p>
+            </div>
           </div>
           <div class="sub-card">
             <h3><i class="fa-solid fa-bus" style="margin-right:8px"></i>버스</h3>
