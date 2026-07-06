@@ -335,6 +335,9 @@ section{position:relative}
 .header-phone .lbl{font-size:.6rem;font-weight:500;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase}
 .header-phone .num{font-size:1.05rem;font-weight:600;color:var(--ink);letter-spacing:-.02em}
 .nav-toggle{display:none;width:44px;height:44px;border-radius:11px;background:var(--bg-2);color:var(--ink);font-size:1.2rem;place-items:center;-webkit-tap-highlight-color:transparent}
+.header-login{display:inline-flex;align-items:center;gap:6px;font-size:.9rem;font-weight:600;color:var(--ink-soft);padding:9px 14px;border-radius:10px;border:1px solid var(--line);transition:color .2s,border-color .2s,background .2s;white-space:nowrap}
+.header-login:hover{color:var(--brand);border-color:var(--brand);background:var(--bg-2)}
+.header-login i{font-size:1rem}
 
 /* ---------- MOBILE DRAWER ---------- */
 .drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(6px);z-index:1100;opacity:0;visibility:hidden;transition:all .35s}
@@ -350,6 +353,10 @@ section{position:relative}
 .drawer .dsub a i{color:var(--ink-faint);width:16px;font-size:.85rem}
 .drawer-foot{padding:18px 22px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
 .drawer-foot .btn{width:100%}
+.drawer-auth{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;font-size:.95rem}
+.drawer-auth a{display:inline-flex;align-items:center;gap:6px;color:var(--ink-soft);font-weight:600;padding:8px 10px;border-radius:8px}
+.drawer-auth a:hover{color:var(--brand)}
+.drawer-auth .sep{color:var(--line)}
 
 /* ============================================================
    HERO — apple "one message" stage, centered
@@ -1025,6 +1032,7 @@ section{position:relative}
 @media (max-width:760px){
   .nav-toggle{display:grid}
   .header-cta .btn-nav{display:none}
+  .header-login{display:none}
   /* 노치 안전영역: 헤더·컨테이너 좌우 여백 보정 */
   .site-header .bar{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right))}
   .container,.container-wide{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right))}

@@ -219,6 +219,7 @@ const Header: FC = () => (
           <span class="lbl">상담·예약</span>
           <span class="num">{CLINIC.phone}</span>
         </a>
+        <a href="/auth/login" class="header-login" data-track="login" data-track-loc="header"><i class="fa-regular fa-circle-user"></i> <span>로그인·가입</span></a>
         <a href="/reservation" class="btn btn-gold btn-nav" data-track="reservation" data-track-loc="header"><i class="fa-solid fa-calendar-check"></i> 예약</a>
         <button class="nav-toggle" aria-label="메뉴 열기"><i class="fa-solid fa-bars"></i></button>
       </div>
@@ -251,6 +252,11 @@ const MobileDrawer: FC = () => (
       <div class="drawer-foot">
         <a href="/reservation" class="btn btn-gold" data-track="reservation" data-track-loc="drawer"><i class="fa-solid fa-calendar-check"></i> 진료 예약</a>
         <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost" data-track="phone" data-track-loc="drawer"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
+        <div class="drawer-auth">
+          <a href="/auth/login" data-track="login" data-track-loc="drawer"><i class="fa-regular fa-circle-user"></i> 로그인</a>
+          <span class="sep">·</span>
+          <a href="/auth/register" data-track="register" data-track-loc="drawer">회원가입</a>
+        </div>
       </div>
     </aside>
   </>
