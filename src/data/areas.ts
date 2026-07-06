@@ -216,7 +216,7 @@ export const AREAS: Area[] = [
 export const AREA_TREATMENTS = [
   { slug: 'implant', name: '임플란트' },
   { slug: 'clear-aligner', name: '투명교정' },
-  { slug: 'minish', name: '미니쉬' },
+  { slug: 'minish', name: '스마일 크라운' },
   { slug: 'orthodontics', name: '치아교정' },
 ]
 

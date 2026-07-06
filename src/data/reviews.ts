@@ -54,7 +54,7 @@ export const REVIEWS: Review[] = [
     author: '박O수 님',
     ageGroup: '40대',
     area: '명지국제신도시',
-    treatment: '미니쉬·라미네이트',
+    treatment: '스마일 크라운·라미네이트',
     treatmentSlug: 'minish',
     rating: 5,
     date: '2026-05',

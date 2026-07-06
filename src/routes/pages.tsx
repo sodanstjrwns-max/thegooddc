@@ -280,7 +280,7 @@ export const FaqPage: FC = () => {
   return (
     <Layout
       title={`자주 묻는 질문 | ${CLINIC.name} 강서구 명지 치과`}
-      description="더착한치과 진료에 대해 자주 묻는 질문을 모았습니다. 임플란트, 투명교정, 미니쉬, 충치, 잇몸치료 등 진료별 궁금증을 확인하세요."
+      description="더착한치과 진료에 대해 자주 묻는 질문을 모았습니다. 임플란트, 투명교정, 스마일 크라운, 충치, 잇몸치료 등 진료별 궁금증을 확인하세요."
       path="/faq"
       keywords={['강서구 치과 질문', '임플란트 질문', '투명교정 비용', '명지 치과 FAQ']}
       schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: 'FAQ', path: '/faq' }]), faqSchema(allFaqs.slice(0, 30)), speakableSchema()]}
@@ -442,7 +442,7 @@ export const NoticePage: FC<{ notices?: Notice[] }> = ({ notices = SEED_NOTICES 
 export const ReservationPage: FC = () => (
   <Layout
     title={`진료 예약 | ${CLINIC.name} 강서구 명지 치과`}
-    description="부산 강서구 명지 더착한치과 온라인 진료 예약. 임플란트·투명교정·미니쉬·충치·잇몸 진료를 원하시는 날짜와 시간으로 신청하시면 확인 후 빠르게 연락드립니다."
+    description="부산 강서구 명지 더착한치과 온라인 진료 예약. 임플란트·투명교정·스마일 크라운·충치·잇몸 진료를 원하시는 날짜와 시간으로 신청하시면 확인 후 빠르게 연락드립니다."
     path="/reservation"
     keywords={['강서구 치과 예약', '명지 치과 예약', '더착한치과 예약']}
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료 예약', path: '/reservation' }])]}

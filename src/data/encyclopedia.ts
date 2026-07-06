@@ -20,7 +20,7 @@ const CORE_TERMS: Term[] = [
   { slug: 'digital-guide', term: '디지털 가이드', reading: 'Digital Surgical Guide', category: '디지털 치의학', def: '3D CT와 구강 스캔 데이터를 분석해 임플란트 식립 위치를 미리 설계하고, 그 설계대로 제작한 수술용 가이드를 말합니다. 계획한 위치에 정밀하게 식립할 수 있습니다.', related: ['implant', 'imaging'] },
   { slug: 'clear-aligner', term: '투명교정장치', reading: 'Clear Aligner', category: '교정', def: '투명한 재질의 맞춤 장치를 단계별로 교체하며 치아를 이동시키는 교정 방식입니다. 눈에 잘 띄지 않고 탈착이 가능합니다.', related: ['clear-aligner', 'orthodontics'] },
   { slug: 'laminate', term: '라미네이트', reading: 'Laminate Veneer', category: '심미', def: '치아 표면에 얇은 세라믹을 부착하여 치아의 색·형태·배열을 개선하는 심미 보철입니다.', related: ['minish'] },
-  { slug: 'minish', term: '미니쉬', reading: 'Minish', category: '심미', def: '자연 치아의 삭제를 최소화하면서 얇은 세라믹으로 치아를 개선하는 심미 보철 방식입니다.', related: ['minish'] },
+  { slug: 'minish', term: '스마일 크라운', reading: 'Smile Crown', category: '심미', def: '자연 치아의 삭제를 최소화하면서 얇은 세라믹으로 치아를 개선하는 심미 보철 방식입니다.', related: ['minish'] },
   { slug: 'crown', term: '크라운', reading: 'Crown', category: '보철·수복', def: '손상된 치아 전체를 덮어 씌우는 보철물입니다. 치아의 형태와 기능을 회복합니다.', related: ['prosthodontics'] },
   { slug: 'bridge', term: '브릿지', reading: 'Bridge', category: '보철·수복', def: '상실된 치아의 양옆 치아를 지대로 삼아 연결된 보철물로 빈 공간을 채우는 방식입니다.', related: ['prosthodontics'] },
   { slug: 'scaling', term: '스케일링', reading: 'Scaling', category: '예방·치주', def: '치아 표면과 잇몸 경계에 쌓인 치석과 치태를 제거하는 처치입니다. 잇몸 건강 유지에 중요하며 연 1회 건강보험이 적용됩니다.', related: ['preventive', 'periodontics'] },
@@ -288,7 +288,7 @@ const PROCEDURE_GUIDE_TOPICS = [
   '관리법', '주의사항', '치료 과정', '회복 기간', '비용 안내', '장점', '부작용 정보', '적응증', '진단 방법', '예방법',
 ]
 const PROCEDURE_BASES = [
-  '임플란트', '투명교정', '라미네이트', '미니쉬', '신경치료', '충치치료', '스케일링', '잇몸치료',
+  '임플란트', '투명교정', '라미네이트', '스마일 크라운', '신경치료', '충치치료', '스케일링', '잇몸치료',
   '사랑니 발치', '크라운', '브릿지', '틀니', '치아미백', '교정', '예방치과', '보철치료',
   '턱관절', '치주염', '구강검진', '디지털 진단',
   '뼈이식', '상악동거상술', '레진치료', '인레이', '치아외상 치료', '구취 치료',
