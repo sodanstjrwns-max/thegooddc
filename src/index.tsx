@@ -138,7 +138,20 @@ app.get('/auth/login', (c) => c.html(<LoginPage />))
 app.get('/auth/register', (c) => c.html(<RegisterPage />))
 app.get('/auth/mypage', async (c) => {
   const s = await getSession(c, 'member')
-  return c.html(<MyPage user={s ? { name: s.name || '회원', email: s.email || '' } : undefined} />)
+  if (!s) return c.html(<MyPage user={undefined} />)
+  let phone = '', marketing = false, name = s.name || '회원'
+  if (c.env.KV && s.email) {
+    const raw = await c.env.KV.get(`user:${s.email}`)
+    if (raw) {
+      try {
+        const u = JSON.parse(raw)
+        phone = u.phone || ''
+        marketing = !!u.marketing
+        name = u.name || name
+      } catch {}
+    }
+  }
+  return c.html(<MyPage user={{ name, email: s.email || '', phone, marketing }} />)
 })
 
 // Admin pages
@@ -266,6 +279,60 @@ app.post('/api/auth/login', async (c) => {
 app.get('/api/auth/logout', (c) => {
   c.header('Set-Cookie', clearCookie('session'))
   return c.redirect('/')
+})
+
+// 회원정보 수정 (이름·전화번호·마케팅 동의·비밀번호)
+app.post('/api/auth/update', async (c) => {
+  try {
+    const s = await getSession(c, 'member')
+    if (!s || !s.email) return c.json({ ok: false, error: '로그인이 필요합니다.' })
+    if (!c.env.KV) return c.json({ ok: false, error: '저장소가 설정되지 않았습니다. (개발 환경)' })
+    const { name, phone, marketing, newPassword, currentPassword } = await c.req.json()
+    const raw = await c.env.KV.get(`user:${s.email}`)
+    if (!raw) return c.json({ ok: false, error: '회원 정보를 찾을 수 없습니다.' })
+    const user = JSON.parse(raw)
+    // 본인 확인 — 현재 비밀번호 필수
+    const curHash = await hashPassword(currentPassword || '', s.email)
+    if (curHash !== user.pwHash) return c.json({ ok: false, error: '현재 비밀번호가 일치하지 않습니다.' })
+    // 필드 갱신
+    if (name && name.trim()) user.name = name.trim()
+    user.phone = (phone || '').trim()
+    user.marketing = !!marketing
+    if (newPassword && newPassword.length >= 6) {
+      user.pwHash = await hashPassword(newPassword, s.email)
+    } else if (newPassword && newPassword.length > 0) {
+      return c.json({ ok: false, error: '새 비밀번호는 6자 이상이어야 합니다.' })
+    }
+    user.updatedAt = Date.now()
+    await c.env.KV.put(`user:${s.email}`, JSON.stringify(user))
+    // 이름이 바뀌었으면 세션 쿠키도 갱신
+    const token = await signSession({ sub: s.email, role: 'member', name: user.name, email: s.email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }, SECRET(c))
+    c.header('Set-Cookie', cookieString('session', token, 60 * 60 * 24 * 30))
+    return c.json({ ok: true })
+  } catch {
+    return c.json({ ok: false, error: '수정 중 오류가 발생했습니다.' })
+  }
+})
+
+// 회원 탈퇴 (KV 레코드 삭제 + 세션 정리)
+app.post('/api/auth/delete', async (c) => {
+  try {
+    const s = await getSession(c, 'member')
+    if (!s || !s.email) return c.json({ ok: false, error: '로그인이 필요합니다.' })
+    if (!c.env.KV) return c.json({ ok: false, error: '저장소가 설정되지 않았습니다. (개발 환경)' })
+    const { password } = await c.req.json()
+    const raw = await c.env.KV.get(`user:${s.email}`)
+    if (!raw) return c.json({ ok: false, error: '회원 정보를 찾을 수 없습니다.' })
+    const user = JSON.parse(raw)
+    // 본인 확인 — 비밀번호 필수
+    const pwHash = await hashPassword(password || '', s.email)
+    if (pwHash !== user.pwHash) return c.json({ ok: false, error: '비밀번호가 일치하지 않습니다.' })
+    await c.env.KV.delete(`user:${s.email}`)
+    c.header('Set-Cookie', clearCookie('session'))
+    return c.json({ ok: true })
+  } catch {
+    return c.json({ ok: false, error: '탈퇴 중 오류가 발생했습니다.' })
+  }
 })
 
 app.post('/api/admin/login', async (c) => {

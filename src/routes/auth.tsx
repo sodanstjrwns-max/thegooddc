@@ -83,7 +83,7 @@ export const RegisterPage: FC = () => (
   </Layout>
 )
 
-export const MyPage: FC<{ user?: { name: string; email: string } }> = ({ user }) => (
+export const MyPage: FC<{ user?: { name: string; email: string; phone?: string; marketing?: boolean } }> = ({ user }) => (
   <Layout title={`마이페이지 | ${CLINIC.name}`} description="더착한치과 마이페이지" path="/auth/mypage">
     <section class="page-hero" style="padding:140px 0 50px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-user"></i> MY PAGE</div><h1>{user ? `${user.name}님, 반갑습니다` : '마이페이지'}</h1></div></section>
     <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '마이페이지', path: '/auth/mypage' }]} />
@@ -95,12 +95,64 @@ export const MyPage: FC<{ user?: { name: string; email: string } }> = ({ user })
               <h3 style="margin-bottom:16px">회원 정보</h3>
               <p style="color:var(--ink-soft)"><strong>이름:</strong> {user.name}</p>
               <p style="color:var(--ink-soft)"><strong>이메일:</strong> {user.email}</p>
+              <p style="color:var(--ink-soft)"><strong>전화번호:</strong> {user.phone || '-'}</p>
+              <p style="color:var(--ink-soft)"><strong>마케팅 수신:</strong> {user.marketing ? '동의함' : '동의 안 함'}</p>
             </div>
-            <div class="chip-row">
+
+            <div class="chip-row" style="margin-bottom:28px">
               <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터 (전체 열람)</a>
               <a href="/reservation" class="chip"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
               <a href="/api/auth/logout" class="chip"><i class="fa-solid fa-right-from-bracket"></i> 로그아웃</a>
             </div>
+
+            {/* 회원정보 수정 */}
+            <div class="card" style="padding:32px;margin-bottom:20px">
+              <h3 style="margin-bottom:16px"><i class="fa-solid fa-user-pen" style="color:var(--brand);margin-right:8px"></i>회원정보 수정</h3>
+              <form id="update-form">
+                <div class="field"><label>이름</label><input name="name" value={user.name} required /></div>
+                <div class="field"><label>전화번호</label><input name="phone" type="tel" value={user.phone || ''} placeholder="010-0000-0000" /></div>
+                <div class="field checkbox-row"><input type="checkbox" id="mk" name="marketing" checked={user.marketing || false} /><label for="mk" style="font-weight:400">마케팅 정보 수신에 동의합니다.</label></div>
+                <hr style="border:none;border-top:1px solid var(--line);margin:18px 0" />
+                <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">비밀번호를 변경하려면 아래를 입력하세요. (변경하지 않으려면 비워두세요)</p>
+                <div class="field"><label>새 비밀번호</label><input name="newPassword" type="password" minlength={6} placeholder="6자 이상" /></div>
+                <hr style="border:none;border-top:1px solid var(--line);margin:18px 0" />
+                <div class="field"><label>현재 비밀번호 확인 *</label><input name="currentPassword" type="password" required placeholder="본인 확인을 위해 필요합니다" /></div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center"><i class="fa-solid fa-floppy-disk"></i> 정보 수정하기</button>
+                <p id="update-result" style="text-align:center;margin-top:14px;font-weight:700"></p>
+              </form>
+            </div>
+
+            {/* 회원 탈퇴 */}
+            <div class="card" style="padding:32px;border:1px solid #f0d0d0;background:#fdf5f5">
+              <h3 style="margin-bottom:10px;color:#c0392b"><i class="fa-solid fa-triangle-exclamation" style="margin-right:8px"></i>회원 탈퇴</h3>
+              <p style="font-size:14px;color:var(--ink-soft);margin-bottom:16px">탈퇴 시 회원 정보가 즉시 삭제되며 복구할 수 없습니다.</p>
+              <form id="delete-form">
+                <div class="field"><label>현재 비밀번호 확인 *</label><input name="password" type="password" required placeholder="탈퇴하려면 비밀번호를 입력하세요" /></div>
+                <button type="submit" class="btn" style="width:100%;justify-content:center;background:#c0392b;color:#fff"><i class="fa-solid fa-user-slash"></i> 회원 탈퇴</button>
+                <p id="delete-result" style="text-align:center;margin-top:14px;font-weight:700"></p>
+              </form>
+            </div>
+
+            <script dangerouslySetInnerHTML={{ __html: `
+              document.getElementById('update-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); const r = document.getElementById('update-result');
+                const data = Object.fromEntries(new FormData(e.target));
+                data.marketing = e.target.marketing.checked;
+                const res = await fetch('/api/auth/update', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                const j = await res.json();
+                if (j.ok) { r.style.color='var(--brand)'; r.textContent='회원정보가 수정되었습니다!'; setTimeout(()=>location.reload(), 900); }
+                else { r.style.color='#c0392b'; r.textContent = j.error || '수정 중 오류가 발생했습니다.'; }
+              });
+              document.getElementById('delete-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); const r = document.getElementById('delete-result');
+                if (!confirm('정말 탈퇴하시겠습니까?\\n회원 정보가 즉시 삭제되며 복구할 수 없습니다.')) return;
+                const data = Object.fromEntries(new FormData(e.target));
+                const res = await fetch('/api/auth/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                const j = await res.json();
+                if (j.ok) { r.style.color='var(--brand)'; r.textContent='탈퇴 처리되었습니다. 이용해 주셔서 감사합니다.'; setTimeout(()=>location.href='/', 1400); }
+                else { r.style.color='#c0392b'; r.textContent = j.error || '탈퇴 중 오류가 발생했습니다.'; }
+              });
+            `}}></script>
           </>
         ) : (
           <div class="aeo-answer" style="text-align:center">로그인이 필요합니다. <a href="/auth/login" style="color:var(--brand);font-weight:700">로그인하기</a></div>
