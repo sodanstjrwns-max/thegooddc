@@ -25,7 +25,7 @@ export const CLINIC = {
   privacyOfficer: '황우석', // 개인정보보호책임자
 
   // 주소 (섹션 2)
-  address: '부산 강서구 명지오션시티4로 59, 스타빌딩 601·602호',
+  address: '부산 강서구 명지오션시티4로 59, 스타빌딩 6층 602호',
   addressRegion: '부산광역시',
   addressLocality: '강서구',
   addressDong: '명지동',
