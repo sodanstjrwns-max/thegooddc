@@ -177,8 +177,7 @@ const Header: FC = () => (
   <header class="site-header">
     <div class="bar">
       <a href="/" class="brand" aria-label={`${CLINIC.name} 홈`}>
-        <img class="logo-img" src={`/static/logo-mark.png?v=${ASSET_VERSION}`} srcset={`/static/logo-mark.png?v=${ASSET_VERSION} 1x, /static/logo-mark@2x.png?v=${ASSET_VERSION} 2x`} width="29" height="40" alt={CLINIC.name} fetchpriority="high" decoding="async" />
-        <span class="nm"><b>{CLINIC.name}</b><small>The Good Dental Clinic</small></span>
+        <img class="logo-img logo-full-img" src={`/static/logo-full.png?v=${ASSET_VERSION}`} srcset={`/static/logo-full.png?v=${ASSET_VERSION} 1x, /static/logo-full@2x.png?v=${ASSET_VERSION} 2x`} width="183" height="40" alt={CLINIC.name} fetchpriority="high" decoding="async" />
       </a>
       <nav aria-label="주 메뉴">
         <ul class="nav-top">
@@ -232,7 +231,7 @@ const MobileDrawer: FC = () => (
     <div class="drawer-backdrop" aria-hidden="true"></div>
     <aside class="drawer" aria-hidden="true">
       <div class="drawer-head">
-        <a href="/" class="brand"><img class="logo-img" src={`/static/logo-mark.png?v=${ASSET_VERSION}`} srcset={`/static/logo-mark.png?v=${ASSET_VERSION} 1x, /static/logo-mark@2x.png?v=${ASSET_VERSION} 2x`} width="29" height="40" alt={CLINIC.name} /><span class="nm"><b>{CLINIC.name}</b><small>The Good Dental Clinic</small></span></a>
+        <a href="/" class="brand"><img class="logo-img logo-full-img" src={`/static/logo-full.png?v=${ASSET_VERSION}`} srcset={`/static/logo-full.png?v=${ASSET_VERSION} 1x, /static/logo-full@2x.png?v=${ASSET_VERSION} 2x`} width="183" height="40" alt={CLINIC.name} /></a>
         <button class="drawer-close" aria-label="메뉴 닫기"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <nav>

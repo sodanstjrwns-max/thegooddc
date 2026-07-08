@@ -302,6 +302,7 @@ section{position:relative}
   background:var(--ink);display:grid;place-items:center;color:#fff;font-size:1.05rem;
 }
 .brand .logo-img{width:auto;height:40px;display:block;flex-shrink:0}
+.brand .logo-full-img{height:38px}
 .footer-brand .brand .logo-img{height:44px}
 .brand .nm{display:flex;flex-direction:column;line-height:1.1}
 .brand .nm b{font-size:1.12rem;font-weight:600;letter-spacing:-.03em;color:var(--ink)}
@@ -441,6 +442,7 @@ section{position:relative}
   .hero-stat.s1{left:14px}
   .hero-stat.s2{right:14px}
   .hero-actions,.hero-trust{justify-content:flex-start}
+  .brand .logo-full-img{height:34px}
 }
 
 /* ============================================================
