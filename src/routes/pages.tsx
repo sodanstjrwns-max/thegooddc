@@ -15,7 +15,7 @@ export const MissionPage: FC = () => {
   return (
     <Layout
       title={`병원소개 | ${CLINIC.name} — ${CLINIC.brandSlogan}`}
-      description={`${CLINIC.name}는 「${CLINIC.philosophy.mission}」는 미션으로 강서구 명지에서 정확하고 편안한 진료를 제공합니다. ${CLINIC.philosophy.vision}.`}
+      description={`${CLINIC.name}의 미션은 "${CLINIC.philosophy.mission}" 입니다. 비전은 ${CLINIC.philosophy.vision}가 되는 것. 강서구 명지에서 편안하고 정확한 진료를 제공합니다.`}
       path="/mission"
       keywords={['강서구 치과 소개', '명지 치과 철학', '더착한치과 미션']}
       schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema()]}
@@ -25,8 +25,31 @@ export const MissionPage: FC = () => {
         <div class="container">
           <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]} />
           <div class="eyebrow">OUR MISSION</div>
-          <h1>치과 통증의 두려움을<br /><span class="grad">안심으로</span> 바꾸겠습니다</h1>
-          <p>{CLINIC.philosophy.vision}</p>
+          <h1>두려움 없이 찾는 치과,<br /><span class="grad">가장 편안한 경험</span>을 만듭니다</h1>
+          <p>{CLINIC.philosophy.vision}가 되는 것 — 그것이 더착한치과의 목표입니다.</p>
+        </div>
+      </section>
+
+      {/* MISSION · VISION · 우리의 약속 — 병원 공식 문서 기반 */}
+      <section class="sec mvp-sec">
+        <div class="container">
+          <div class="mvp-grid">
+            <article class="mvp-card reveal">
+              <span class="mvp-kicker"><i class="fa-solid fa-bullseye"></i> Mission · 미션</span>
+              <h2 class="mvp-title">{CLINIC.philosophy.mission}</h2>
+              <p class="mvp-desc">단순히 치아를 치료하는 병원이 아니라, 치과가 무서워 치료를 미루던 환자도 안심하고 찾아올 수 있는 치과를 만드는 것이 우리의 존재 이유입니다.</p>
+            </article>
+            <article class="mvp-card reveal reveal-d1">
+              <span class="mvp-kicker"><i class="fa-solid fa-mountain-sun"></i> Vision · 비전</span>
+              <h2 class="mvp-title">{CLINIC.philosophy.vision}</h2>
+              <p class="mvp-desc">환자들이 "임플란트라면 이 치과가 가장 편한 치과"라고 가장 먼저 떠올리는 병원이 되겠습니다.</p>
+            </article>
+          </div>
+          <blockquote class="mvp-promise reveal reveal-d2">
+            <span class="mvp-promise-label">우리의 약속</span>
+            {CLINIC.philosophy.promise}
+            <cite>이 한 문장이 우리가 하는 모든 진료·상담·설명·서비스의 기준입니다.</cite>
+          </blockquote>
         </div>
       </section>
 
@@ -84,39 +107,36 @@ export const MissionPage: FC = () => {
         </div>
       </section>
 
-      {/* CORE VALUES — 사진 배경 카드 */}
-      <section class="sec">
+      {/* CORE VALUES — 병원 공식 핵심가치 5가지 */}
+      <section class="sec bg-sand">
         <div class="container">
           <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
             <div class="eyebrow center">CORE VALUES</div>
-            <h2 class="section-title">원칙을 진료실에서 지키는 방법</h2>
+            <h2 class="section-title">우리가 진료실에서 지키는 다섯 가지</h2>
+            <p style="color:var(--ink-soft)">환자의 두려움을 줄이고 가장 편안한 치료 경험을 만들기 위해, 매 순간 지키는 약속입니다.</p>
           </div>
-          <div class="mis-values">
-            {[
-              { ...CLINIC.philosophy.coreValues[0], bg: '/images/op-guide.webp' },
-              { ...CLINIC.philosophy.coreValues[1], bg: '/images/op-focus.webp' },
-              { ...CLINIC.philosophy.coreValues[2], bg: '/images/interior-1.webp' },
-            ].map((v, i) => (
-              <div class={`mis-val reveal reveal-d${i + 1}`}>
-                <div class="bg" style={`background-image:url('${v.bg}')`}></div>
-                <div class="v-inner">
-                  <div class="v-ico"><i class={`fa-solid fa-${v.icon}`}></i></div>
+          <ol class="mis-corevalues">
+            {CLINIC.philosophy.coreValues.map((v, i) => (
+              <li class={`cv-item reveal reveal-d${(i % 3) + 1}`}>
+                <span class="cv-no">{String(i + 1).padStart(2, '0')}</span>
+                <div class="cv-ico"><i class={`fa-solid fa-${v.icon}`}></i></div>
+                <div class="cv-body">
                   <h3>{v.title}</h3>
                   <p>{v.desc}</p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
       {/* SPACE — 공간 갤러리 (신념을 뒷받침하는 환경) */}
-      <section class="sec bg-sand">
+      <section class="sec">
         <div class="container">
           <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 44px">
             <div class="eyebrow center">OUR SPACE</div>
             <h2 class="section-title">원칙을 뒷받침하는 환경</h2>
-            <p style="color:var(--ink-soft)">‘정확하게, 한 번에’라는 원칙을 지키기 위해 공간과 시스템을 그에 맞게 갖췄습니다.</p>
+            <p style="color:var(--ink-soft)">‘편안하게, 정확하게’라는 원칙을 지키기 위해 공간과 시스템을 그에 맞게 갖췄습니다.</p>
           </div>
           <div class="mis-gallery reveal">
             <figure class="wide tall">

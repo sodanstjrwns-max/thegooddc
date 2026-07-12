@@ -1408,6 +1408,31 @@ section{position:relative}
 .mis-val p{font-size:.94rem;line-height:1.7;color:rgba(255,255,255,.92);text-shadow:0 1px 8px rgba(0,0,0,.35)}
 @media(max-width:880px){.mis-values{grid-template-columns:1fr;gap:14px}.mis-val{min-height:230px}}
 
+/* MISSION · VISION · PROMISE — 병원 공식 문서 카드 */
+.mvp-sec{background:linear-gradient(180deg,var(--bg-2) 0%,#fff 100%)}
+.mvp-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.mvp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:38px 34px;box-shadow:var(--sh-sm);transition:transform .4s var(--ease-out,ease),box-shadow .4s}
+.mvp-card:hover{transform:translateY(-5px);box-shadow:var(--sh-md)}
+.mvp-card .mvp-kicker{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:16px}
+.mvp-card .mvp-title{font-size:clamp(19px,2.1vw,24px);font-weight:700;letter-spacing:-.03em;line-height:1.42;color:var(--ink);margin-bottom:14px;word-break:keep-all}
+.mvp-card .mvp-desc{font-size:.97rem;line-height:1.8;color:var(--ink-soft);word-break:keep-all}
+.mvp-promise{position:relative;margin:32px 0 0;padding:40px 44px;border:none;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--accent) 0%,var(--accent-d,#0c7ca4) 100%);color:#fff;text-align:center;font-size:clamp(19px,2.3vw,27px);font-weight:700;letter-spacing:-.03em;line-height:1.5;box-shadow:0 18px 40px -18px rgba(12,124,164,.55);word-break:keep-all}
+.mvp-promise .mvp-promise-label{display:block;font-size:.8rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.82);margin-bottom:14px}
+.mvp-promise cite{display:block;margin-top:18px;font-size:.92rem;font-weight:500;font-style:normal;color:rgba(255,255,255,.9);letter-spacing:0}
+@media(max-width:880px){.mvp-grid{grid-template-columns:1fr;gap:16px}.mvp-card{padding:30px 26px}.mvp-promise{padding:32px 26px}}
+
+/* CORE VALUES — 핵심가치 5가지 리스트 */
+.mis-corevalues{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0;margin:0;counter-reset:cv}
+.mis-corevalues .cv-item{position:relative;display:flex;gap:18px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:26px 28px;box-shadow:var(--sh-sm);transition:transform .4s var(--ease-out,ease),box-shadow .4s,border-color .4s}
+.mis-corevalues .cv-item:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--accent-soft,#cfeaf5)}
+.mis-corevalues .cv-item:last-child:nth-child(odd){grid-column:1 / -1}
+.mis-corevalues .cv-no{position:absolute;top:18px;right:22px;font-size:1.5rem;font-weight:800;color:var(--accent-soft,#e3f2f9);letter-spacing:-.04em;line-height:1}
+.mis-corevalues .cv-ico{flex-shrink:0;width:52px;height:52px;border-radius:14px;background:linear-gradient(150deg,var(--accent) 0%,var(--accent-d,#0c7ca4) 100%);color:#fff;display:grid;place-items:center;font-size:1.35rem;box-shadow:0 6px 16px -6px rgba(12,124,164,.5)}
+.mis-corevalues .cv-body{min-width:0;padding-right:24px}
+.mis-corevalues .cv-body h3{font-size:1.1rem;font-weight:700;letter-spacing:-.02em;line-height:1.4;color:var(--ink);margin-bottom:8px;word-break:keep-all}
+.mis-corevalues .cv-body p{font-size:.94rem;line-height:1.72;color:var(--ink-soft);word-break:keep-all}
+@media(max-width:880px){.mis-corevalues{grid-template-columns:1fr;gap:12px}.mis-corevalues .cv-item:last-child:nth-child(odd){grid-column:auto}.mis-corevalues .cv-item{padding:22px 24px}}
+
 /* SPACE gallery */
 .mis-gallery{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:14px}
 .mis-gallery figure{position:relative;margin:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-xs)}
