@@ -28,6 +28,7 @@ import {
   listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
 } from './lib/content-store'
 import { setActiveSettings } from './lib/runtime-settings'
+import { listMediumPosts } from './lib/medium'
 import { notifyGoogleIndex, notifyGoogleIndexMany, isGoogleIndexingConfigured } from './lib/google-indexing'
 
 // 절대 URL 헬퍼 (자동 색인용)
@@ -96,7 +97,11 @@ app.get('/faq', (c) => c.html(<FaqPage />))
 app.get('/pricing', (c) => c.html(<PricingPage />))
 app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
-app.get('/column', async (c) => c.html(<ColumnListPage columns={await listColumns(c.env)} />))
+app.get('/column', async (c) => {
+  const [columns, mediumPosts] = await Promise.all([listColumns(c.env), listMediumPosts(c.env)])
+  return c.html(<ColumnListPage columns={columns} mediumPosts={mediumPosts} />)
+})
+
 app.get('/column/:slug', async (c) => {
   const slug = c.req.param('slug')
   const views = await bumpView(c.env, `column:${slug}`)

@@ -10,6 +10,7 @@ import { InlinkText } from '../lib/inlink'
 import type { Column } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES } from '../lib/content-store'
 import type { CaseItem } from '../lib/content-store'
+import type { MediumPost } from '../lib/medium'
 
 // ============================================================
 // 비포 / 애프터 (애프터 사진 로그인 게이팅)
@@ -142,7 +143,7 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
 // 원장 칼럼
 // ============================================================
 
-export const ColumnListPage: FC<{ columns?: Column[] }> = ({ columns = SEED_COLUMNS }) => (
+export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[] }> = ({ columns = SEED_COLUMNS, mediumPosts = [] }) => (
   <Layout
     title={`원장 칼럼 | ${CLINIC.name} 강서구 명지 치과`}
     description="더착한치과 황우석 대표원장이 직접 쓰는 치과 건강 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다."
@@ -182,6 +183,40 @@ export const ColumnListPage: FC<{ columns?: Column[] }> = ({ columns = SEED_COLU
         </div>
       </div>
     </section>
+
+    {mediumPosts.length > 0 && (
+      <section class="sec en-column-sec" id="english-column">
+        <div class="container">
+          <div class="en-column-head reveal">
+            <div class="hero-badge en-badge"><i class="fa-brands fa-medium"></i> ENGLISH COLUMN</div>
+            <h2>Dr. Hwang’s English Column</h2>
+            <p>Essays on dentistry, patient care, and clinical judgment — written in English by Dr. Woo-seok Hwang, published on Medium.</p>
+          </div>
+          <div class="tlist-grid en-column-grid">
+            {mediumPosts.map((m) => (
+              <a href={m.link} target="_blank" rel="noopener noreferrer" class={`card reveal col-list-card ${m.cover ? 'has-thumb' : ''}`} style="text-decoration:none">
+                {m.cover && (
+                  <div class="col-list-thumb">
+                    <img src={m.cover} alt={m.title} loading="lazy" width="600" height="315" />
+                  </div>
+                )}
+                <div class="col-list-body">
+                  <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{m.date} · Medium</div>
+                  <h3 style="font-size:20px;margin-bottom:12px;line-height:1.4">{m.title}</h3>
+                  <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{m.excerpt}</p>
+                  <span style="color:var(--brand);font-weight:700;font-size:14px">Read on Medium <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:12px"></i></span>
+                </div>
+              </a>
+            ))}
+          </div>
+          <div class="en-column-more">
+            <a href="https://medium.com/@wsh216" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+              <i class="fa-brands fa-medium"></i> View all on Medium
+            </a>
+          </div>
+        </div>
+      </section>
+    )}
   </Layout>
 )
 
