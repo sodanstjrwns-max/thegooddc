@@ -94,9 +94,9 @@ const PROC_META: Record<string, { bodyLocation?: string; preparation?: string; f
 export const TreatmentsListPage: FC = () => (
   <Layout
     title={`진료안내 | ${CLINIC.name} 강서구 명지 치과`}
-    description="더착한치과의 전체 진료 안내입니다. 디지털 가이드 임플란트, 투명교정, 스마일 크라운 심미치료부터 충치·잇몸·보철·사랑니까지 강서구 명지에서 한 곳에서."
+    description="더착한치과의 전체 진료 안내입니다. 디지털 가이드 임플란트, 투명교정, 스타일네이트 심미치료부터 충치·잇몸·보철·사랑니까지 강서구 명지에서 한 곳에서."
     path="/treatments"
-    keywords={['강서구 치과 진료', '명지 치과', '임플란트', '투명교정', '스마일 크라운']}
+    keywords={['강서구 치과 진료', '명지 치과', '임플란트', '투명교정', '스타일네이트']}
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }])]}
   >
     <section class="page-hero has-img">

@@ -146,7 +146,7 @@ export const SEED_COLUMNS: Column[] = [
 export const SEED_CASES: CaseItem[] = [
   { id: 'cs-seed-1', title: '디지털 가이드 임플란트 케이스', age: '50대', gender: '남성', category: 'implant', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 3개월', desc: '상실된 어금니를 디지털 가이드 임플란트로 회복한 사례입니다. 정밀 설계를 통해 안정적인 식립을 진행했습니다.', modified: '2026-05-01' },
   { id: 'cs-seed-2', title: '투명교정 전후', age: '20대', gender: '여성', category: 'clear-aligner', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 12개월', desc: '앞니의 가벼운 배열을 투명교정으로 자연스럽게 개선한 사례입니다.', modified: '2026-05-01' },
-  { id: 'cs-seed-3', title: '스마일 크라운 심미 치료', age: '30대', gender: '여성', category: 'minish', area: '부산 강서구', doctor: 'hwang-wooseok', period: '약 2주', desc: '자연 치아 삭제를 최소화하며 앞니의 색과 형태를 개선한 심미 치료 사례입니다.', modified: '2026-05-01' },
+  { id: 'cs-seed-3', title: '스타일네이트 심미 치료', age: '30대', gender: '여성', category: 'minish', area: '부산 강서구', doctor: 'hwang-wooseok', period: '약 2주', desc: '자연 치아 삭제를 최소화하며 앞니의 색과 형태를 개선한 심미 치료 사례입니다.', modified: '2026-05-01' },
   { id: 'cs-seed-5', title: '오랜 틀니 사용 후 AI 가이드 임플란트', age: '60대', gender: '여성', category: 'implant', area: '강서구 명지동', doctor: 'hwang-wooseok', period: '약 6개월', desc: '잇몸뼈가 부족해 오랜 기간 틀니를 사용하시던 분의 사례입니다. AI 가이드 시스템으로 남아 있는 뼈를 최대한 활용하는 위치를 정밀 설계하여 단계적으로 진행했습니다.', modified: '2026-06-10' },
   { id: 'cs-seed-4', title: '다수 임플란트 회복', age: '60대', gender: '남성', category: 'implant', area: '경남 김해 장유', doctor: 'hwang-wooseok', period: '약 4개월', desc: '여러 개의 치아를 잃은 경우 정밀 설계로 저작 기능을 회복한 사례입니다.', modified: '2026-05-01' },
 ]

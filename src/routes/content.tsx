@@ -18,9 +18,9 @@ import type { MediumPost } from '../lib/medium'
 export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ loggedIn = false, cases = SEED_CASES }) => (
   <Layout
     title={`비포 / 애프터 | ${CLINIC.name} 강서구 명지 치과`}
-    description="더착한치과의 진료 전후 사례를 확인하세요. 임플란트, 투명교정, 스마일 크라운 등 디지털 정밀 진료 케이스를 소개합니다."
+    description="더착한치과의 진료 전후 사례를 확인하세요. 임플란트, 투명교정, 스타일네이트 등 디지털 정밀 진료 케이스를 소개합니다."
     path="/cases"
-    keywords={['강서구 치과 전후', '명지 임플란트 후기', '투명교정 전후', '스마일 크라운 전후']}
+    keywords={['강서구 치과 전후', '명지 임플란트 후기', '투명교정 전후', '스타일네이트 전후']}
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '비포/애프터', path: '/cases' }])]}
   >
     <section class="page-hero">

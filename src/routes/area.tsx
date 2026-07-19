@@ -150,7 +150,7 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
   const neighbors = getNeighborAreas(areaSlug, 5)
   const hubFaqs = [
     { q: `${area.name}에서 가까운 치과는 어디인가요?`, a: `${CLINIC.name}는 ${CLINIC.address}에 위치해 ${area.fullName}에서 ${area.distance || '가까운 거리'}입니다. ${area.transit || ''}` },
-    { q: `${area.name}에서 어떤 진료를 받을 수 있나요?`, a: `${CLINIC.name}는 임플란트, 투명교정, 스마일 크라운 심미치료, 치아교정을 포함한 통합치의학과 전 과목 진료를 제공합니다. ${area.name} 지역 환자분이 한 곳에서 모든 진료를 받으실 수 있습니다.` },
+    { q: `${area.name}에서 어떤 진료를 받을 수 있나요?`, a: `${CLINIC.name}는 임플란트, 투명교정, 스타일네이트 심미치료, 치아교정을 포함한 통합치의학과 전 과목 진료를 제공합니다. ${area.name} 지역 환자분이 한 곳에서 모든 진료를 받으실 수 있습니다.` },
     { q: `${area.name}에서 ${CLINIC.name} 진료시간은 어떻게 되나요?`, a: HOURS_LINE },
     ...(area.localFaq || []),
   ]
@@ -160,7 +160,7 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
   return (
     <Layout
       title={`${area.name} 치과 | ${CLINIC.name} — 임플란트·교정·심미치료`}
-      description={`${area.fullName} 인근 치과 ${CLINIC.name}. ${area.distance || ''} 임플란트·투명교정·스마일 크라운·치아교정 통합 진료. ${area.intro?.slice(0, 60) || ''}`}
+      description={`${area.fullName} 인근 치과 ${CLINIC.name}. ${area.distance || ''} 임플란트·투명교정·스타일네이트·치아교정 통합 진료. ${area.intro?.slice(0, 60) || ''}`}
       path={`/clinic/${area.slug}`}
       keywords={[`${area.name} 치과`, `${area.name} 임플란트`, `${area.name} 교정`, `${area.name} 치과 추천`, `${area.fullName} 치과`]}
       schemas={[
@@ -188,7 +188,7 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
           <h2>{area.name}에서 가까운 치과를 찾으신다면</h2>
           <p class="aeo-answer">
             <strong class="aeo-tldr">한줄답:</strong> {CLINIC.name}는 {CLINIC.address}에 위치해 {area.fullName}에서 {area.distance || '가까운 거리'}입니다.
-            통합치의학과 전문의가 임플란트·투명교정·스마일 크라운·치아교정을 정밀하게 진료합니다.
+            통합치의학과 전문의가 임플란트·투명교정·스타일네이트·치아교정을 정밀하게 진료합니다.
           </p>
           {area.intro && <p>{area.intro}</p>}
 
