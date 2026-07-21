@@ -144,12 +144,12 @@ export const MissionPage: FC = () => {
               <figcaption>리셉션 · 안내 데스크</figcaption>
             </figure>
             <figure>
-              <img src="/images/interior-1.webp" alt="진료실" loading="lazy" />
-              <figcaption>진료실</figcaption>
+              <img src="/images/interior-1.webp" alt="더착한치과 대기 공간" loading="lazy" />
+              <figcaption>대기 공간</figcaption>
             </figure>
             <figure>
-              <img src="/images/interior-2.webp" alt="상담실" loading="lazy" />
-              <figcaption>상담 공간</figcaption>
+              <img src="/images/interior-2.webp" alt="더착한치과 응접·대기 공간" loading="lazy" />
+              <figcaption>응접·대기 공간</figcaption>
             </figure>
             <figure class="wide">
               <img src="/images/interior-lounge.webp" alt="대기 라운지" loading="lazy" />
