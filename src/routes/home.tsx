@@ -514,6 +514,88 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
         </div>
       </section>
 
+      {/* ===================== 오시는길 (지도·주차·진료시간) ===================== */}
+      <section class="visit" id="visit" aria-label="오시는길">
+        <div class="container">
+          <div class="shead center" data-index="08">
+            <span class="eyebrow center">Visit Us</span>
+            <h2>오시는 길, <span class="gold">어렵지 않습니다</span></h2>
+            <p>명지오션시티 스타빌딩 6층. 지하 주차장 30대 · 주차비 지원까지 챙겨드립니다.</p>
+          </div>
+          <div class="visit-grid reveal">
+            <div class="visit-map">
+              <iframe
+                title="더착한치과 위치 지도"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(CLINIC.address)}&hl=ko&z=17&output=embed`}
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen
+              ></iframe>
+              <div class="visit-map-apps">
+                <a
+                  href={`https://map.naver.com/p/search/${encodeURIComponent(CLINIC.name + ' ' + CLINIC.addressDong)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mapapp naver"
+                  data-track="map"
+                  data-track-loc="home-visit-naver"
+                >
+                  <i class="fa-solid fa-location-dot"></i> 네이버 지도
+                </a>
+                <a
+                  href={`https://map.kakao.com/link/search/${encodeURIComponent(CLINIC.name + ' ' + CLINIC.addressDong)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mapapp kakao"
+                  data-track="map"
+                  data-track-loc="home-visit-kakao"
+                >
+                  <i class="fa-solid fa-comment"></i> 카카오맵
+                </a>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(CLINIC.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mapapp google"
+                  data-track="map"
+                  data-track-loc="home-visit-google"
+                >
+                  <i class="fa-solid fa-diamond-turn-right"></i> 길찾기
+                </a>
+              </div>
+            </div>
+            <div class="visit-info">
+              <div class="visit-block">
+                <span class="vi-head"><i class="fa-solid fa-location-dot"></i> 주소</span>
+                <p class="vi-addr">{CLINIC.address}</p>
+                <a href={`tel:${CLINIC.phoneRaw}`} class="vi-phone" data-track="phone" data-track-loc="home-visit">
+                  <i class="fa-solid fa-phone"></i> {CLINIC.phone}
+                </a>
+              </div>
+              <div class="visit-block">
+                <span class="vi-head"><i class="fa-solid fa-clock"></i> 진료시간</span>
+                <ul class="vi-hours">
+                  {CLINIC.hours.map((h) => (
+                    <li class={h.closed ? 'off' : ''}>
+                      <span class="d">{h.day}</span>
+                      <span class="t">
+                        {h.time}
+                        {h.note ? <em> · {h.note}</em> : null}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p class="vi-note"><i class="fa-solid fa-circle-info"></i> {CLINIC.hoursNote}</p>
+              </div>
+              <div class="visit-block">
+                <span class="vi-head"><i class="fa-solid fa-square-parking"></i> 주차</span>
+                <p class="vi-park">{CLINIC.directions.parkingDetail}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===================== CTA BAND — 서사형 ===================== */}
       <section class="cta-band">
         <JourneyPathVector />

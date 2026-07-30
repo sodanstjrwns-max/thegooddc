@@ -369,11 +369,54 @@
     });
   }
 
+  /* 진료중/종료 실시간 배지
+     ⚠️ 진료시간 변경 시 src/data/clinic.ts 의 hours 와 아래 SCHEDULE 을 함께 수정할 것 */
+  function initClinicStatus() {
+    var el = document.querySelector('[data-clinic-status]');
+    if (!el) return;
+    /* 요일 0=일 ~ 6=토. open/close 는 분 단위(24h). lunch 는 [시작,끝] 분(선택). null = 휴진 */
+    var m = function (h, mm) { return h * 60 + (mm || 0); };
+    var SCHEDULE = {
+      0: null,                                   /* 일 - 정기휴무 */
+      1: { open: m(9), close: m(20), lunch: [m(12), m(14)] }, /* 월 - 야간 */
+      2: { open: m(9), close: m(18), lunch: [m(12), m(14)] }, /* 화 */
+      3: { open: m(9), close: m(20), lunch: [m(12), m(14)] }, /* 수 - 야간 */
+      4: { open: m(9), close: m(18), lunch: [m(12), m(14)] }, /* 목 */
+      5: { open: m(9), close: m(18), lunch: [m(12), m(14)] }, /* 금 */
+      6: { open: m(8), close: m(12), lunch: null }            /* 토 - 점심없음 */
+    };
+    function fmt(min) { var h = Math.floor(min / 60), mm = min % 60; return (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm; }
+    function compute() {
+      /* 한국 시간(KST, UTC+9) 기준으로 판정 — 해외/타임존 방문자도 병원 현지시간으로 정확히 */
+      var now = new Date();
+      var kst = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (9 * 3600000));
+      var dow = kst.getDay();
+      var cur = kst.getHours() * 60 + kst.getMinutes();
+      var day = SCHEDULE[dow];
+      if (!day) return { state: 'closed', text: '진료종료', sub: '오늘 휴진' };
+      if (cur < day.open) return { state: 'closed', text: '진료 준비중', sub: fmt(day.open) + ' 진료 시작' };
+      if (cur >= day.close) return { state: 'closed', text: '진료종료', sub: '오늘 진료 마감' };
+      if (day.lunch && cur >= day.lunch[0] && cur < day.lunch[1]) return { state: 'lunch', text: '점심시간', sub: fmt(day.lunch[1]) + ' 진료 재개' };
+      return { state: 'open', text: '진료중', sub: fmt(day.close) + ' 까지' };
+    }
+    function render() {
+      var r = compute();
+      el.setAttribute('data-state', r.state);
+      var t = el.querySelector('.cs-text');
+      if (t) t.textContent = r.text;
+      el.setAttribute('title', r.text + ' · ' + r.sub);
+      el.setAttribute('aria-label', '현재 ' + r.text + ', ' + r.sub);
+      el.removeAttribute('hidden');
+    }
+    render();
+    setInterval(render, 60000); /* 1분마다 갱신 */
+  }
+
   function init() {
     initHeader(); initProgress(); initDrawer(); initReveal(); initCountUp(); initFaq(); initBA(); initAnchors();
     initGlow(); initTilt(); initRing();
     initGrain(); initFableSpine(); initFunnel();
-    initTracking(); initPWA();
+    initTracking(); initPWA(); initClinicStatus();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

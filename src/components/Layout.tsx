@@ -214,6 +214,10 @@ const Header: FC = () => (
         </ul>
       </nav>
       <div class="header-cta">
+        <span class="clinic-status" id="clinic-status" data-clinic-status hidden>
+          <span class="cs-dot"></span>
+          <span class="cs-text"></span>
+        </span>
         <a href={`tel:${CLINIC.phoneRaw}`} class="header-phone" data-track="phone" data-track-loc="header">
           <span class="lbl">상담·예약</span>
           <span class="num">{CLINIC.phone}</span>
