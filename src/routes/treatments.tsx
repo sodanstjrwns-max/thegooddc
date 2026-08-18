@@ -20,7 +20,7 @@ const PROC_META: Record<string, { bodyLocation?: string; preparation?: string; f
     bodyLocation: '상·하악 치조골',
     preparation: '3D CT 촬영과 구강 스캔으로 골량·신경 위치를 분석하고, 디지털 가이드를 제작합니다.',
     followup: '식립 후 정기 검진으로 골유착 상태를 확인하며, 보철 장착 후에도 주기적 관리를 권장합니다.',
-    howPerformed: '디지털 가이드를 이용해 계획된 위치에 임플란트 픽스처를 식립하고, 골유착 후 지대주와 보철을 연결합니다.',
+    howPerformed: '디지털 가이드를 이용해 계획된 위치에 임플란트 픽스처를 식립하고, 골유착(뼈와 단단히 붙는 과정)이 이뤄진 뒤 지대주(임플란트 위에 세우는 기둥)와 보철을 연결합니다.',
   },
   'clear-aligner': {
     bodyLocation: '치열 전체',

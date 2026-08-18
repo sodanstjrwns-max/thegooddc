@@ -253,8 +253,9 @@ export const DirectionsPage: FC = () => (
               <p style="margin:0;font-size:14px;line-height:1.7;color:var(--ink-soft)">
                 지하 1·2층이 만차일 경우, 주변 <strong>유료 주차장</strong>에 주차하신 뒤
                 영수증 사진과 이체받으실 계좌를
-                <a href={`tel:${CLINIC.directions.parkingSupportPhone.replace(/[^0-9]/g, '')}`} style="color:var(--brand);font-weight:700"> 더착한치과({CLINIC.directions.parkingSupportPhone})</a>로
+                <a href={`tel:${CLINIC.directions.parkingSupportPhone.replace(/[^0-9]/g, '')}`} style="color:var(--brand);font-weight:700"> 주차 지원 전용번호({CLINIC.directions.parkingSupportPhone})</a>로
                 보내주시면 <strong>주차비를 지원해 드립니다.</strong>
+                <br /><span style="font-size:12.5px;color:var(--ink-faint)">※ 진료 상담·예약은 대표번호 {CLINIC.phone} 로 문의해 주세요.</span>
               </p>
             </div>
           </div>
@@ -471,7 +472,7 @@ export const ReservationPage: FC = () => (
       <div class="container ph-inner">
         <div class="hero-badge"><i class="fa-regular fa-calendar-check"></i> RESERVATION</div>
         <h1>진료 예약</h1>
-        <p>예약 정보를 남겨주시면 확인 후 빠르게 연락드립니다.</p>
+        <p>예약 정보를 남겨주시면 <strong>진료시간 기준 24시간 이내</strong>에 확인 후 연락드립니다.</p>
       </div>
     </section>
     <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료 예약', path: '/reservation' }]} />
@@ -561,6 +562,7 @@ export const ReservationPage: FC = () => (
             <i class="fa-regular fa-paper-plane"></i> 예약 신청하기
           </button>
           <p class="rsv-trust"><i class="fa-solid fa-lock"></i> 입력하신 정보는 안전하게 보호되며 예약 상담 목적으로만 사용됩니다.</p>
+          <p class="rsv-trust" style="margin-top:6px"><i class="fa-regular fa-clock"></i> 신청해 주시면 <strong>진료시간 기준 24시간 이내</strong>에 답변드립니다. 급하신 경우 대표번호 <a href={`tel:${CLINIC.phoneRaw}`} style="color:var(--brand);font-weight:700">{CLINIC.phone}</a>{CLINIC.sns.kakao && <> 또는 <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" style="color:var(--brand);font-weight:700">카카오톡 상담</a></>}으로 바로 문의해 주세요.</p>
           <p id="reservation-result" style="text-align:center;margin-top:16px;font-weight:700"></p>
         </form>
       </div>
@@ -612,7 +614,7 @@ export const ReservationPage: FC = () => (
             var res = await fetch('/api/reservation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
             var j = await res.json();
             if (j.ok) {
-              r.innerHTML = '<i class="fa-solid fa-circle-check"></i> 예약 신청이 접수되었습니다. 확인 후 빠르게 연락드리겠습니다.';
+              r.innerHTML = '<i class="fa-solid fa-circle-check"></i> 예약 신청이 접수되었습니다. 진료시간 기준 24시간 이내에 확인 후 연락드리겠습니다.';
               r.style.color = 'var(--brand)';
               setStep(4);
               f.reset();
