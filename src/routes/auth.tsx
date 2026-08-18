@@ -4,8 +4,8 @@ import { Breadcrumb } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
-import type { Notice, Column, CaseItem, SiteSettings, Reservation, ResStats } from '../lib/content-store'
-import { bodyToText, RES_STATUS_LABEL } from '../lib/content-store'
+import type { Notice, Column, CaseItem, SiteSettings, Reservation, ResStats, BoardKind } from '../lib/content-store'
+import { bodyToText, RES_STATUS_LABEL, BOARDS, boardOf } from '../lib/content-store'
 
 // 추적 설정 진단 타입 (대시보드/설정 화면 공용)
 export type SettingsSource = 'env' | 'kv' | 'seed' | 'none'
@@ -796,23 +796,25 @@ const CoverField: FC<{ cover?: string; coverAlt?: string; nameUrl?: string; name
 
 export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Record<string, number> }> = ({ columns, ok, views = {} }) => {
   const treatOpts = TREATMENTS.map((t) => ({ slug: t.slug, name: t.shortName || t.name }))
+  const boardOpts = Object.values(BOARDS)
   return (
-    <AdminShell active="columns" title="원장 칼럼 관리" ok={ok}>
+    <AdminShell active="columns" title="게시판 관리 (칼럼 · 치료 후기 · 치과 이야기)" ok={ok}>
       <style dangerouslySetInnerHTML={{ __html: EDITOR_CSS }} />
-      {/* 새 칼럼 작성 */}
+      {/* 새 글 작성 */}
       <details class="adm-detail" style="margin-bottom:26px">
-        <summary><i class="fa-solid fa-plus"></i> 새 칼럼 작성</summary>
+        <summary><i class="fa-solid fa-plus"></i> 새 글 작성 (게시판 선택)</summary>
         <form class="adm-form" method="post" action="/api/admin/columns/create">
-          <div><label>제목</label><input type="text" name="title" required placeholder="예: 디지털 임플란트, 왜 정확할까요?" /></div>
+          <div><label>게시판 선택</label><select name="board">{boardOpts.map((b) => <option value={b.kind} selected={b.kind === 'reviews'}>{b.label}</option>)}</select></div>
+          <div><label>제목</label><input type="text" name="title" required placeholder="예: 임플란트 치료 후기 / 개원 10주년 감사 인사" /></div>
           <div><label>요약(목록·검색·공유 미리보기에 노출 · SEO 핵심)</label><textarea name="excerpt" style="min-height:60px" placeholder="한두 문장으로 요약 (검색결과 설명문으로 쓰입니다)"></textarea></div>
           <div><label>대표이미지</label><CoverField /></div>
           <div class="row">
-            <div><label>URL slug(비우면 자동)</label><input type="text" name="slug" placeholder="why-digital-implant" /></div>
+            <div><label>URL slug(비우면 자동)</label><input type="text" name="slug" placeholder="review-implant-2026" /></div>
             <div><label>날짜</label><input type="date" name="date" /></div>
           </div>
           <div class="row">
             <div><label>작성 의료진</label><select name="author">{DOCTORS.map((d) => <option value={d.slug}>{d.name} {d.title}</option>)}</select></div>
-            <div><label>관련 진료</label><select name="related"><option value="">선택 안 함</option>{treatOpts.map((t) => <option value={t.slug}>{t.name}</option>)}</select></div>
+            <div><label>관련 진료(선택)</label><select name="related"><option value="">선택 안 함</option>{treatOpts.map((t) => <option value={t.slug}>{t.name}</option>)}</select></div>
           </div>
           <div class="ed-wrap">
             <label>본문</label>
@@ -826,17 +828,20 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
         </form>
       </details>
 
-      {columns.length === 0 && <p style="color:var(--ink-soft)">등록된 칼럼이 없습니다.</p>}
-      {columns.map((c) => (
+      {columns.length === 0 && <p style="color:var(--ink-soft)">등록된 글이 없습니다.</p>}
+      {columns.map((c) => {
+        const bm = BOARDS[boardOf(c)]
+        return (
         <div class="adm-card">
-          <div class="adm-meta"><span>{c.date}</span><span style="color:var(--ink-faint)">/column/{c.slug}</span><span style="color:var(--accent-d);font-weight:700"><i class="fa-regular fa-eye"></i> 조회 {(views[`column:${c.slug}`] || 0).toLocaleString()}</span></div>
-          <h3><a href={`/column/${c.slug}`} target="_blank" style="color:var(--ink)">{c.title} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;color:var(--ink-faint)"></i></a></h3>
+          <div class="adm-meta"><span style="background:var(--brand);color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700"><i class={`fa-solid fa-${bm.icon}`}></i> {bm.label}</span><span>{c.date}</span><span style="color:var(--ink-faint)">{bm.path}/{c.slug}</span><span style="color:var(--accent-d);font-weight:700"><i class="fa-regular fa-eye"></i> 조회 {(views[`column:${c.slug}`] || 0).toLocaleString()}</span></div>
+          <h3><a href={`${bm.path}/${c.slug}`} target="_blank" style="color:var(--ink)">{c.title} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;color:var(--ink-faint)"></i></a></h3>
           <p class="adm-body-prev">{c.excerpt}</p>
           <div class="adm-actions">
             <details class="adm-detail" style="flex:1">
               <summary><i class="fa-solid fa-pen"></i> 수정</summary>
               <form class="adm-form" method="post" action="/api/admin/columns/update">
                 <input type="hidden" name="id" value={c.id} />
+                <div><label>게시판</label><select name="board">{boardOpts.map((b) => <option value={b.kind} selected={b.kind === boardOf(c)}>{b.label}</option>)}</select></div>
                 <div><label>제목</label><input type="text" name="title" value={c.title} required /></div>
                 <div><label>요약</label><textarea name="excerpt" style="min-height:60px">{c.excerpt}</textarea></div>
                 <div><label>대표이미지</label><CoverField cover={c.cover} coverAlt={c.coverAlt} /></div>
@@ -852,13 +857,14 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
                 <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
               </form>
             </details>
-            <form method="post" action="/api/admin/columns/delete" onsubmit="return confirm('이 칼럼을 삭제할까요?')">
+            <form method="post" action="/api/admin/columns/delete" onsubmit="return confirm('이 글을 삭제할까요?')">
               <input type="hidden" name="id" value={c.id} />
               <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> 삭제</button>
             </form>
           </div>
         </div>
-      ))}
+        )
+      })}
       <script dangerouslySetInnerHTML={{ __html: EDITOR_JS }}></script>
     </AdminShell>
   )

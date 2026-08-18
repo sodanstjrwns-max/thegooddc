@@ -26,7 +26,9 @@ import {
   listCases, createCase, updateCase, deleteCase,
   getSettings, getSettingsDiagnostic, saveSettings,
   listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
+  BOARDS,
 } from './lib/content-store'
+import type { BoardKind } from './lib/content-store'
 import { setActiveSettings } from './lib/runtime-settings'
 import { listMediumPosts } from './lib/medium'
 import { notifyGoogleIndex, notifyGoogleIndexMany, isGoogleIndexingConfigured } from './lib/google-indexing'
@@ -98,14 +100,36 @@ app.get('/pricing', (c) => c.html(<PricingPage />))
 app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
 app.get('/column', async (c) => {
-  const [columns, mediumPosts] = await Promise.all([listColumns(c.env), listMediumPosts(c.env)])
-  return c.html(<ColumnListPage columns={columns} mediumPosts={mediumPosts} />)
+  const [columns, mediumPosts] = await Promise.all([listColumns(c.env, 'column'), listMediumPosts(c.env)])
+  return c.html(<ColumnListPage columns={columns} mediumPosts={mediumPosts} board="column" />)
 })
 
 app.get('/column/:slug', async (c) => {
   const slug = c.req.param('slug')
   const views = await bumpView(c.env, `column:${slug}`)
-  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} />)
+  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="column" />)
+})
+
+// ===== 치료 후기 게시판 =====
+app.get('/reviews-board', async (c) => {
+  const columns = await listColumns(c.env, 'reviews')
+  return c.html(<ColumnListPage columns={columns} board="reviews" />)
+})
+app.get('/reviews-board/:slug', async (c) => {
+  const slug = c.req.param('slug')
+  const views = await bumpView(c.env, `column:${slug}`)
+  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="reviews" />)
+})
+
+// ===== 치과 이야기 게시판 =====
+app.get('/story-board', async (c) => {
+  const columns = await listColumns(c.env, 'story')
+  return c.html(<ColumnListPage columns={columns} board="story" />)
+})
+app.get('/story-board/:slug', async (c) => {
+  const slug = c.req.param('slug')
+  const views = await bumpView(c.env, `column:${slug}`)
+  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="story" />)
 })
 app.get('/encyclopedia', (c) => c.html(<EncyclopediaListPage category={c.req.query('cat')} />))
 app.get('/encyclopedia/:slug', (c) => c.html(<EncyclopediaDetailPage slug={c.req.param('slug')} />))
@@ -464,9 +488,10 @@ app.post('/api/admin/columns/create', async (c) => {
     cover: String(f.cover || ''),
     coverAlt: String(f.coverAlt || ''),
     bodyText: String(f.bodyText || ''),
+    board: (String(f.board || 'column') as BoardKind),
   })
-  // 새 칼럼 → 구글 자동 색인 요청 (백그라운드, 실패해도 발행에 영향 없음)
-  c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`/column/${col.slug}`), 'URL_UPDATED'))
+  // 새 글 → 구글 자동 색인 요청 (백그라운드, 실패해도 발행에 영향 없음)
+  c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`${BOARDS[col.board || 'column'].path}/${col.slug}`), 'URL_UPDATED'))
   return c.redirect('/admin/columns?ok=created')
 })
 app.post('/api/admin/columns/update', async (c) => {
@@ -482,9 +507,10 @@ app.post('/api/admin/columns/update', async (c) => {
     cover: String(f.cover || ''),
     coverAlt: String(f.coverAlt || ''),
     bodyText: String(f.bodyText || ''),
+    board: (String(f.board || 'column') as BoardKind),
   })
-  // 수정된 칼럼 → 구글 재색인 요청 (콘텐츠 갱신 신호)
-  if (upd) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`/column/${upd.slug}`), 'URL_UPDATED'))
+  // 수정된 글 → 구글 재색인 요청 (콘텐츠 갱신 신호)
+  if (upd) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`${BOARDS[upd.board || 'column'].path}/${upd.slug}`), 'URL_UPDATED'))
   return c.redirect('/admin/columns?ok=updated')
 })
 app.post('/api/admin/columns/delete', async (c) => {
@@ -494,7 +520,7 @@ app.post('/api/admin/columns/delete', async (c) => {
   // 삭제 전 slug 확보 → 구글에 URL_DELETED 알림 (검색결과에서 빠르게 제거)
   const target = (await listColumns(c.env)).find((x) => x.id === id)
   await deleteColumn(c.env, id)
-  if (target?.slug) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`/column/${target.slug}`), 'URL_DELETED'))
+  if (target?.slug) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`${BOARDS[target.board || 'column'].path}/${target.slug}`), 'URL_DELETED'))
   return c.redirect('/admin/columns?ok=deleted')
 })
 
@@ -557,9 +583,9 @@ app.post('/api/admin/index/reindex-all', async (c) => {
   const cols = await listColumns(c.env)
   const urls = [
     absUrl('/'), absUrl('/mission'), absUrl('/treatments'), absUrl('/doctors'),
-    absUrl('/cases'), absUrl('/column'), absUrl('/encyclopedia'),
+    absUrl('/cases'), absUrl('/column'), absUrl('/reviews-board'), absUrl('/story-board'), absUrl('/encyclopedia'),
     absUrl('/directions'), absUrl('/faq'), absUrl('/pricing'),
-    ...cols.map((x) => absUrl(`/column/${x.slug}`)),
+    ...cols.map((x) => absUrl(`${BOARDS[x.board || 'column'].path}/${x.slug}`)),
   ]
   c.executionCtx?.waitUntil(notifyGoogleIndexMany(c.env, urls, 'URL_UPDATED'))
   return c.redirect('/admin/settings?ok=reindex')
@@ -800,7 +826,7 @@ app.post('/api/admin/indexnow', async (c) => {
   if (!session) return c.json({ error: 'unauthorized' }, 401)
   const base = `https://${CLINIC.domain}`
   const urlList = [
-    '/', '/mission', '/treatments', '/doctors', '/cases', '/column',
+    '/', '/mission', '/treatments', '/doctors', '/cases', '/column', '/reviews-board', '/story-board',
     '/encyclopedia', '/directions', '/faq', '/pricing', '/notice', '/reservation',
     ...TREATMENTS.map((t) => `/treatments/${t.slug}`),
     ...DOCTORS.map((d) => `/doctors/${d.slug}`),
@@ -897,6 +923,8 @@ app.get('/sitemap-main.xml', (c) => {
     { loc: '/treatments', pri: '0.9' },
     { loc: '/doctors', pri: '0.8' },
     { loc: '/cases', pri: '0.7' },
+    { loc: '/reviews-board', pri: '0.8' },
+    { loc: '/story-board', pri: '0.6' },
     { loc: '/column', pri: '0.7' },
     { loc: '/encyclopedia', pri: '0.7' },
     { loc: '/directions', pri: '0.7' },
@@ -939,7 +967,7 @@ app.get('/sitemap-content.xml', async (c) => {
       const lastmod = (col.modified || col.date || '').slice(0, 10) || now
       if (lastmod > latestColumn) latestColumn = lastmod
       urls.push({
-        loc: `/column/${col.slug}`,
+        loc: `${BOARDS[col.board || 'column'].path}/${col.slug}`,
         pri: '0.7',
         lastmod,
         img: img ? { url: /^https?:\/\//.test(img) ? img : `${base}${img}`, caption: col.coverAlt || col.title } : undefined,
@@ -1173,7 +1201,10 @@ ${DETAILED_TERMS.map((t) => `- ${t.term}: ${t.def} → https://${d}/encyclopedia
 ## 주요 페이지
 - 병원소개: https://${d}/mission
 - 의료진: https://${d}/doctors
+- 치료 후기: https://${d}/reviews-board
 - 비포/애프터: https://${d}/cases
+- 치과 이야기(병원 소식·일상): https://${d}/story-board
+- 원장 칼럼: https://${d}/column
 - 자주 묻는 질문: https://${d}/faq
 - 진료비 안내: https://${d}/pricing
 - 오시는 길: https://${d}/directions

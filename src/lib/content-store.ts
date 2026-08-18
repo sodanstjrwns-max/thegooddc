@@ -22,6 +22,10 @@ export interface ColumnBlock {
   p: string
 }
 
+// 게시판 종류: 원장 칼럼 / 치료 후기 / 치과 이야기
+// (기존 데이터엔 board 없음 → 'column'으로 간주하여 하위호환)
+export type BoardKind = 'column' | 'reviews' | 'story'
+
 export interface Column {
   id: string
   slug: string
@@ -34,6 +38,41 @@ export interface Column {
   cover?: string // 대표이미지 URL (OG/스키마/목록 썸네일)
   coverAlt?: string // 대표이미지 대체텍스트
   body: ColumnBlock[]
+  board?: BoardKind // 소속 게시판 (없으면 'column')
+}
+
+// 게시판 메타 — 경로/제목/설명/아이콘을 한곳에서 관리
+export interface BoardMeta {
+  kind: BoardKind
+  path: string // 목록 경로 (예: /reviews-board)
+  label: string // 메뉴/브레드크럼 표기
+  badge: string // 히어로 뱃지 영문
+  icon: string // fontawesome 아이콘명
+  heroTitle: string
+  heroDesc: string
+  metaDesc: string // <meta description>
+  keywords: string[]
+}
+
+export const BOARDS: Record<BoardKind, BoardMeta> = {
+  column: {
+    kind: 'column', path: '/column', label: '원장 칼럼', badge: 'COLUMN', icon: 'pen-nib',
+    heroTitle: '원장 칼럼', heroDesc: '정확한 치과 정보를 직접 전합니다. 검증된 내용으로 건강한 선택을 돕겠습니다.',
+    metaDesc: '더착한치과 황우석 대표원장이 직접 쓰는 치과 건강 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다.',
+    keywords: ['치과 칼럼', '임플란트 정보', '강서구 치과 블로그', '명지 치과 칼럼'],
+  },
+  reviews: {
+    kind: 'reviews', path: '/reviews-board', label: '치료 후기', badge: 'REVIEWS', icon: 'comment-dots',
+    heroTitle: '치료 후기', heroDesc: '더착한치과에서 진료받으신 분들이 직접 남겨주신 소중한 후기입니다.',
+    metaDesc: '부산 강서구 명지 더착한치과 치료 후기 게시판. 임플란트·교정·심미치료 등 실제 진료 경험담을 확인하실 수 있습니다.',
+    keywords: ['더착한치과 후기', '강서구 치과 후기', '명지 임플란트 후기', '명지 치과 후기'],
+  },
+  story: {
+    kind: 'story', path: '/story-board', label: '치과 이야기', badge: 'STORY', icon: 'heart',
+    heroTitle: '치과 이야기', heroDesc: '더착한치과의 일상, 소식, 그리고 감사한 마음을 나눕니다.',
+    metaDesc: '부산 강서구 명지 더착한치과의 병원 소식과 일상 이야기. 진료 외의 따뜻한 순간들을 전합니다.',
+    keywords: ['더착한치과 소식', '강서구 치과 이야기', '명지 치과 일상'],
+  },
 }
 
 export interface CaseItem {
@@ -139,6 +178,37 @@ export const SEED_COLUMNS: Column[] = [
       { h: '두려움은 치아보다 빨리 자랍니다', p: '어릴 적 치과 치료의 아픈 기억 때문에 치과만 생각하면 가슴이 두근거릴 정도로 두려움이 크셨던 50대 환자분이 계셨습니다. 치료를 미루는 사이 상태가 나빠져 제대로 씹기 어려웠고, 소화 불편까지 이어졌다고 하셨습니다. 앞니가 부러지고 나서야 더 미룰 수 없다는 마음으로 내원하셨습니다.' },
       { h: '충분한 상담이 먼저입니다', p: '치료보다 먼저 한 일은 충분히 이야기를 듣는 것이었습니다. 어떤 점이 가장 두려운지 확인한 뒤, 통증 부담을 줄이는 마취 시스템으로 진행했습니다. 마취가 끝난 뒤 "이미 끝난 것이냐"고 되물으시고는, 평생 무서워서 미룬 것이 후회된다고 말씀하셨습니다.' },
       { h: '씹는 즐거움은 건강의 시작입니다', p: '이후 필요한 치료를 차근차근 진행했고, 저작 기능이 회복되면서 식사와 소화 불편감도 나아졌다고 하셨습니다. 치과 공포가 큰 분일수록, 첫 상담에서 두려움부터 말씀해 주세요. 그 속도에 맞춰 진행하겠습니다. 치료 경과는 개인에 따라 다를 수 있습니다.' },
+    ],
+  },
+  // ===== 치료 후기 게시판 (관리자에서 계속 추가 · 아래는 예시 글) =====
+  {
+    id: 'rv-seed-1',
+    slug: 'review-welcome',
+    title: '치료 후기 게시판을 시작합니다',
+    excerpt: '더착한치과에서 진료받으신 분들의 소중한 경험을 이곳에 모읍니다. 진료받으신 분들의 이야기를 하나씩 전해드리겠습니다.',
+    date: '2026-06-01',
+    modified: '2026-06-01',
+    author: 'hwang-wooseok',
+    related: '',
+    board: 'reviews',
+    body: [
+      { h: '환자분들의 이야기를 담습니다', p: '더착한치과를 찾아주신 분들이 남겨주신 진료 경험과 소감을 이 게시판에 모아 소개합니다. 후기는 동의를 받은 내용을 바탕으로 게재되며, 개인 식별정보는 비식별 처리합니다.' },
+      { h: '후기는 개인의 경험입니다', p: '게재되는 후기는 각 환자분의 개인적인 경험이며, 치료 결과는 구강 상태와 관리에 따라 사람마다 다를 수 있습니다. 정확한 진단과 상담은 내원 후 안내해 드립니다.' },
+    ],
+  },
+  // ===== 치과 이야기 게시판 (병원 소식·일상 · 아래는 예시 글) =====
+  {
+    id: 'st-seed-1',
+    slug: 'story-welcome',
+    title: '더착한치과 이야기를 시작합니다',
+    excerpt: '진료실 밖의 따뜻한 순간들 — 병원 소식과 일상, 감사한 마음을 이곳에서 나눕니다.',
+    date: '2026-06-01',
+    modified: '2026-06-01',
+    author: 'hwang-wooseok',
+    related: '',
+    board: 'story',
+    body: [
+      { h: '진료 그 이상의 이야기', p: '더착한치과의 소식과 일상을 이 게시판에서 전해드립니다. 병원의 크고 작은 소식, 환자분들과 나눈 감사한 순간들을 편하게 나누는 공간입니다.' },
     ],
   },
 ]
@@ -268,9 +338,16 @@ export async function getActivePopupNotice(env: any): Promise<Notice | null> {
 // ============================================================
 // COLUMNS
 // ============================================================
-export async function listColumns(env: any): Promise<Column[]> {
+// board 미지정(기존 데이터)은 'column'으로 간주
+export function boardOf(c: Column): BoardKind {
+  return c.board || 'column'
+}
+
+// board를 지정하면 해당 게시판 글만 반환. 미지정 시 전체(관리자용).
+export async function listColumns(env: any, board?: BoardKind): Promise<Column[]> {
   const list = await readList<Column>(env, KV_COLUMNS, SEED_COLUMNS)
-  return [...list].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  const filtered = board ? list.filter((x) => boardOf(x) === board) : list
+  return [...filtered].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 }
 
 export async function getColumn(env: any, slug: string): Promise<Column | null> {
@@ -318,6 +395,7 @@ export async function createColumn(env: any, input: Partial<Column> & { bodyText
     cover: (input.cover || '').toString().trim(),
     coverAlt: (input.coverAlt || '').toString().trim(),
     body: input.bodyText !== undefined ? parseBodyText(input.bodyText) : (input.body || []),
+    board: (input.board as BoardKind) || 'column',
   }
   await writeList(env, KV_COLUMNS, [c, ...list])
   return c
@@ -347,6 +425,7 @@ export async function updateColumn(env: any, id: string, input: Partial<Column> 
     cover: input.cover !== undefined ? input.cover.toString().trim() : list[idx].cover,
     coverAlt: input.coverAlt !== undefined ? input.coverAlt.toString().trim() : list[idx].coverAlt,
     body: input.bodyText !== undefined ? parseBodyText(input.bodyText) : (input.body !== undefined ? input.body : list[idx].body),
+    board: input.board !== undefined ? (input.board as BoardKind) : (list[idx].board || 'column'),
     modified: today(),
   }
   list[idx] = updated

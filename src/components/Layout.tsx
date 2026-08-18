@@ -197,7 +197,9 @@ const Header: FC = () => (
           <li>
             <a href="/cases">콘텐츠 <i class="fa-solid fa-chevron-down"></i></a>
             <div class="mega">
+              <a href="/reviews-board"><i class="fa-solid fa-comment-dots"></i><span>치료 후기</span></a>
               <a href="/cases"><i class="fa-solid fa-images"></i><span>비포 / 애프터</span></a>
+              <a href="/story-board"><i class="fa-solid fa-heart"></i><span>치과 이야기</span></a>
               <a href="/column"><i class="fa-solid fa-pen-nib"></i><span>원장 칼럼</span></a>
               <a href="/encyclopedia"><i class="fa-solid fa-book"></i><span>치과 백과사전</span></a>
             </div>
@@ -245,7 +247,9 @@ const MobileDrawer: FC = () => (
         <div class="dsub">
           {[...CORE_TREATMENTS, ...GENERAL_TREATMENTS].map((t) => <a href={`/treatments/${t.slug}`}>{t.shortName}</a>)}
         </div>
+        <a href="/reviews-board">치료 후기</a>
         <a href="/cases">비포 / 애프터</a>
+        <a href="/story-board">치과 이야기</a>
         <a href="/column">원장 칼럼</a>
         <a href="/encyclopedia">치과 백과사전</a>
         <a href="/directions">오시는 길 · 진료시간</a>
@@ -292,8 +296,9 @@ const Footer: FC = () => (
           <p class="footer-h">병원안내</p>
           <a href="/mission">병원소개</a>
           <a href="/doctors">의료진</a>
+          <a href="/reviews-board">치료 후기</a>
           <a href="/cases">비포/애프터</a>
-          <a href="/column">원장 칼럼</a>
+          <a href="/story-board">치과 이야기</a>
           <a href="/directions">오시는 길</a>
         </div>
         <div class="footer-col">

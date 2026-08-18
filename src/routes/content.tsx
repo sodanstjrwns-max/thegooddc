@@ -7,8 +7,8 @@ import { DOCTORS, getDoctor } from '../data/doctors'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, speakableSchema, faqSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
-import type { Column } from '../lib/content-store'
-import { SEED_COLUMNS, SEED_CASES } from '../lib/content-store'
+import type { Column, BoardKind, BoardMeta } from '../lib/content-store'
+import { SEED_COLUMNS, SEED_CASES, BOARDS } from '../lib/content-store'
 import type { CaseItem } from '../lib/content-store'
 import type { MediumPost } from '../lib/medium'
 
@@ -143,29 +143,39 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
 // 원장 칼럼
 // ============================================================
 
-export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[] }> = ({ columns = SEED_COLUMNS, mediumPosts = [] }) => (
+export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]; board?: BoardKind }> = ({ columns = SEED_COLUMNS, mediumPosts = [], board = 'column' }) => {
+  const b: BoardMeta = BOARDS[board]
+  const isColumn = board === 'column'
+  const detailBase = isColumn ? '/column' : b.path
+  return (
   <Layout
-    title={`원장 칼럼 | ${CLINIC.name} 강서구 명지 치과`}
-    description="더착한치과 황우석 대표원장이 직접 쓰는 치과 건강 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다."
-    path="/column"
-    keywords={['치과 칼럼', '임플란트 정보', '강서구 치과 블로그', '명지 치과 칼럼']}
-    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }])]}
+    title={`${b.heroTitle} | ${CLINIC.name} 강서구 명지 치과`}
+    description={b.metaDesc}
+    path={b.path}
+    keywords={b.keywords}
+    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: b.label, path: b.path }])]}
   >
     <section class="page-hero">
       <div class="container ph-inner">
-        <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> COLUMN</div>
-        <h1>원장 칼럼</h1>
-        <p>정확한 치과 정보를 직접 전합니다. 검증된 내용으로 건강한 선택을 돕겠습니다.</p>
+        <div class="hero-badge"><i class={`fa-solid fa-${b.icon}`}></i> {b.badge}</div>
+        <h1>{b.heroTitle}</h1>
+        <p>{b.heroDesc}</p>
       </div>
     </section>
-    <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }]} />
+    <Breadcrumb items={[{ name: '홈', path: '/' }, { name: b.label, path: b.path }]} />
     <section class="sec">
       <div class="container">
+        {columns.length === 0 ? (
+          <div class="aeo-answer reveal" style="max-width:720px;margin:0 auto;text-align:center;padding:40px 24px">
+            <i class={`fa-solid fa-${b.icon}`} style="color:var(--brand);font-size:28px;margin-bottom:12px"></i>
+            <p style="margin:0">아직 등록된 글이 없습니다. 곧 새로운 소식으로 찾아뵙겠습니다.</p>
+          </div>
+        ) : (
         <div class="tlist-grid">
           {columns.map((c) => {
             const dr = getDoctor(c.author)
             return (
-              <a href={`/column/${c.slug}`} class={`card reveal col-list-card ${c.cover ? 'has-thumb' : ''}`} style="text-decoration:none">
+              <a href={`${detailBase}/${c.slug}`} class={`card reveal col-list-card ${c.cover ? 'has-thumb' : ''}`} style="text-decoration:none">
                 {c.cover && (
                   <div class="col-list-thumb">
                     <img src={c.cover} alt={c.coverAlt || c.title} loading="lazy" width="600" height="315" />
@@ -175,16 +185,17 @@ export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]
                   <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{c.date}</div>
                   <h2 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h2>
                   <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{c.excerpt}</p>
-                  <span style="color:var(--brand);font-weight:700;font-size:14px">{dr?.name} {dr?.title} · 자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+                  <span style="color:var(--brand);font-weight:700;font-size:14px">{isColumn && dr ? `${dr.name} ${dr.title} · ` : ''}자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
               </a>
             )
           })}
         </div>
+        )}
       </div>
     </section>
 
-    {mediumPosts.length > 0 && (
+    {isColumn && mediumPosts.length > 0 && (
       <section class="sec en-column-sec" id="english-column">
         <div class="container">
           <div class="en-column-head reveal">
@@ -218,7 +229,8 @@ export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]
       </section>
     )}
   </Layout>
-)
+  )
+}
 
 // 리치 본문 렌더러: ### → H3, **x** → <strong>, - → <ul>, ![alt](url) → <img>, 일반 줄 → <p>+인링크
 const RichBody: FC<{ text: string }> = ({ text }) => {
@@ -265,15 +277,17 @@ const RichBody: FC<{ text: string }> = ({ text }) => {
   return <>{out}</>
 }
 
-export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number }> = ({ slug, column, views = 0 }) => {
+export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number; board?: BoardKind }> = ({ slug, column, views = 0, board = 'column' }) => {
+  const bm: BoardMeta = BOARDS[board]
   const c = column ?? SEED_COLUMNS.find((x) => x.slug === slug)
   if (!c) {
     return (
-      <Layout title="칼럼을 찾을 수 없습니다" description="요청하신 칼럼을 찾을 수 없습니다." path="/column">
-        <section class="page-hero"><div class="container ph-inner"><h1>칼럼을 찾을 수 없습니다</h1><p><a href="/column" style="color:var(--blue);text-decoration:underline">칼럼 목록 보기</a></p></div></section>
+      <Layout title={`글을 찾을 수 없습니다 | ${bm.label}`} description="요청하신 글을 찾을 수 없습니다." path={bm.path}>
+        <section class="page-hero"><div class="container ph-inner"><h1>글을 찾을 수 없습니다</h1><p><a href={bm.path} style="color:var(--blue);text-decoration:underline">{bm.label} 목록 보기</a></p></div></section>
       </Layout>
     )
   }
+  const isColumn = board === 'column'
   const dr = getDoctor(c.author) ?? getDoctor('hwang-wooseok')!
   const t = getTreatment(c.related)
   // 대표이미지: 지정값 → 본문 첫 이미지 fallback
@@ -289,28 +303,29 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
   const wordCount = c.body.reduce((acc, b) => acc + (b.h?.length || 0) + (b.p?.replace(/!\[.*?\]\(.*?\)/g, '').length || 0), 0)
   return (
     <Layout
-      title={`${c.title} | ${CLINIC.name} 원장 칼럼`}
+      title={`${c.title} | ${CLINIC.name} ${bm.label}`}
       description={c.excerpt}
-      path={`/column/${c.slug}`}
+      path={`${bm.path}/${c.slug}`}
       ogType="article"
       ogImage={cover || undefined}
-      keywords={['치과 칼럼', t?.shortName || '', '강서구 치과']}
+      keywords={[bm.label, t?.shortName || '', '강서구 치과']}
       schemas={[
-        breadcrumbSchema([{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }, { name: c.title, path: `/column/${c.slug}` }]),
-        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || '치과 칼럼' }),
+        breadcrumbSchema([{ name: '홈', path: '/' }, { name: bm.label, path: bm.path }, { name: c.title, path: `${bm.path}/${c.slug}` }]),
+        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
         speakableSchema(),
       ]}
     >
       <section class="page-hero">
         <div class="container ph-inner">
-          <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> COLUMN · {c.date}{views > 0 && <span style="opacity:.75"> · 조회 {views.toLocaleString()}</span>}</div>
+          <div class="hero-badge"><i class={`fa-solid fa-${bm.icon}`}></i> {bm.badge} · {c.date}{views > 0 && <span style="opacity:.75"> · 조회 {views.toLocaleString()}</span>}</div>
           <h1>{c.title}</h1>
         </div>
       </section>
-      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '원장 칼럼', path: '/column' }, { name: c.title, path: `/column/${c.slug}` }]} />
+      <Breadcrumb items={[{ name: '홈', path: '/' }, { name: bm.label, path: bm.path }, { name: c.title, path: `${bm.path}/${c.slug}` }]} />
       <section class="sec">
         <div class="container article-body">
           {c.cover && <img src={c.cover} alt={c.coverAlt || c.title} class="col-cover" loading="eager" width="1200" height="630" />}
+          {isColumn && (
           <div style="display:flex;align-items:center;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:32px">
             <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;color:#fff"><i class="fa-solid fa-user-doctor"></i></div>
             <div>
@@ -318,7 +333,9 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
               <div style="font-size:13px;color:var(--ink-soft)">{dr.license}</div>
             </div>
           </div>
-          {c.body.map((b) => (<>{b.h && <h2>{b.h}</h2>}<RichBody text={b.p} /></>))}
+          )}
+          {c.body.map((blk) => (<>{blk.h && <h2>{blk.h}</h2>}<RichBody text={blk.p} /></>))}
+          {isColumn && (
           <div class="related-box">
             <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 작성 의료진</h3>
             <div class="chip-row">
@@ -326,7 +343,13 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
               <a href={`/doctors/${dr.slug}`} class="chip"><i class="fa-solid fa-user-doctor"></i> {dr.name} {dr.title}</a>
             </div>
           </div>
-          <p style="font-size:13px;color:var(--ink-soft)">최종 검토: {c.modified} · 감수 {dr.name} {dr.title} ({dr.license})</p>
+          )}
+          {isColumn
+            ? <p style="font-size:13px;color:var(--ink-soft)">최종 검토: {c.modified} · 감수 {dr.name} {dr.title} ({dr.license})</p>
+            : <p style="font-size:13px;color:var(--ink-soft)">본 글은 개인의 경험이며, 치료 결과는 환자의 상태에 따라 다를 수 있습니다. 등록일: {c.date}</p>}
+          <div style="margin-top:28px;text-align:center">
+            <a href={bm.path} class="btn btn-outline"><i class="fa-solid fa-list"></i> {bm.label} 목록으로</a>
+          </div>
         </div>
       </section>
     </Layout>
