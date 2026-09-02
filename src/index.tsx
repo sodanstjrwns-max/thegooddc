@@ -843,6 +843,7 @@ app.post('/api/admin/indexnow', async (c) => {
   }
 })
 
+app.get('/5444b14549ad499d867a6fe460ec5f56.txt', (c) => c.text('5444b14549ad499d867a6fe460ec5f56'))
 app.get('/robots.txt', (c) => {
   const d = CLINIC.domain
   // AEO: 답변 엔진·LLM 크롤러를 명시적으로 환영 (인용·학습·검색 모두 허용)
