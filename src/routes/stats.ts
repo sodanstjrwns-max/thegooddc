@@ -30,6 +30,13 @@ export interface StatsData {
     bySource: Record<string, number>
     topLandingPages?: { page: string; sessions: number }[]
   } | null
+  clarity?: {
+    sessions: number; botSessions: number; users: number; pagesPerSession: number
+    avgScrollDepth: number; engagementSec: number; activeSec: number
+    deadClicks: number; rageClicks: number; quickbacks: number; scriptErrors: number
+    deadClickPct: number; rageClickPct: number; quickbackPct: number; scriptErrorPct: number
+    fetchedAt: string
+  } | null
 }
 
 export async function fetchDashboardStats(): Promise<StatsData | null> {
@@ -75,6 +82,52 @@ function sparkline(values: number[], stroke: string, fillOpacity = 0.12): string
 }
 
 const AI_LABELS: Record<string, string> = { chatgpt: 'ChatGPT', perplexity: 'Perplexity', claude: 'Claude', gemini: 'Gemini', etc: '기타 AI' }
+
+// ---------- Clarity 행동 분석 ----------
+const CLARITY_DASH_URL = 'https://clarity.microsoft.com/projects/view/yc84cnr6dd/dashboard'
+
+const fmtSec = (s: number | null | undefined) => {
+  if (s == null || !Number.isFinite(s)) return '-'
+  const m = Math.floor(s / 60), r = Math.round(s % 60)
+  return m > 0 ? `${m}분 ${r}초` : `${r}초`
+}
+
+function clarityInsights(c: NonNullable<StatsData['clarity']>): string[] {
+  const out: string[] = []
+  if ((c.rageClickPct ?? 0) >= 1 || (c.deadClickPct ?? 0) >= 5) out.push('화면 반응이 없어 반복 클릭하는 사용자가 있습니다 (UI 답답 신호)')
+  if ((c.avgScrollDepth ?? 0) < 40 && (c.sessions ?? 0) >= 30) out.push('첫 화면에서 이탈이 많습니다')
+  if ((c.scriptErrors ?? 0) > 0) out.push(`스크립트 오류 ${num(c.scriptErrors)}건 감지 — 점검 필요`)
+  if ((c.quickbackPct ?? 0) >= 8) out.push('들어왔다 바로 나가는 비율이 높습니다')
+  if (!out.length && (c.sessions ?? 0) > 0) out.push('특이 신호 없음')
+  return out
+}
+
+function claritySection(c: StatsData['clarity'] | undefined): string {
+  const head = `<h3>행동 분석 <span class="cap">Clarity · 최근 3일</span><a class="cl-link" href="${CLARITY_DASH_URL}" target="_blank" rel="noopener">Clarity 대시보드 ↗</a></h3>`
+  if (!c) {
+    return `
+  <section class="card">
+    ${head}
+    <p class="empty-line">Clarity 수집 대기 중 — 데이터가 쌓이면 자동으로 표시됩니다.</p>
+  </section>`
+  }
+  const ins = clarityInsights(c)
+  return `
+  <section class="card">
+    ${head}
+    <div class="metrics">
+      <div class="metric"><div class="m-l">세션</div><div class="m-v">${num(c.sessions)}</div><div class="m-sub">봇 세션 ${num(c.botSessions)}건 별도</div></div>
+      <div class="metric"><div class="m-l">사용자</div><div class="m-v">${num(c.users)}</div><div class="m-sub">세션당 ${c.pagesPerSession ?? '-'}페이지</div></div>
+      <div class="metric"><div class="m-l">평균 스크롤</div><div class="m-v">${c.avgScrollDepth != null && Number.isFinite(c.avgScrollDepth) ? c.avgScrollDepth + '%' : '-'}</div></div>
+      <div class="metric"><div class="m-l">참여 시간</div><div class="m-v">${fmtSec(c.engagementSec)}</div><div class="m-sub">활성 ${fmtSec(c.activeSec)}</div></div>
+      <div class="metric"><div class="m-l">레이지 클릭</div><div class="m-v">${num(c.rageClicks)}건</div><div class="m-sub">세션의 ${c.rageClickPct ?? 0}%</div></div>
+      <div class="metric"><div class="m-l">데드 클릭</div><div class="m-v">${num(c.deadClicks)}건</div><div class="m-sub">세션의 ${c.deadClickPct ?? 0}%</div></div>
+      <div class="metric"><div class="m-l">퀵백</div><div class="m-v">${num(c.quickbacks)}건</div><div class="m-sub">세션의 ${c.quickbackPct ?? 0}%</div></div>
+      <div class="metric"><div class="m-l">스크립트 오류</div><div class="m-v">${num(c.scriptErrors)}건</div><div class="m-sub">세션의 ${c.scriptErrorPct ?? 0}%</div></div>
+    </div>
+    ${ins.length ? `<ul class="insights" style="margin-top:14px">${ins.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+  </section>`
+}
 
 function buildInsights(d: StatsData): string[] {
   const ins: string[] = []
@@ -127,7 +180,8 @@ export function renderStatsPage(d: StatsData | null): string {
   <section class="card wait">
     <h3>데이터 연동 대기 중</h3>
     <p>구글 검색콘솔·GA4 데이터 연동이 준비되는 대로 이 페이지에 최근 28일 검색·방문 통계가 자동으로 표시됩니다.</p>
-  </section>`
+  </section>
+${claritySection(d?.clarity)}`
   } else {
     const gaCards = d!.hasGa && a
       ? `
@@ -165,7 +219,7 @@ export function renderStatsPage(d: StatsData | null): string {
     <div class="metrics">${gaCards}</div>
     ${d!.hasGa && a ? `<div class="spark"><p class="spark-t">일별 방문 사용자</p>${sparkline((a.dailyUsers ?? []).map((x) => x.users), '#43C8F4')}</div>` : ''}
   </section>
-
+${claritySection(d?.clarity)}
   <div class="tables">
     <section class="card">
       <h3>상위 검색어 TOP 10</h3>
@@ -211,6 +265,8 @@ main{max-width:1080px;margin:0 auto;padding:26px 18px 60px;display:flex;flex-dir
 .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px}
 .card h3{font-size:16.5px;margin-bottom:14px;letter-spacing:-.01em}
 .card h3 .cap{font-size:12px;color:var(--faint);font-weight:500;margin-left:8px}
+.card h3 .cl-link{float:right;font-size:12px;color:var(--accent);text-decoration:none;font-weight:600}
+.card h3 .cl-link:hover{text-decoration:underline}
 .expect h2{font-size:20px;letter-spacing:-.01em;margin-bottom:10px}
 .expect .ico{margin-right:4px}
 .expect.big{border-color:var(--accent);border-width:1.5px;background:linear-gradient(180deg,#F4FAFD,#fff);padding:30px 28px}
