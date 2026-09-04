@@ -108,6 +108,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <meta name="description" content={description} />
         {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
         <link rel="canonical" href={url} />
+        <link rel="alternate" type="application/rss+xml" title="더착한치과 칼럼 RSS" href={`https://${CLINIC.domain}/rss.xml`} />
         <meta name="robots" content="index, follow, max-image-preview:large" />
         <meta name="author" content={CLINIC.name} />
 

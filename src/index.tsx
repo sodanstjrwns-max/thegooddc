@@ -993,6 +993,47 @@ app.get('/sitemap-content.xml', async (c) => {
   return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
 })
 
+// ===== RSS 2.0 피드 (/rss.xml) — 칼럼·게시판 최신 글 (구독·AI 크롤러 발견성 + 네이버 서치어드바이저 RSS 제출용) =====
+app.get('/rss.xml', async (c) => {
+  const base = `https://${CLINIC.domain}`
+  const esc = (s: any) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+  const toRfc822 = (v: any): string => {
+    const d = new Date(String(v || ''))
+    return isNaN(d.getTime()) ? new Date().toUTCString() : d.toUTCString()
+  }
+  let cols: any[] = []
+  try { cols = await listColumns(c.env) } catch {}
+  cols = cols
+    .slice()
+    .sort((a: any, b: any) => String(b.date || '').localeCompare(String(a.date || '')))
+    .slice(0, 50)
+  const items = cols.map((col: any) => {
+    const board = BOARDS[(col.board || 'column') as BoardKind]
+    const url = `${base}${board.path}/${col.slug}`
+    return `  <item>
+    <title>${esc(col.title)}</title>
+    <link>${url}</link>
+    <guid isPermaLink="true">${url}</guid>
+    <description>${esc(col.excerpt || col.title)}</description>
+    <category>${esc(board.label)}</category>
+    <pubDate>${toRfc822(col.date)}</pubDate>
+  </item>`
+  }).join('\n')
+  const rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>${esc(CLINIC.name)} 칼럼</title>
+  <link>${base}/column</link>
+  <atom:link href="${base}/rss.xml" rel="self" type="application/rss+xml"/>
+  <description>${esc(CLINIC.name)} 원장이 직접 쓰는 치과 건강 칼럼 — 임플란트·교정·심미치료</description>
+  <language>ko-KR</language>
+  <lastBuildDate>${cols.length ? toRfc822(cols[0].date) : new Date().toUTCString()}</lastBuildDate>
+${items}
+</channel>
+</rss>`
+  return c.text(rss, 200, { 'Content-Type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=1800' })
+})
+
 // 백과사전 — 상세 200개는 우선순위 높임
 app.get('/sitemap-encyclopedia.xml', (c) => {
   const base = `https://${CLINIC.domain}`
