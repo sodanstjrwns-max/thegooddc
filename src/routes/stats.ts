@@ -4,6 +4,7 @@
 // ============================================================
 
 export const STATS_KEY = 'a8edcf4adf130dcd56e2e50dc93d667ef039ea541847b489'
+export const MASTER_KEY = 'pfwe-b4f42f06'
 const STATS_ENDPOINT = 'https://pf-dashboard-2nt.pages.dev/api/stats/thegooddc.kr'
 
 export interface StatsData {
