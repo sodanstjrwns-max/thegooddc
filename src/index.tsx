@@ -19,6 +19,7 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage, AreaHubPage } from './routes/area'
+import { fetchDashboardStats, renderStatsPage, STATS_KEY } from './routes/stats'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
@@ -264,6 +265,15 @@ app.get('/admin/analytics', async (c) => {
   const items = await listReservations(c.env)
   const stats = buildResStats(items)
   return c.html(<AdminAnalyticsPage stats={stats} />)
+})
+
+// 검색·방문 통계 (중앙 대시보드 API 프록시 — 세션 또는 ?key 접근, 불일치 시 404)
+app.get('/admin/stats', async (c) => {
+  const s = await getSession(c, 'admin')
+  const authed = !!s || c.req.query('key') === STATS_KEY
+  if (!authed) return c.notFound()
+  const data = await fetchDashboardStats()
+  return c.html(renderStatsPage(data))
 })
 
 // Legal pages

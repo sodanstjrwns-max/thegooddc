@@ -247,6 +247,7 @@ export const AdminDashboard: FC<{ stats: { members: number; reservations: number
         <div class="tlist-grid">
           <a href="/admin/reservations" class="tlist-card"><div class="tc-icon"><i class="fa-regular fa-calendar-check"></i></div><h3>예약 운영</h3><p>상태관리·검색·CSV·안내문 복사</p></a>
           <a href="/admin/analytics" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-chart-pie"></i></div><h3>운영 분석</h3><p>전환율·인기진료·요일/시간대 패턴</p></a>
+          <a href="/admin/stats" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-chart-line"></i></div><h3>검색·방문 통계</h3><p>검색콘솔·GA4·AI 유입 리포트</p></a>
           <a href="/admin/members" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-users"></i></div><h3>회원 관리</h3><p>가입 회원 목록 조회</p></a>
           <a href="/admin/cases" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-images"></i></div><h3>비포/애프터</h3><p>케이스 작성 및 관리</p></a>
           <a href="/admin/columns" class="tlist-card"><div class="tc-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>원장 칼럼</h3><p>칼럼 작성 및 관리</p></a>
