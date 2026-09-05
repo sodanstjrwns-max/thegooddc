@@ -1300,6 +1300,34 @@ app.get('/llms-full.txt', (c) => {
 import handoverHtml from '../public/handover-thegooddc-2026.html?raw'
 app.get('/handover-thegooddc-2026.html', (c) => c.html(handoverHtml))
 
+// 실예약 로컬 통계 (PF 중앙 대시보드 수집용) — 개인정보 없이 건수만 반환
+app.get('/api/local-stats', async (c) => {
+  const key = c.req.query('key')
+  if (key !== STATS_KEY && key !== MASTER_KEY) return c.notFound()
+  if (!c.env.KV) return c.json({ supported: false })
+  try {
+    const now = Date.now()
+    const d28 = 28 * 24 * 60 * 60 * 1000
+    let cur = 0
+    let prev = 0
+    let cursor: string | undefined
+    do {
+      const res: { keys: { name: string }[]; list_complete: boolean; cursor?: string } =
+        await c.env.KV.list({ prefix: 'reservation:', cursor })
+      for (const k of res.keys) {
+        const ts = parseInt(k.name.slice('reservation:'.length), 10)
+        if (!Number.isFinite(ts)) continue
+        if (ts >= now - d28) cur++
+        else if (ts >= now - 2 * d28) prev++
+      }
+      cursor = res.list_complete ? undefined : res.cursor
+    } while (cursor)
+    return c.json({ supported: true, tables: [{ name: 'reservations', cur, prev }], total: { cur, prev } })
+  } catch {
+    return c.json({ supported: false })
+  }
+})
+
 // 404
 app.notFound((c) => c.html(notFoundPage(), 404))
 

@@ -62,6 +62,9 @@ gtag('js',new Date());`
       {/* Microsoft Clarity */}
       <script dangerouslySetInnerHTML={{ __html: '(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","yc84cnr6dd");' }} />
 
+      {/* PF 1st-party 비콘 */}
+      <script defer src="https://pf-dashboard-2nt.pages.dev/beacon.js"></script>
+
       {/* GTM 컨테이너 (GA4와 병행 가능하나 보통 택1 권장) */}
       {useGtm && (
         <script
