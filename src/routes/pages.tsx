@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout'
 import { Breadcrumb, FaqList } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS } from '../data/treatments'
-import { PRICING, PRICING_UPDATED, PRICING_UNIT_NOTE } from '../data/pricing'
+import type { FeesDoc } from '../lib/fees'
 import { DOCTORS } from '../data/doctors'
 import { breadcrumbSchema, faqSchema, speakableSchema } from '../lib/seo'
 import type { Notice } from '../lib/content-store'
@@ -333,7 +333,7 @@ export const FaqPage: FC = () => {
 }
 
 // ===== 비용 안내 =====
-export const PricingPage: FC = () => (
+export const PricingPage: FC<{ doc: FeesDoc }> = ({ doc }) => (
   <Layout
     title={`비용 안내 | ${CLINIC.name} 강서구 명지 치과`}
     description="더착한치과 비급여 진료비용 안내입니다. 정확한 비용은 정밀 진단 후 개인별 상태에 따라 상담 시 안내해 드립니다."
@@ -365,11 +365,11 @@ export const PricingPage: FC = () => (
     <section class="sec-sm">
       <div class="container">
         <div class="price-meta reveal">
-          <span><i class="fa-regular fa-calendar"></i> 기준일 {PRICING_UPDATED}</span>
-          <span><i class="fa-solid fa-circle-info"></i> {PRICING_UNIT_NOTE}</span>
+          <span><i class="fa-regular fa-calendar"></i> 기준일 {doc.updated}</span>
+          <span><i class="fa-solid fa-circle-info"></i> {doc.unitNote}</span>
         </div>
 
-        {PRICING.map((g) => (
+        {doc.groups.map((g) => (
           <div class="price-block reveal">
             <h2 class="price-cat"><i class={`fa-solid fa-${g.icon}`}></i> {g.category}</h2>
             <div class="price-table-wrap">

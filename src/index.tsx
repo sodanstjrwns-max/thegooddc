@@ -17,10 +17,11 @@ import { HomePage } from './routes/home'
 import { TreatmentsListPage, TreatmentDetailPage } from './routes/treatments'
 import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
+import { loadFees, saveFees, toPublic } from './lib/fees'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage, AreaHubPage } from './routes/area'
 import { fetchDashboardStats, renderStatsPage, STATS_KEY, MASTER_KEY } from './routes/stats'
-import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage } from './routes/auth'
+import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage, AdminFeesPage } from './routes/auth'
 import {
   listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
@@ -97,7 +98,7 @@ app.get('/doctors', (c) => c.html(<DoctorsListPage />))
 app.get('/doctors/:slug', (c) => c.html(<DoctorDetailPage slug={c.req.param('slug')} />))
 app.get('/directions', (c) => c.html(<DirectionsPage />))
 app.get('/faq', (c) => c.html(<FaqPage />))
-app.get('/pricing', (c) => c.html(<PricingPage />))
+app.get('/pricing', async (c) => c.html(<PricingPage doc={toPublic(await loadFees(c.env))} />))
 app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
 app.get('/column', async (c) => {
@@ -217,6 +218,19 @@ app.get('/admin/notices', async (c) => {
   const s = await getSession(c, 'admin')
   if (!s) return c.redirect('/admin')
   return c.html(<AdminNoticesPage notices={await listNotices(c.env)} ok={c.req.query('ok')} />)
+})
+app.get('/admin/fees', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.redirect('/admin')
+  return c.html(<AdminFeesPage doc={await loadFees(c.env)} />)
+})
+app.post('/api/admin/fees', async (c) => {
+  const s = await getSession(c, 'admin')
+  if (!s) return c.json({ ok: false, error: 'unauthorized' }, 401)
+  let body: any
+  try { body = await c.req.json() } catch { return c.json({ ok: false, error: 'bad json' }, 400) }
+  const r = await saveFees(c.env, body)
+  return c.json(r, r.ok ? 200 : 400)
 })
 app.get('/admin/columns', async (c) => {
   const s = await getSession(c, 'admin')
