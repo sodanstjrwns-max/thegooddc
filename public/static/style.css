@@ -1753,3 +1753,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
 .vi-park{margin:0;font-size:13.5px;line-height:1.7;color:var(--ink-soft,#5b6b7a)}
 @media(max-width:900px){.visit-grid{grid-template-columns:1fr;gap:22px}.visit-map iframe{min-height:340px}}
 @media(max-width:520px){.visit{padding:60px 0}.visit-map-apps .mapapp{flex:1 1 100%}}
+
+/* ============================================================
+   예약 빠른 채널 카드 (전화 / 카카오톡 / 네이버 예약) — 2026-09-09
+   ============================================================ */
+.rsv-quick-sec{padding:34px 0 0}
+.rsv-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:980px;margin:0 auto}
+.rq-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:26px 18px 24px;border-radius:18px;border:1.5px solid var(--line);background:var(--card,#fff);text-decoration:none;color:var(--ink);transition:transform .2s,box-shadow .2s,border-color .2s}
+.rq-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.08);border-color:color-mix(in oklab,var(--accent,#0C7CA4) 40%,var(--line))}
+.rq-ico{width:54px;height:54px;border-radius:15px;display:grid;place-items:center;font-size:22px;margin-bottom:6px}
+.rq-phone .rq-ico{background:color-mix(in oklab,var(--accent,#0C7CA4) 12%,#fff);color:var(--accent,#0C7CA4)}
+.rq-kakao .rq-ico{background:#fee500;color:#3c1e1e}
+.rq-naver .rq-ico{background:#03c75a;color:#fff}
+.rq-t{font-size:13px;font-weight:700;color:var(--ink-soft,#5c6670);letter-spacing:.02em}
+.rq-v{font-size:19px;font-weight:800;line-height:1.25}
+.rq-d{font-size:12.5px;color:var(--ink-faint,#8a949c)}
+.rq-note{text-align:center;font-size:13.5px;color:var(--ink-soft,#5c6670);margin:16px 0 0}
+@media(max-width:760px){.rsv-quick{grid-template-columns:1fr;gap:12px}.rq-card{flex-direction:row;text-align:left;align-items:center;gap:4px 14px;padding:16px 18px;flex-wrap:wrap}.rq-ico{margin:0;width:46px;height:46px;font-size:19px}.rq-t{width:calc(100% - 60px)}.rq-v{font-size:17px;width:calc(100% - 60px)}.rq-d{width:100%;padding-left:60px;margin-top:-2px}}

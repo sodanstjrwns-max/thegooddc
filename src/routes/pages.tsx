@@ -477,6 +477,37 @@ export const ReservationPage: FC = () => (
     </section>
     <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료 예약', path: '/reservation' }]} />
 
+    {/* 빠른 예약 채널 — 전화 / 카카오톡 상담 / 네이버 간편예약 (원장 요청 2026-09-09) */}
+    <section class="sec rsv-quick-sec" aria-label="빠른 예약 채널">
+      <div class="container">
+        <div class="rsv-quick">
+          <a href={`tel:${CLINIC.phoneRaw}`} class="rq-card rq-phone" data-track="call" data-track-loc="reservation_quick">
+            <span class="rq-ico"><i class="fa-solid fa-phone"></i></span>
+            <span class="rq-t">전화 예약</span>
+            <span class="rq-v">{CLINIC.phone}</span>
+            <span class="rq-d">진료시간 내 바로 연결</span>
+          </a>
+          {CLINIC.sns.kakao && (
+            <a href={CLINIC.sns.kakao} target="_blank" rel="noopener" class="rq-card rq-kakao" data-track="kakao" data-track-loc="reservation_quick">
+              <span class="rq-ico"><i class="fa-solid fa-comment"></i></span>
+              <span class="rq-t">카카오톡 상담 예약</span>
+              <span class="rq-v">@더착한치과의원</span>
+              <span class="rq-d">채팅으로 편하게 문의·예약</span>
+            </a>
+          )}
+          {CLINIC.sns.naverBooking && (
+            <a href={CLINIC.sns.naverBooking} target="_blank" rel="noopener" class="rq-card rq-naver" data-track="naver_booking" data-track-loc="reservation_quick">
+              <span class="rq-ico"><i class="fa-regular fa-calendar-check"></i></span>
+              <span class="rq-t">네이버 간편 예약</span>
+              <span class="rq-v">원하는 시간 직접 선택</span>
+              <span class="rq-d">네이버 예약으로 즉시 접수</span>
+            </a>
+          )}
+        </div>
+        <p class="rq-note">원하시는 방법을 고르세요. 아래 예약 신청서를 남겨주셔도 <strong>진료시간 기준 24시간 이내</strong>에 연락드립니다.</p>
+      </div>
+    </section>
+
     {/* 진료 여정 — 예약 후 이렇게 진행됩니다 (안심 프로세스) */}
     <section class="journey" aria-label="진료 진행 과정">
       <div class="container">

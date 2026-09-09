@@ -102,6 +102,7 @@ export const CLINIC = {
     blog: '',
     youtube: '',
     kakao: 'https://pf.kakao.com/_yRxjxeV', // 더착한치과의원 공식 카카오톡 채널
+    naverBooking: 'https://booking.naver.com/booking/13/bizes/269751', // 네이버 예약 (플레이스 36398883 더착한치과의원, 2026-09-09 확인)
     legacySite: 'http://thegooddc.com', // 기존(구) 홈페이지
   },
 
