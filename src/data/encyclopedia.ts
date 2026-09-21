@@ -361,6 +361,20 @@ export const DETAILED_TERMS: Term[] = TERMS.filter((t) => t.body && t.body.lengt
 
 export const TERM_CATEGORIES = Array.from(new Set(TERMS.map((t) => t.category)))
 
+// ---- thin 용어 판정 (한 곳에서만 관리) ----
+// 본문(body)·FAQ(qa)가 없고 정의가 200자 미만이면 색인 가치가 없는 얇은 페이지로 본다.
+// 해당 용어는 페이지·내부 링크는 유지하되 noindex,follow + 사이트맵 제외 처리한다.
+// 본문이 채워지면 자동으로 색인 대상으로 복귀한다.
+export function isThinTerm(t: Term): boolean {
+  const hasBody = !!(t.body && t.body.length > 0)
+  const hasQa = !!(t.qa && t.qa.length > 0)
+  return !hasBody && !hasQa && t.def.length < 200
+}
+
+// 색인 대상 용어(사이트맵·llms 등에 노출) — thin 용어 제외
+export const INDEXABLE_TERMS: Term[] = TERMS.filter((t) => !isThinTerm(t))
+export const THIN_TERMS: Term[] = TERMS.filter(isThinTerm)
+
 export function getTerm(slug: string): Term | undefined {
   return TERMS.find((t) => t.slug === slug)
 }

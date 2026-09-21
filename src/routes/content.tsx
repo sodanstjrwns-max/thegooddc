@@ -4,7 +4,7 @@ import { Breadcrumb } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
 import { DOCTORS, getDoctor } from '../data/doctors'
-import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms } from '../data/encyclopedia'
+import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms, isThinTerm } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, speakableSchema, faqSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
 import type { Column, BoardKind, BoardMeta } from '../lib/content-store'
@@ -446,6 +446,8 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
     },
   ]
   if (hasQa) schemas.push(faqSchema(term.qa!))
+  // 본문 없는 thin 용어는 noindex,follow (사이트맵도 제외 — src/data/encyclopedia.ts isThinTerm)
+  const thin = isThinTerm(term)
   return (
     <Layout
       title={`${term.term}${term.reading ? ` (${term.reading})` : ''} | 치과 백과사전 · ${CLINIC.name}`}
@@ -453,6 +455,7 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
       path={`/encyclopedia/${term.slug}`}
       keywords={[term.term, term.reading || '', term.category, '치과 용어', '강서구 명지 치과'].filter(Boolean)}
       schemas={schemas}
+      noindex={thin}
     >
       <section class="page-hero">
         <div class="container ph-inner">

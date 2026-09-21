@@ -14,6 +14,7 @@ interface LayoutProps {
   ogImage?: string
   schemas?: object[]
   ogType?: string
+  noindex?: boolean // true면 robots noindex,follow (thin 페이지 등 — 링크는 따라가되 색인 제외)
 }
 
 const FA = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css'
@@ -91,7 +92,7 @@ const GtmNoscript: FC = () => {
 }
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
-  const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', children } = props
+  const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', noindex = false, children } = props
   const url = canonical(path)
   const img = ogImage
     ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
@@ -112,7 +113,9 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
         <link rel="canonical" href={url} />
         <link rel="alternate" type="application/rss+xml" title="더착한치과 칼럼 RSS" href={`https://${CLINIC.domain}/rss.xml`} />
-        <meta name="robots" content="index, follow, max-image-preview:large" />
+        {noindex
+          ? <meta name="robots" content="noindex, follow" />
+          : <meta name="robots" content="index, follow, max-image-preview:large" />}
         <meta name="author" content={CLINIC.name} />
 
         {/* Open Graph */}

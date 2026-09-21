@@ -4,7 +4,7 @@ import { CLINIC } from './data/clinic'
 import { ASSET_VERSION } from './lib/asset-version'
 import { TREATMENTS } from './data/treatments'
 import { DOCTORS } from './data/doctors'
-import { TERMS, DETAILED_TERMS, TERM_REDIRECTS } from './data/encyclopedia'
+import { TERMS, DETAILED_TERMS, TERM_REDIRECTS, INDEXABLE_TERMS, THIN_TERMS, getTerm, isThinTerm } from './data/encyclopedia'
 import { getAreaCombinations, getAreaHubs, getArea, AREAS } from './data/areas'
 import { searchRegions } from './data/regions'
 import {
@@ -176,6 +176,9 @@ app.get('/encyclopedia/:slug', (c) => {
   const slug = c.req.param('slug')
   const primary = TERM_REDIRECTS[slug]
   if (primary) return c.redirect(`/encyclopedia/${primary}`, 301)
+  // 본문 없는 thin 용어: 페이지는 정상 제공하되 noindex,follow 헤더 (meta는 Layout에서 함께 출력)
+  const term = getTerm(slug)
+  if (term && isThinTerm(term)) return c.html(<EncyclopediaDetailPage slug={slug} />, 200, { 'X-Robots-Tag': 'noindex, follow' })
   return c.html(<EncyclopediaDetailPage slug={slug} />)
 })
 
@@ -1101,11 +1104,11 @@ ${items}
   return c.text(rss, 200, { 'Content-Type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=1800' })
 })
 
-// 백과사전 — 상세 200개는 우선순위 높임
+// 백과사전 — 상세 용어는 우선순위 높임. 본문 없는 thin 용어(noindex)는 제외
 app.get('/sitemap-encyclopedia.xml', (c) => {
   const base = `https://${CLINIC.domain}`
   const detailSlugs = new Set(DETAILED_TERMS.map((t) => t.slug))
-  const urls = TERMS.map((t) => ({
+  const urls = INDEXABLE_TERMS.map((t) => ({
     loc: `/encyclopedia/${t.slug}`,
     pri: detailSlugs.has(t.slug) ? '0.6' : '0.4',
   }))
@@ -1134,8 +1137,11 @@ app.get('/seo-health', async (c) => {
   // 1) 콘텐츠 수량 점검
   add('진료 페이지', TREATMENTS.length > 0, `${TREATMENTS.length}개 진료 (핵심 ${TREATMENTS.filter(t => t.category === 'core').length})`)
   add('의료진 페이지', DOCTORS.length > 0, `${DOCTORS.length}명`)
-  add('백과사전 전체', TERMS.length > 0, `${TERMS.length}개 용어`)
-  add('백과사전 상세(본문)', DETAILED_TERMS.length >= 200, `${DETAILED_TERMS.length}개 상세 (목표 200)`)
+  add('백과사전 전체', TERMS.length > 0, `${TERMS.length}개 용어 (중복 301 ${Object.keys(TERM_REDIRECTS).length}건 별도)`)
+  // 목표 200 → 199: 상세 본문 용어 1건이 동명 중복으로 301 통합되어 실제 색인 페이지는 199개. 실제 수 기준으로 조정.
+  add('백과사전 상세(본문)', DETAILED_TERMS.length >= 199, `${DETAILED_TERMS.length}개 상세 (목표 199)`)
+  // thin 용어(본문·FAQ 없음, 정의 200자 미만)는 noindex,follow + 사이트맵 제외 — 색인 대상 = 상세 용어와 일치해야 함
+  add('백과사전 thin 용어 noindex·사이트맵 제외', INDEXABLE_TERMS.length === DETAILED_TERMS.length, `thin ${THIN_TERMS.length}개 noindex · 색인 대상 ${INDEXABLE_TERMS.length}개`)
   add('지역×진료 조합', getAreaCombinations().length > 0, `${getAreaCombinations().length}개 (지역 ${AREAS.length})`)
   add('지역 허브 페이지', getAreaHubs().length >= 10, `${getAreaHubs().length}개 (/clinic/:area)`)
   const areaNoIntro = AREAS.filter((a) => !a.intro || a.intro.length < 80).map((a) => a.slug)
