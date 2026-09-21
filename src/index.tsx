@@ -4,7 +4,7 @@ import { CLINIC } from './data/clinic'
 import { ASSET_VERSION } from './lib/asset-version'
 import { TREATMENTS } from './data/treatments'
 import { DOCTORS } from './data/doctors'
-import { TERMS, DETAILED_TERMS } from './data/encyclopedia'
+import { TERMS, DETAILED_TERMS, TERM_REDIRECTS } from './data/encyclopedia'
 import { getAreaCombinations, getAreaHubs, getArea, AREAS } from './data/areas'
 import { searchRegions } from './data/regions'
 import {
@@ -25,6 +25,7 @@ import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminN
 import {
   listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
+  listPublicColumns, getColumnRedirect,
   listCases, createCase, updateCase, deleteCase,
   getSettings, getSettingsDiagnostic, saveSettings,
   listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
@@ -57,6 +58,37 @@ type Bindings = {
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
+
+// 정규 URL 강제 (GSC 중복 URL 방지)
+//  - www.<host> → https://<host> 301 (같은 경로·쿼리 유지). *.pages.dev 프리뷰는 www. 로 시작하지 않아 영향 없음.
+//  - 트레일링 슬래시 제거 301 (루트 '/' 제외). GET/HEAD 만 대상.
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url)
+  let changed = false
+  if (url.hostname.startsWith('www.')) {
+    url.hostname = url.hostname.slice(4)
+    url.protocol = 'https:'
+    url.port = ''
+    changed = true
+  }
+  if ((c.req.method === 'GET' || c.req.method === 'HEAD') && url.pathname.length > 1 && url.pathname.endsWith('/')) {
+    url.pathname = url.pathname.replace(/\/+$/, '')
+    changed = true
+  }
+  if (changed) return c.redirect(url.toString(), 301)
+  await next()
+})
+
+// 동적 HTML 응답에도 기본 헤더 적용 (_headers는 정적 자산에만 적용됨).
+app.use('*', async (c, next) => {
+  await next()
+  c.header('X-Content-Type-Options', 'nosniff')
+  c.header('X-Frame-Options', 'SAMEORIGIN')
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin')
+  if (new URL(c.req.url).protocol === 'https:') {
+    c.header('Strict-Transport-Security', 'max-age=31536000')
+  }
+})
 app.use('/api/*', cors())
 
 // 모든 HTML 요청 전에 분석 설정을 prefetch → 런타임 홀더에 주입 (Layout이 동기 read)
@@ -102,39 +134,50 @@ app.get('/pricing', async (c) => c.html(<PricingPage doc={toPublic(await loadFee
 app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
 app.get('/column', async (c) => {
-  const [columns, mediumPosts] = await Promise.all([listColumns(c.env, 'column'), listMediumPosts(c.env)])
+  const [columns, mediumPosts] = await Promise.all([listPublicColumns(c.env, 'column'), listMediumPosts(c.env)])
   return c.html(<ColumnListPage columns={columns} mediumPosts={mediumPosts} board="column" />)
 })
 
 app.get('/column/:slug', async (c) => {
   const slug = c.req.param('slug')
+  const canonical = await getColumnRedirect(c.env, slug)
+  if (canonical) return c.redirect(encodeURI(`/column/${canonical}`), 301)
   const views = await bumpView(c.env, `column:${slug}`)
   return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="column" />)
 })
 
 // ===== 치료 후기 게시판 =====
 app.get('/reviews-board', async (c) => {
-  const columns = await listColumns(c.env, 'reviews')
+  const columns = await listPublicColumns(c.env, 'reviews')
   return c.html(<ColumnListPage columns={columns} board="reviews" />)
 })
 app.get('/reviews-board/:slug', async (c) => {
   const slug = c.req.param('slug')
+  const canonical = await getColumnRedirect(c.env, slug)
+  if (canonical) return c.redirect(encodeURI(`/reviews-board/${canonical}`), 301)
   const views = await bumpView(c.env, `column:${slug}`)
   return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="reviews" />)
 })
 
 // ===== 치과 이야기 게시판 =====
 app.get('/story-board', async (c) => {
-  const columns = await listColumns(c.env, 'story')
+  const columns = await listPublicColumns(c.env, 'story')
   return c.html(<ColumnListPage columns={columns} board="story" />)
 })
 app.get('/story-board/:slug', async (c) => {
   const slug = c.req.param('slug')
+  const canonical = await getColumnRedirect(c.env, slug)
+  if (canonical) return c.redirect(encodeURI(`/story-board/${canonical}`), 301)
   const views = await bumpView(c.env, `column:${slug}`)
   return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="story" />)
 })
 app.get('/encyclopedia', (c) => c.html(<EncyclopediaListPage category={c.req.query('cat')} />))
-app.get('/encyclopedia/:slug', (c) => c.html(<EncyclopediaDetailPage slug={c.req.param('slug')} />))
+app.get('/encyclopedia/:slug', (c) => {
+  const slug = c.req.param('slug')
+  const primary = TERM_REDIRECTS[slug]
+  if (primary) return c.redirect(`/encyclopedia/${primary}`, 301)
+  return c.html(<EncyclopediaDetailPage slug={slug} />)
+})
 
 app.get('/cases', async (c) => {
   const session = await getSession(c, 'member')
@@ -604,7 +647,7 @@ app.post('/api/admin/cases/delete', async (c) => {
 // 초기 등록 직후, 또는 대량 갱신 후 한 번에 밀어넣을 때 사용.
 app.post('/api/admin/index/reindex-all', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
-  const cols = await listColumns(c.env)
+  const cols = await listPublicColumns(c.env)
   const urls = [
     absUrl('/'), absUrl('/mission'), absUrl('/treatments'), absUrl('/doctors'),
     absUrl('/cases'), absUrl('/column'), absUrl('/reviews-board'), absUrl('/story-board'), absUrl('/encyclopedia'),
@@ -979,7 +1022,7 @@ app.get('/sitemap-content.xml', async (c) => {
   const urls: CUrl[] = []
   let latestColumn = ''
   try {
-    const columns = await listColumns(c.env)
+    const columns = await listPublicColumns(c.env)
     columns.forEach((col: any) => {
       // 칼럼 대표이미지: 지정 cover → 본문 첫 이미지 fallback
       let img = col.cover || ''
@@ -1026,7 +1069,7 @@ app.get('/rss.xml', async (c) => {
     return isNaN(d.getTime()) ? new Date().toUTCString() : d.toUTCString()
   }
   let cols: any[] = []
-  try { cols = await listColumns(c.env) } catch {}
+  try { cols = await listPublicColumns(c.env) } catch {}
   cols = cols
     .slice()
     .sort((a: any, b: any) => String(b.date || '').localeCompare(String(a.date || '')))

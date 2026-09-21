@@ -355,6 +355,33 @@ export async function getColumn(env: any, slug: string): Promise<Column | null> 
   return list.find((x) => x.slug === slug) ?? null
 }
 
+// ---------- 중복 칼럼 정리 (GSC 중복 색인 방지) ----------
+// createColumn/updateColumn 이 slug 충돌 시 `-xxxx`(4자) 접미사를 붙이므로,
+// 같은 게시판에 접미사 없는 slug 가 같은 제목으로 존재하면 접미사 글은 중복본이다.
+// 행은 삭제하지 않고 공개 목록·사이트맵에서만 제외하며, 상세 URL은 원본으로 301 한다.
+const DUP_SUFFIX = /^(.+)-[a-z0-9]{4}$/
+export function duplicateColumnTarget(list: Column[], col: Column): string | null {
+  const m = col.slug.match(DUP_SUFFIX)
+  if (!m) return null
+  const base = list.find((x) => x.slug === m[1] && x.id !== col.id)
+  if (!base) return null
+  return base.title === col.title && boardOf(base) === boardOf(col) ? base.slug : null
+}
+
+// 공개 페이지·사이트맵·RSS 용: 중복본 제외 (관리자는 listColumns 로 전체 조회)
+export async function listPublicColumns(env: any, board?: BoardKind): Promise<Column[]> {
+  const all = await readList<Column>(env, KV_COLUMNS, SEED_COLUMNS)
+  const list = await listColumns(env, board)
+  return list.filter((x) => duplicateColumnTarget(all, x) === null)
+}
+
+// slug 가 중복본이면 원본 slug 를 반환 (301 대상), 아니면 null
+export async function getColumnRedirect(env: any, slug: string): Promise<string | null> {
+  const list = await readList<Column>(env, KV_COLUMNS, SEED_COLUMNS)
+  const col = list.find((x) => x.slug === slug)
+  return col ? duplicateColumnTarget(list, col) : null
+}
+
 // body를 폼에서 받을 때: 줄바꿈 2개 단위 단락, 각 단락 첫 줄=소제목(옵션)
 export function parseBodyText(raw: string): ColumnBlock[] {
   const text = (raw || '').toString().replace(/\r\n/g, '\n').trim()

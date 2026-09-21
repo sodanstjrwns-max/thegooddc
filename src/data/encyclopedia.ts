@@ -331,7 +331,30 @@ const SUPPLEMENT_TERMS: Term[] = [...CORE_TERMS, ...EXTRA_TERMS].filter(
   (t) => !detailSlugs.has(t.slug) && !detailNames.has(t.term),
 )
 
-export const TERMS: Term[] = [...DETAIL_AS_TERM, ...SUPPLEMENT_TERMS]
+const ALL_TERMS: Term[] = [...DETAIL_AS_TERM, ...SUPPLEMENT_TERMS]
+
+// ---- 중복 용어 정리 (GSC 중복 색인 방지) ----
+// 용어명이 같은 항목(공백·괄호 보충어 무시)은 하나만 노출하고, 나머지 slug는 301 대상으로 기록한다.
+// 우선순위: 상세 본문(body) 보유 항목 → 그 외에는 목록상 먼저 등장한 항목(낮은 term- 번호).
+// 데이터 행은 삭제하지 않으며 TERM_REDIRECTS 로만 관리한다.
+function normalizeTermName(s: string): string {
+  return s.replace(/\s|\(.*?\)/g, '')
+}
+const primaryByName = new Map<string, Term>()
+for (const t of ALL_TERMS) {
+  const k = normalizeTermName(t.term)
+  const cur = primaryByName.get(k)
+  const curHasBody = !!(cur && cur.body && cur.body.length)
+  const hasBody = !!(t.body && t.body.length)
+  if (!cur || (!curHasBody && hasBody)) primaryByName.set(k, t)
+}
+export const TERM_REDIRECTS: Record<string, string> = {}
+for (const t of ALL_TERMS) {
+  const primary = primaryByName.get(normalizeTermName(t.term))!
+  if (primary.slug !== t.slug) TERM_REDIRECTS[t.slug] = primary.slug
+}
+
+export const TERMS: Term[] = ALL_TERMS.filter((t) => !TERM_REDIRECTS[t.slug])
 
 // 상세 본문(body)을 가진 용어만 추린 목록 (목록 페이지 "상세" 뱃지·우선 노출용)
 export const DETAILED_TERMS: Term[] = TERMS.filter((t) => t.body && t.body.length > 0)
