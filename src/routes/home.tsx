@@ -17,6 +17,7 @@ const HOME_FAQS = [
   { q: '어떤 진료를 받을 수 있나요?', a: '디지털 가이드 임플란트, 투명교정, 스타일네이트·라미네이트 심미치료를 비롯해 통합치의학과 전반의 진료를 제공합니다.' },
 ]
 import type { Notice } from '../lib/content-store'
+import { POPUP_MAX } from '../lib/content-store'
 
 const CORE_IMG: Record<string, string> = {
   implant: '/images/core-implant-v2.webp',
@@ -53,7 +54,7 @@ const COMPARE = [
   { label: '상담 방식', us: '꼭 필요한 진료만 설명' },
 ]
 
-export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
+export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
   const doctor = DOCTORS[0]
   return (
     <Layout
@@ -70,7 +71,7 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
         breadcrumbSchema([{ name: '홈', path: '/' }]),
       ]}
     >
-      {popup && <NoticePopup notice={popup} />}
+      {popups.length > 0 && <NoticePopups notices={popups} />}
       {/* ===================== HERO — editorial asymmetric ===================== */}
       <section class="hero">
         <div class="container-wide hero-inner">
@@ -620,88 +621,210 @@ export const HomePage: FC<{ popup?: Notice | null }> = ({ popup }) => {
   )
 }
 
-// ===================== 공지 팝업 (홈 첫 화면) =====================
-// 관리자가 "팝업으로 띄우기"를 켠 공지를 모달로 노출.
-// "오늘 하루 보지 않기"는 localStorage에 (id + 날짜)를 저장해 제어.
-const NoticePopup: FC<{ notice: Notice }> = ({ notice }) => {
-  const POPUP_CSS = `
-.npop-ov{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,32,.55);backdrop-filter:blur(3px);animation:npop-fade .25s ease}
-.npop-ov.show{display:flex}
-@keyframes npop-fade{from{opacity:0}to{opacity:1}}
-.npop{width:100%;max-width:420px;background:var(--card,#fff);border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.32);animation:npop-up .3s cubic-bezier(.16,1,.3,1)}
-@keyframes npop-up{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
-.npop-head{background:linear-gradient(135deg,var(--accent,#1f6f6b),var(--accent-d,#155350));color:#fff;padding:20px 24px;position:relative}
-.npop-head .npop-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.85;display:flex;align-items:center;gap:7px}
-.npop-head h2{margin:8px 0 0;font-size:21px;line-height:1.35;color:#fff;word-break:keep-all}
-.npop-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+// ===================== 공지 팝업 (홈 첫 화면 · 최대 5개 동시) =====================
+// 관리자가 "팝업으로 띄우기"를 켠 공지를 고정글 우선 → 최신순으로 최대 POPUP_MAX개 노출.
+//  - PC(≥768px): 한 장의 어두운 배경 위에 카드들을 나란히(줄바꿈 허용, 가운데 정렬)
+//  - 모바일(≤767px): 우상단 작은 "병원 소식 N" 칩 → 탭하면 한 장씩 넘겨보기(스와이프·‹ ›)
+// "오늘 하루 보지 않기"는 카드별 localStorage(npop_dismiss_{id} = "YYYY-MM-DD|modified", KST)
+// 공지 내용이 수정되면(modified 변경) 다시 노출 — 기존 키 형식 유지.
+const NPOP_CSS = `
+.npop-ov{position:fixed;inset:0;z-index:1200;display:flex;padding:24px;background:rgba(15,23,32,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow-y:auto;overscroll-behavior:contain;opacity:0;transition:opacity .3s ease}
+.npop-ov[hidden]{display:none!important}
+.npop-ov:not(.show){pointer-events:none}
+.npop-ov.show{opacity:1;pointer-events:auto}
+.npop-ov button{font-family:inherit}
+.npop-stack{margin:auto;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:flex-start;max-width:100%}
+.npop{width:360px;max-width:100%;max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:var(--card,#fff);border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.32);transform:translateY(24px) scale(.96);transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .25s ease}
+.npop-stack.solo .npop{width:420px}
+.npop-ov.show .npop{transform:none}
+.npop-ov.show .npop.npop-out{opacity:0;transform:translateY(12px) scale(.94)}
+.npop-head{flex:none;background:linear-gradient(135deg,var(--accent,#1f6f6b),var(--accent-d,#155350));color:#fff;padding:20px 24px;position:relative}
+.npop-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.85;display:flex;align-items:center;gap:7px}
+.npop-head h2{margin:8px 0 0;padding-right:40px;font-size:20px;line-height:1.35;color:#fff;word-break:keep-all}
+.npop-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .npop-x:hover{background:rgba(255,255,255,.34)}
-.npop-body{padding:22px 24px;color:var(--ink,#2b2b2b);font-size:15px;line-height:1.7;white-space:pre-line;max-height:46vh;overflow-y:auto}
+.npop-scroll{flex:1 1 auto;min-height:0;overflow-y:auto}
+.npop-img img{display:block;width:100%;max-height:38vh;object-fit:cover}
+.npop-body{padding:20px 24px;color:var(--ink,#2b2b2b);font-size:15px;line-height:1.7;white-space:pre-line;word-break:keep-all}
 .npop-date{font-size:12.5px;color:var(--ink-faint,#9aa);margin-bottom:10px}
-.npop-actions{display:flex;gap:10px;padding:0 24px 22px}
+.npop-actions{flex:none;display:flex;gap:10px;padding:0 24px 20px}
 .npop-actions .btn{flex:1;justify-content:center}
-.npop-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;border-top:1px solid var(--line,#eee);background:var(--bg-2,#f7f7f5)}
-.npop-foot label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft,#666);cursor:pointer;user-select:none}
-.npop-foot input{width:17px;height:17px}
-.npop-foot .npop-close2{background:none;border:none;font-size:13px;font-weight:700;color:var(--ink-soft,#666);cursor:pointer;padding:4px}
-@media(max-width:480px){.npop{max-width:100%} .npop-head h2{font-size:19px}}
+.npop-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 18px;border-top:1px solid var(--line,#eee);background:var(--bg-2,#f7f7f5)}
+.npop-hide{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 6px;background:none;border:none;font-size:13px;color:var(--ink-soft,#666);cursor:pointer}
+.npop-hide input{width:17px;height:17px;accent-color:var(--accent,#1f6f6b);pointer-events:none}
+.npop-hide:hover{color:var(--ink,#222)}
+.npop-close2{min-height:44px;padding:4px 10px;background:none;border:none;font-size:13px;font-weight:700;color:var(--ink-soft,#666);cursor:pointer}
+.npop-close2:hover{color:var(--accent-d,#155350)}
+.npop-chip,.npop-nav{display:none}
+.npop-ov.npop-compact{inset:auto;top:calc(84px + env(safe-area-inset-top));right:16px;z-index:990;padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible}
+.npop-compact .npop-stack,.npop-compact .npop-nav{display:none}
+.npop-compact .npop-chip{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:10px 16px;background:var(--card,#fff);color:var(--accent-d,#155350);border:1px solid color-mix(in oklab,var(--accent,#1f6f6b) 30%,transparent);border-radius:99px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(15,23,32,.16);cursor:pointer}
+.npop-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--accent,#1f6f6b);color:#fff;font-size:12px;font-weight:800}
+.npop-single{flex-direction:column;align-items:center;padding:16px}
+.npop-single .npop-stack{margin:auto auto 0;width:100%;max-width:420px;flex-wrap:nowrap}
+.npop-single .npop{display:none;width:100%;max-height:calc(100svh - 104px)}
+.npop-single .npop.npop-active{display:flex;animation:npop-in .25s ease}
+.npop-single .npop-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px auto auto}
+.npop-single .npop-nav[hidden]{display:none}
+.npop-nav button{width:44px;height:44px;border-radius:50%;border:none;background:var(--card,#fff);color:var(--accent-d,#155350);font-size:1.5rem;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.npop-ind{min-width:64px;text-align:center;font-size:14px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+@keyframes npop-in{from{opacity:0;transform:translateX(var(--npop-dx,0))}to{opacity:1;transform:none}}
+@media(max-width:480px){.npop-head h2{font-size:18px}.npop-body{padding:18px 20px}.npop-actions{padding:0 20px 18px}.npop-img img{max-height:32svh;object-fit:contain;background:var(--bg-2,#f7f7f5)}}
+@media(prefers-reduced-motion:reduce){.npop-ov,.npop{transition:none}.npop-single .npop.npop-active{animation:none}}
 `
-  const POPUP_JS = `
+
+// 동작 스크립트 (서버 값 삽입 없음 — 카드의 data-id / data-mod 만 사용)
+const NPOP_JS = `
 (function(){
-  var id=${JSON.stringify(notice.id)};
-  var mod=${JSON.stringify(notice.modified || notice.date || '')};
-  var key='npop_dismiss_'+id;
-  try{
-    var saved=localStorage.getItem(key);
-    // 저장값 형식: "YYYY-MM-DD|modified". 오늘이거나 내용이 그대로면 숨김.
-    if(saved){
-      var parts=saved.split('|');
-      var savedDate=parts[0], savedMod=parts[1]||'';
-      var todayStr=new Date().toISOString().slice(0,10);
-      // 공지 내용이 수정됐으면 다시 노출
-      if(savedMod===mod && savedDate===todayStr) return;
-    }
-  }catch(e){}
   var ov=document.getElementById('npop-overlay');
   if(!ov) return;
-  // 약간의 지연 후 등장(첫 화면 인지 후)
-  setTimeout(function(){ ov.classList.add('show'); document.body.style.overflow='hidden'; }, 600);
-  function close(){
-    ov.classList.remove('show'); document.body.style.overflow='';
-    var dontShow=document.getElementById('npop-dont');
-    if(dontShow && dontShow.checked){
-      try{ localStorage.setItem(key, new Date().toISOString().slice(0,10)+'|'+mod); }catch(e){}
-    }
+  var stack=ov.querySelector('.npop-stack'),nav=ov.querySelector('.npop-nav'),ind=ov.querySelector('.npop-ind'),chip=ov.querySelector('.npop-chip');
+  var today=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+  function key(id){return 'npop_dismiss_'+id;}
+  function cards(){return Array.prototype.slice.call(stack.querySelectorAll('.npop:not(.npop-out)'));}
+  // 오늘 숨긴 카드 먼저 제거 (저장값 "YYYY-MM-DD|modified" — 오늘 & 내용 그대로면 숨김)
+  Array.prototype.slice.call(stack.querySelectorAll('.npop')).forEach(function(c){
+    try{
+      var saved=localStorage.getItem(key(c.getAttribute('data-id')));
+      if(!saved) return;
+      var p=saved.split('|');
+      if(p[0]===today && (p[1]||'')===(c.getAttribute('data-mod')||'')) c.parentNode.removeChild(c);
+    }catch(e){}
+  });
+  if(!cards().length){ ov.parentNode.removeChild(ov); return; }
+  function solo(){ stack.classList.toggle('solo',cards().length===1); }
+  solo();
+  var mq=matchMedia('(max-width:767px)');
+  var compact=mq.matches, idx=0, prevOverflow='', locked=false;
+  function lock(){ if(!locked){ prevOverflow=document.body.style.overflow; document.body.style.overflow='hidden'; locked=true; } }
+  function unlock(){ if(locked){ document.body.style.overflow=prevOverflow; locked=false; } }
+  function setDialog(on){
+    if(on){ ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); }
+    else{ ov.setAttribute('role','region'); ov.removeAttribute('aria-modal'); }
   }
-  ov.querySelectorAll('[data-npop-close]').forEach(function(b){ b.addEventListener('click', close); });
-  ov.addEventListener('click', function(e){ if(e.target===ov) close(); });
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.classList.contains('show')) close(); });
+  function updateChip(){
+    var n=cards().length;
+    chip.innerHTML='<i class="fa-solid fa-bullhorn" aria-hidden="true"></i> 병원 소식'+(n>1?' <span class="npop-count">'+n+'</span>':' 보기');
+    chip.setAttribute('aria-label','병원 소식 '+n+'건 보기');
+  }
+  function show(i,dir){
+    var cs=cards(); if(!cs.length) return;
+    idx=(i+cs.length)%cs.length;
+    cs.forEach(function(c,k){ c.classList.toggle('npop-active',k===idx); c.style.setProperty('--npop-dx',dir?(dir*40)+'px':'0'); });
+    ind.textContent=(idx+1)+' / '+cs.length;
+    nav.hidden=cs.length<2;
+  }
+  function focusFirst(){
+    var c=ov.classList.contains('npop-single')?stack.querySelector('.npop.npop-active'):cards()[0];
+    var b=c&&c.querySelector('.npop-x'); if(b){ try{ b.focus({preventScroll:true}); }catch(e){ b.focus(); } }
+  }
+  function applyMode(){
+    if(compact){ ov.classList.add('npop-compact'); setDialog(false); updateChip(); return; }
+    ov.classList.remove('npop-compact'); setDialog(true);
+    ov.classList.toggle('npop-single',mq.matches);
+    if(mq.matches) show(idx,0);
+  }
+  function open(){
+    applyMode();
+    ov.hidden=false;
+    void ov.offsetWidth; ov.classList.add('show'); // 강제 리플로 후 전환 (백그라운드 탭에서도 rAF 대기 없이 표시)
+    if(!compact){ lock(); setTimeout(focusFirst,60); }
+  }
+  function closeAll(){
+    ov.classList.remove('show'); unlock();
+    setTimeout(function(){ ov.hidden=true; },320);
+  }
+  function removeCard(c){
+    c.classList.add('npop-out');
+    var single=ov.classList.contains('npop-single');
+    var left=cards().length;
+    if(!left){ closeAll(); return; }
+    if(single){ c.parentNode.removeChild(c); show(Math.min(idx,left-1),0); solo(); }
+    else setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); solo(); },260);
+    updateChip();
+    setTimeout(focusFirst,single?0:270);
+  }
+  stack.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('[data-act]');
+    if(!b){ if(e.target===stack && !ov.classList.contains('npop-single')) closeAll(); return; }
+    e.preventDefault();
+    var c=b.closest('.npop');
+    if(b.getAttribute('data-act')==='hide'){
+      var cb=b.querySelector('input'); if(cb) cb.checked=true;
+      try{ localStorage.setItem(key(c.getAttribute('data-id')),today+'|'+(c.getAttribute('data-mod')||'')); }catch(err){}
+    }
+    removeCard(c);
+  });
+  chip.addEventListener('click',function(){
+    compact=false; chip.setAttribute('aria-expanded','true');
+    applyMode(); lock(); focusFirst();
+  });
+  ov.querySelector('.npop-prev').addEventListener('click',function(){ show(idx-1,-1); focusFirst(); });
+  ov.querySelector('.npop-next').addEventListener('click',function(){ show(idx+1,1); focusFirst(); });
+  // 모바일 스와이프
+  var sx=0,sy=0,tracking=false;
+  stack.addEventListener('touchstart',function(e){ if(!ov.classList.contains('npop-single')||e.touches.length!==1) return; tracking=true; sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  stack.addEventListener('touchend',function(e){
+    if(!tracking) return; tracking=false;
+    var t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.3){ if(dx<0) show(idx+1,1); else show(idx-1,-1); }
+  },{passive:true});
+  ov.addEventListener('click',function(e){ if(e.target===ov && !compact) closeAll(); });
+  document.addEventListener('keydown',function(e){
+    if(ov.hidden || compact) return;
+    if(e.key==='Escape') closeAll();
+    else if(ov.classList.contains('npop-single')){ if(e.key==='ArrowRight') show(idx+1,1); else if(e.key==='ArrowLeft') show(idx-1,-1); }
+  });
+  var onMq=function(){ if(!compact && !ov.hidden) applyMode(); };
+  if(mq.addEventListener) mq.addEventListener('change',onMq); else if(mq.addListener) mq.addListener(onMq);
+  // 약간의 지연 후 등장(첫 화면 인지 후)
+  setTimeout(open,600);
 })();
 `
+
+const NoticePopupCard: FC<{ notice: Notice; i: number }> = ({ notice, i }) => (
+  <div class="npop" id={`npop-card-${i}`} data-id={notice.id} data-mod={notice.modified || notice.date || ''} role="group" aria-labelledby={`npop-title-${i}`}>
+    <div class="npop-head">
+      <span class="npop-eyebrow"><i class="fa-solid fa-bullhorn"></i> 더착한치과 공지</span>
+      <h2 id={`npop-title-${i}`}>{notice.title}</h2>
+      <button type="button" class="npop-x" data-act="close" aria-label={`${notice.title} 팝업 닫기`}><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="npop-scroll">
+      {notice.image && <div class="npop-img"><img src={notice.image} alt={notice.imageAlt || notice.title} loading="eager" /></div>}
+      <div class="npop-body">
+        {notice.date && <div class="npop-date"><i class="fa-regular fa-calendar"></i> {notice.date}</div>}
+        {notice.body}
+      </div>
+    </div>
+    <div class="npop-actions">
+      <a href="/notice" class="btn btn-gold btn-sm"><i class="fa-solid fa-list"></i> 공지 전체보기</a>
+      <a href="/reservation" class="btn btn-ghost btn-sm"><i class="fa-solid fa-calendar-check"></i> 예약하기</a>
+    </div>
+    <div class="npop-foot">
+      <button type="button" class="npop-hide" data-act="hide"><input type="checkbox" tabindex={-1} aria-hidden="true" /> 오늘 하루 보지 않기</button>
+      <button type="button" class="npop-close2" data-act="close">닫기</button>
+    </div>
+  </div>
+)
+
+const NoticePopups: FC<{ notices: Notice[] }> = ({ notices }) => {
+  const list = notices.slice(0, POPUP_MAX)
+  if (!list.length) return null
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: POPUP_CSS }} />
-      <div id="npop-overlay" class="npop-ov" role="dialog" aria-modal="true" aria-labelledby="npop-title">
-        <div class="npop">
-          <div class="npop-head">
-            <span class="npop-eyebrow"><i class="fa-solid fa-bullhorn"></i> 더착한치과 공지</span>
-            <h2 id="npop-title">{notice.title}</h2>
-            <button type="button" class="npop-x" data-npop-close aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <div class="npop-body">
-            {notice.date && <div class="npop-date"><i class="fa-regular fa-calendar"></i> {notice.date}</div>}
-            {notice.body}
-          </div>
-          <div class="npop-actions">
-            <a href="/notice" class="btn btn-gold btn-sm"><i class="fa-solid fa-list"></i> 공지 전체보기</a>
-            <a href="/reservation" class="btn btn-ghost btn-sm"><i class="fa-solid fa-calendar-check"></i> 예약하기</a>
-          </div>
-          <div class="npop-foot">
-            <label><input type="checkbox" id="npop-dont" /> 오늘 하루 보지 않기</label>
-            <button type="button" class="npop-close2" data-npop-close>닫기</button>
-          </div>
+      <style dangerouslySetInnerHTML={{ __html: NPOP_CSS }} />
+      <div id="npop-overlay" class="npop-ov" role="dialog" aria-modal="true" aria-label="더착한치과 병원 소식" hidden>
+        <button type="button" class="npop-chip" aria-expanded="false" aria-controls="npop-stack">병원 소식 보기</button>
+        <div class={`npop-stack${list.length === 1 ? ' solo' : ''}`} id="npop-stack">
+          {list.map((n, i) => <NoticePopupCard notice={n} i={i} />)}
+        </div>
+        <div class="npop-nav" hidden>
+          <button type="button" class="npop-prev" aria-label="이전 소식">&lsaquo;</button>
+          <span class="npop-ind" aria-live="polite">1 / {list.length}</span>
+          <button type="button" class="npop-next" aria-label="다음 소식">&rsaquo;</button>
         </div>
       </div>
-      <script dangerouslySetInnerHTML={{ __html: POPUP_JS }} />
+      <script dangerouslySetInnerHTML={{ __html: NPOP_JS }} />
     </>
   )
 }

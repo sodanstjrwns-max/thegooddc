@@ -23,7 +23,7 @@ import { AreaPage, AreaHubPage } from './routes/area'
 import { fetchDashboardStats, renderStatsPage, STATS_KEY, MASTER_KEY } from './routes/stats'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage, AdminFeesPage } from './routes/auth'
 import {
-  listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotice,
+  listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotices, isPopupActive, kstToday,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
   listPublicColumns, getColumnRedirect,
   listCases, createCase, updateCase, deleteCase,
@@ -122,7 +122,7 @@ async function getSession(c: any, role: 'member' | 'admin'): Promise<SessionPayl
 // ============================================================
 // PAGE ROUTES
 // ============================================================
-app.get('/', async (c) => c.html(<HomePage popup={await getActivePopupNotice(c.env)} />))
+app.get('/', async (c) => c.html(<HomePage popups={await getActivePopupNotices(c.env)} />))
 app.get('/mission', (c) => c.html(<MissionPage />))
 app.get('/treatments', (c) => c.html(<TreatmentsListPage />))
 app.get('/treatments/:slug', (c) => c.html(<TreatmentDetailPage slug={c.req.param('slug')} />))
@@ -247,8 +247,11 @@ app.get('/admin/dashboard', async (c) => {
     const r = await c.env.KV.list({ prefix: 'reservation:' })
     reservations = r.keys.length
   }
-  const [notices, columns, cases, popup, diag] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env), getActivePopupNotice(c.env), getSettingsDiagnostic(c.env, CLINIC.analytics)])
-  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} popup={popup} diag={diag} />)
+  const [notices, columns, cases, diag] = await Promise.all([listNotices(c.env), listColumns(c.env), listCases(c.env), getSettingsDiagnostic(c.env, CLINIC.analytics)])
+  // 활성 팝업 전체 (홈과 같은 정렬: 고정 → 최신). 홈에는 앞에서부터 POPUP_MAX개만 표시
+  const todayKst = kstToday()
+  const popups = notices.filter((n) => isPopupActive(n, todayKst))
+  return c.html(<AdminDashboard stats={{ members, reservations, notices: notices.length, columns: columns.length, cases: cases.length }} popups={popups} diag={diag} />)
 })
 
 // Admin settings (추적·분석)

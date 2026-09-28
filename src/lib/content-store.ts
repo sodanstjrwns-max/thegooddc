@@ -321,18 +321,28 @@ export async function deleteNotice(env: any, id: string): Promise<boolean> {
   return true
 }
 
-// 홈 히어로에 띄울 "활성 팝업" 1건 반환.
-// 조건: popup === true && (popupUntil 비었거나 오늘 이전이 아님)
-// 여러 건이면 고정글 우선 → 최신 날짜 우선으로 정렬해 첫 건 사용.
-export async function getActivePopupNotice(env: any): Promise<Notice | null> {
+// 홈 팝업 동시 표시 한도 — PC는 나란히, 모바일은 넘겨보기
+export const POPUP_MAX = 5
+
+// 한국 시간 기준 오늘 (YYYY-MM-DD) — 홈 팝업 클라이언트 스크립트와 동일 계산
+export function kstToday(): string {
+  return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)
+}
+
+// 팝업 활성 조건: popup === true && (popupUntil 비었거나 오늘(KST) 이전이 아님)
+export function isPopupActive(n: Notice, todayStr: string = kstToday()): boolean {
+  if (!n.popup) return false
+  if (n.popupUntil && n.popupUntil < todayStr) return false // 종료일 지남
+  return true
+}
+
+// 홈에 띄울 활성 팝업 목록 (고정글 우선 → 최신 날짜 순, 최대 limit건).
+// limit <= 0 이면 활성 전체 반환 (관리자 대시보드용).
+export async function getActivePopupNotices(env: any, limit: number = POPUP_MAX): Promise<Notice[]> {
   const list = await listNotices(env) // 이미 pinned→date 정렬됨
-  const todayStr = today()
-  const active = list.filter((n) => {
-    if (!n.popup) return false
-    if (n.popupUntil && n.popupUntil < todayStr) return false // 종료일 지남
-    return true
-  })
-  return active[0] || null
+  const todayStr = kstToday()
+  const active = list.filter((n) => isPopupActive(n, todayStr))
+  return limit > 0 ? active.slice(0, limit) : active
 }
 
 // ============================================================

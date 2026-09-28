@@ -5,7 +5,10 @@ import { CLINIC } from '../data/clinic'
 import { TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import type { Notice, Column, CaseItem, SiteSettings, Reservation, ResStats, BoardKind } from '../lib/content-store'
-import { bodyToText, RES_STATUS_LABEL, BOARDS, boardOf } from '../lib/content-store'
+import { bodyToText, RES_STATUS_LABEL, BOARDS, boardOf, POPUP_MAX, isPopupActive, kstToday } from '../lib/content-store'
+
+// 관리자 공통 안내 — 홈 팝업 동시 표시 한도
+const POPUP_HINT = `팝업은 최대 ${POPUP_MAX}개까지 동시에 표시됩니다 (PC는 나란히, 모바일은 넘겨보기)`
 
 // 추적 설정 진단 타입 (대시보드/설정 화면 공용)
 export type SettingsSource = 'env' | 'kv' | 'seed' | 'none'
@@ -197,25 +200,35 @@ const DASH_CSS = `
 .dash-popup .dp-txt{min-width:0}
 .dash-popup .dp-txt b{display:block;font-size:15px;margin-bottom:2px}
 .dash-popup .dp-txt span{font-size:13px;color:var(--ink-soft);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46ch}
+.dash-popup .dp-txt span.dp-warn{color:#b23b3b;font-weight:700;white-space:normal}
+.dash-popup .dp-list{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:2px}
+.dash-popup .dp-list li{font-size:13px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52ch}
+.dash-popup .dp-list li.off{color:var(--ink-faint);text-decoration:line-through}
 .dash-quick{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px}
 .dash-quick .btn{font-size:13.5px}
 .dash-sec-title{font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin:0 0 14px}
 `
 
-export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number }; popup?: Notice | null; diag?: SettingsDiag }> = ({ stats, popup, diag }) => (
+export const AdminDashboard: FC<{ stats: { members: number; reservations: number; notices: number; columns: number; cases: number }; popups?: Notice[]; diag?: SettingsDiag }> = ({ stats, popups = [], diag }) => (
   <Layout title="관리자 대시보드" description="관리자 전용" path="/admin/dashboard">
     <style dangerouslySetInnerHTML={{ __html: DASH_CSS + TRACK_CARD_CSS }} />
     <section class="page-hero" style="padding:130px 0 50px"><div class="container ph-inner"><div class="hero-badge"><i class="fa-solid fa-gauge"></i> DASHBOARD</div><h1>관리자 대시보드</h1></div></section>
     <section class="sec">
       <div class="container">
         {/* 팝업 상태 배너 */}
-        <div class={`dash-popup ${popup ? 'on' : 'off'}`}>
+        <div class={`dash-popup ${popups.length ? 'on' : 'off'}`}>
           <div class="dp-left">
             <div class="dp-ic"><i class="fa-solid fa-window-restore"></i></div>
             <div class="dp-txt">
-              {popup
-                ? <><b>홈 팝업 노출 중</b><span>“{popup.title}”{popup.popupUntil ? ` · ${popup.popupUntil}까지` : ' · 종료일 없음'}</span></>
-                : <><b>현재 홈 팝업 없음</b><span>공지 작성 시 “홈 첫 화면에 팝업으로 띄우기”를 켜면 방문자에게 표시됩니다.</span></>}
+              {popups.length
+                ? <>
+                    <b>홈 팝업 {Math.min(popups.length, POPUP_MAX)}개 노출 중</b>
+                    {popups.length > POPUP_MAX && <span class="dp-warn">⚠ 표시 중 {POPUP_MAX}/{popups.length} — 오래된 것은 숨겨짐</span>}
+                    <ul class="dp-list">
+                      {popups.map((p, i) => <li class={i >= POPUP_MAX ? 'off' : ''} title={i >= POPUP_MAX ? `동시 표시 한도(${POPUP_MAX}개) 초과로 홈에 보이지 않습니다` : ''}>“{p.title}”{p.popupUntil ? ` · ${p.popupUntil}까지` : ' · 종료일 없음'}{i >= POPUP_MAX ? ' · 숨겨짐' : ''}</li>)}
+                    </ul>
+                  </>
+                : <><b>현재 홈 팝업 없음</b><span>공지 작성 시 “홈 첫 화면에 팝업으로 띄우기”를 켜면 방문자에게 표시됩니다. {POPUP_HINT}.</span></>}
             </div>
           </div>
           <a href="/admin/notices" class="btn btn-gold btn-sm"><i class="fa-solid fa-bullhorn"></i> 공지 관리</a>
@@ -522,9 +535,23 @@ const AdminShell: FC<{ active: 'notices' | 'columns' | 'cases'; title: string; o
   )
 }
 
-export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notices, ok }) => (
+export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notices, ok }) => {
+  // 홈과 같은 정렬(고정 → 최신)이라 활성 팝업 중 앞에서부터 POPUP_MAX개가 실제 노출
+  const todayKst = kstToday()
+  const activeIds = notices.filter((n) => isPopupActive(n, todayKst)).map((n) => n.id)
+  const liveCount = activeIds.length
+  const shownIds = new Set(activeIds.slice(0, POPUP_MAX))
+  return (
   <AdminShell active="notices" title="공지사항 관리" ok={ok}>
     <style dangerouslySetInnerHTML={{ __html: EDITOR_CSS }} />
+    <div class="adm-popup-box" style="margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)">
+      <span><i class="fa-solid fa-circle-info" style="color:var(--accent)"></i> {POPUP_HINT}. 중요(고정) 공지가 먼저, 그다음 최신 순으로 표시돼요.</span>
+      {liveCount > POPUP_MAX
+        ? <span class="adm-pin" style="background:#b23b3b">⚠ 표시 중 {POPUP_MAX}/{liveCount} — 오래된 것은 숨겨짐</span>
+        : liveCount > 0
+        ? <span class="adm-pin" style="background:var(--accent-d)">표시 중 {liveCount}/{POPUP_MAX}</span>
+        : null}
+    </div>
     {/* 새 공지 작성 */}
     <details class="adm-detail" style="margin-bottom:26px">
       <summary><i class="fa-solid fa-plus"></i> 새 공지 작성</summary>
@@ -538,7 +565,7 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
         </div>
         <div class="adm-popup-box">
           <label class="adm-check"><input type="checkbox" name="popup" /> <i class="fa-solid fa-window-restore" style="color:var(--accent)"></i> 홈 첫 화면에 팝업으로 띄우기</label>
-          <p class="adm-hint">체크하면 방문자가 홈에 들어올 때 이 공지가 팝업 창으로 표시됩니다. (여러 개를 체크하면 가장 위 항목 1개만 노출)</p>
+          <p class="adm-hint">체크하면 방문자가 홈에 들어올 때 이 공지가 팝업 창으로 표시됩니다. {POPUP_HINT}. {POPUP_MAX}개를 넘으면 중요(고정) → 최신 순으로 {POPUP_MAX}개만 보입니다.</p>
           <div style="margin-top:10px"><label>팝업 종료일 <span style="font-weight:400;color:var(--ink-faint)">(선택 · 비우면 직접 끌 때까지 계속 노출)</span></label><input type="date" name="popupUntil" /></div>
         </div>
         <div><button type="submit" class="btn btn-gold"><i class="fa-solid fa-check"></i> 등록하기</button></div>
@@ -548,7 +575,7 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
     {notices.length === 0 && <p style="color:var(--ink-soft)">등록된 공지가 없습니다.</p>}
     {notices.map((n) => (
       <div class="adm-card">
-        <div class="adm-meta">{n.pinned && <span class="adm-pin">중요</span>}{n.popup && <span class="adm-pin" style="background:var(--accent-d)"><i class="fa-solid fa-window-restore"></i> 팝업</span>}{n.image && <span class="adm-pin" style="background:var(--brand)"><i class="fa-solid fa-image"></i> 이미지</span>}<span>{n.date}</span>{n.popup && n.popupUntil && <span style="color:var(--accent-d)">팝업 ~{n.popupUntil}</span>}<span style="color:var(--ink-faint)">수정 {n.modified}</span></div>
+        <div class="adm-meta">{n.pinned && <span class="adm-pin">중요</span>}{n.popup && <span class="adm-pin" style="background:var(--accent-d)"><i class="fa-solid fa-window-restore"></i> 팝업</span>}{activeIds.includes(n.id) && !shownIds.has(n.id) && <span class="adm-pin" style="background:#b23b3b" title={`동시 표시 한도(${POPUP_MAX}개) 초과로 홈에 보이지 않습니다`}>숨겨짐({POPUP_MAX}개 초과)</span>}{n.image && <span class="adm-pin" style="background:var(--brand)"><i class="fa-solid fa-image"></i> 이미지</span>}<span>{n.date}</span>{n.popup && n.popupUntil && <span style="color:var(--accent-d)">팝업 ~{n.popupUntil}</span>}<span style="color:var(--ink-faint)">수정 {n.modified}</span></div>
         <h3>{n.title}</h3>
         {n.image && <img src={n.image} alt={n.imageAlt || n.title} style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:8px" />}
         <p class="adm-body-prev">{n.body}</p>
@@ -566,6 +593,7 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
               </div>
               <div class="adm-popup-box">
                 <label class="adm-check"><input type="checkbox" name="popup" checked={n.popup} /> <i class="fa-solid fa-window-restore" style="color:var(--accent)"></i> 홈 첫 화면에 팝업으로 띄우기</label>
+                <p class="adm-hint">{POPUP_HINT}.</p>
                 <div style="margin-top:10px"><label>팝업 종료일 <span style="font-weight:400;color:var(--ink-faint)">(선택)</span></label><input type="date" name="popupUntil" value={n.popupUntil || ''} /></div>
               </div>
               <div><button type="submit" class="btn btn-gold btn-sm"><i class="fa-solid fa-floppy-disk"></i> 저장</button></div>
@@ -580,7 +608,8 @@ export const AdminNoticesPage: FC<{ notices: Notice[]; ok?: string }> = ({ notic
     ))}
     <script dangerouslySetInnerHTML={{ __html: EDITOR_JS }} />
   </AdminShell>
-)
+  )
+}
 
 // ============================================================
 // 슈퍼 블로그 에디터: 리치 툴바 + 드래그/붙여넣기 이미지(alt 입력) + 실시간 미리보기 + 글자수
