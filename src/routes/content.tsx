@@ -277,12 +277,12 @@ const RichBody: FC<{ text: string }> = ({ text }) => {
   return <>{out}</>
 }
 
-export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number; board?: BoardKind }> = ({ slug, column, views = 0, board = 'column' }) => {
+export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number; board?: BoardKind; noindex?: boolean }> = ({ slug, column, views = 0, board = 'column', noindex = false }) => {
   const bm: BoardMeta = BOARDS[board]
   const c = column ?? SEED_COLUMNS.find((x) => x.slug === slug)
   if (!c) {
     return (
-      <Layout title={`글을 찾을 수 없습니다 | ${bm.label}`} description="요청하신 글을 찾을 수 없습니다." path={bm.path}>
+      <Layout title={`글을 찾을 수 없습니다 | ${bm.label}`} description="요청하신 글을 찾을 수 없습니다." path={bm.path} noindex>
         <section class="page-hero"><div class="container ph-inner"><h1>글을 찾을 수 없습니다</h1><p><a href={bm.path} style="color:var(--blue);text-decoration:underline">{bm.label} 목록 보기</a></p></div></section>
       </Layout>
     )
@@ -306,6 +306,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       title={`${c.title} | ${CLINIC.name} ${bm.label}`}
       description={c.excerpt}
       path={`${bm.path}/${c.slug}`}
+      noindex={noindex}
       ogType="article"
       ogImage={cover || undefined}
       keywords={[bm.label, t?.shortName || '', '강서구 치과']}
@@ -421,7 +422,7 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
   const term = getTerm(slug)
   if (!term) {
     return (
-      <Layout title="용어를 찾을 수 없습니다" description="요청하신 용어를 찾을 수 없습니다." path="/encyclopedia">
+      <Layout title="용어를 찾을 수 없습니다" description="요청하신 용어를 찾을 수 없습니다." path="/encyclopedia" noindex>
         <section class="page-hero"><div class="container ph-inner"><h1>용어를 찾을 수 없습니다</h1><p><a href="/encyclopedia" style="color:var(--blue);text-decoration:underline">백과사전 보기</a></p></div></section>
       </Layout>
     )

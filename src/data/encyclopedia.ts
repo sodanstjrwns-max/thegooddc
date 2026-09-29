@@ -354,6 +354,15 @@ for (const t of ALL_TERMS) {
   if (primary.slug !== t.slug) TERM_REDIRECTS[t.slug] = primary.slug
 }
 
+// 상세본과 이름이 같아 병합 단계에서 빠진 옛 기본 용어 slug(예: tmj → tmj-disorder)도 301 대상으로 기록.
+// 칼럼·용어 본문에 남은 옛 링크가 "용어를 찾을 수 없습니다"로 떨어지던 문제 방지.
+const detailSlugByName = new Map(DETAIL_AS_TERM.map((t) => [t.term, t.slug]))
+for (const t of [...CORE_TERMS, ...EXTRA_TERMS]) {
+  if (detailSlugs.has(t.slug) || TERM_REDIRECTS[t.slug]) continue
+  const target = detailSlugByName.get(t.term)
+  if (target && target !== t.slug) TERM_REDIRECTS[t.slug] = TERM_REDIRECTS[target] || target
+}
+
 export const TERMS: Term[] = ALL_TERMS.filter((t) => !TERM_REDIRECTS[t.slug])
 
 // 상세 본문(body)을 가진 용어만 추린 목록 (목록 페이지 "상세" 뱃지·우선 노출용)

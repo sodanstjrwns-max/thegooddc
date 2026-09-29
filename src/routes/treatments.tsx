@@ -7,6 +7,23 @@ import { getDoctor } from '../data/doctors'
 import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
 import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedureRichSchema, howToSchema, qaPageSchema, imageObjectSchema, medicalWebPageSchema, itemListSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
+import { getTerm, TERM_REDIRECTS } from '../data/encyclopedia'
+
+// 진료 slug 와 같은 백과사전 용어가 없는 진료과 → 대표 용어로 연결 (예전엔 /encyclopedia/{진료slug} 404성 링크)
+const ENCY_TERM_FOR_TREATMENT: Record<string, string> = {
+  integrated: 'treatment-plan',
+  conservative: 'cavity',
+  prosthodontics: 'crown',
+  orthodontics: 'malocclusion',
+  periodontics: 'periodontitis',
+  preventive: 'scaling',
+  imaging: 'cbct',
+  'oral-medicine': 'tmj-disorder',
+}
+function encyTermForTreatment(slug: string) {
+  const s = TERM_REDIRECTS[slug] || (getTerm(slug) ? slug : ENCY_TERM_FOR_TREATMENT[slug])
+  return s ? getTerm(s) : undefined
+}
 
 const CORE_IMG: Record<string, string> = {
   implant: '/images/core-implant-v2.webp',
@@ -376,7 +393,12 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                     <div class="chip-row">
                       {related.map((r) => <a href={`/treatments/${r!.slug}`} class="chip"><i class={`fa-solid fa-${r!.icon}`}></i> {r!.shortName}</a>)}
                       <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터</a>
-                      <a href={`/encyclopedia/${t.slug}`} class="chip"><i class="fa-solid fa-book"></i> 백과사전</a>
+                      {(() => {
+                        const term = encyTermForTreatment(t.slug)
+                        return term
+                          ? <a href={`/encyclopedia/${term.slug}`} class="chip"><i class="fa-solid fa-book"></i> 백과사전 · {term.term}</a>
+                          : <a href="/encyclopedia" class="chip"><i class="fa-solid fa-book"></i> 백과사전</a>
+                      })()}
                     </div>
                   </div>
                 )}

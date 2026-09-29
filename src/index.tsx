@@ -29,9 +29,10 @@ import {
   listCases, createCase, updateCase, deleteCase,
   getSettings, getSettingsDiagnostic, saveSettings,
   listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
-  BOARDS,
+  BOARDS, SEED_COLUMNS,
 } from './lib/content-store'
 import type { BoardKind } from './lib/content-store'
+import { isThinBoardPost, NOINDEX_FOLLOW } from './lib/thin-content'
 import { setActiveSettings } from './lib/runtime-settings'
 import { listMediumPosts } from './lib/medium'
 import { notifyGoogleIndex, notifyGoogleIndexMany, isGoogleIndexingConfigured } from './lib/google-indexing'
@@ -138,39 +139,42 @@ app.get('/column', async (c) => {
   return c.html(<ColumnListPage columns={columns} mediumPosts={mediumPosts} board="column" />)
 })
 
-app.get('/column/:slug', async (c) => {
+// 게시판 상세 공통: 중복본 301 → 없는 글은 진짜 404(noindex) → 얇은 후기·이야기 글은 noindex, follow
+async function renderBoardDetail(c: any, board: BoardKind) {
   const slug = c.req.param('slug')
+  const path = BOARDS[board].path
   const canonical = await getColumnRedirect(c.env, slug)
-  if (canonical) return c.redirect(encodeURI(`/column/${canonical}`), 301)
+  if (canonical) return c.redirect(encodeURI(`${path}/${canonical}`), 301)
+  // KV에 없으면 페이지와 같은 방식으로 시드 글로 폴백 (기존 동작 유지)
+  const column = (await getColumn(c.env, slug)) ?? SEED_COLUMNS.find((x) => x.slug === slug) ?? null
+  if (!column) {
+    // 예전엔 200 + "글을 찾을 수 없습니다"(soft 404) → 404 상태 + noindex
+    return c.html(<ColumnDetailPage slug={slug} column={null} board={board} />, 404, { 'X-Robots-Tag': 'noindex' })
+  }
   const views = await bumpView(c.env, `column:${slug}`)
-  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="column" />)
-})
+  const thin = isThinBoardPost(column)
+  return c.html(
+    <ColumnDetailPage slug={slug} column={column} views={views} board={board} noindex={thin} />,
+    200,
+    thin ? { 'X-Robots-Tag': NOINDEX_FOLLOW } : {},
+  )
+}
+
+app.get('/column/:slug', (c) => renderBoardDetail(c, 'column'))
 
 // ===== 치료 후기 게시판 =====
 app.get('/reviews-board', async (c) => {
   const columns = await listPublicColumns(c.env, 'reviews')
   return c.html(<ColumnListPage columns={columns} board="reviews" />)
 })
-app.get('/reviews-board/:slug', async (c) => {
-  const slug = c.req.param('slug')
-  const canonical = await getColumnRedirect(c.env, slug)
-  if (canonical) return c.redirect(encodeURI(`/reviews-board/${canonical}`), 301)
-  const views = await bumpView(c.env, `column:${slug}`)
-  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="reviews" />)
-})
+app.get('/reviews-board/:slug', (c) => renderBoardDetail(c, 'reviews'))
 
 // ===== 치과 이야기 게시판 =====
 app.get('/story-board', async (c) => {
   const columns = await listPublicColumns(c.env, 'story')
   return c.html(<ColumnListPage columns={columns} board="story" />)
 })
-app.get('/story-board/:slug', async (c) => {
-  const slug = c.req.param('slug')
-  const canonical = await getColumnRedirect(c.env, slug)
-  if (canonical) return c.redirect(encodeURI(`/story-board/${canonical}`), 301)
-  const views = await bumpView(c.env, `column:${slug}`)
-  return c.html(<ColumnDetailPage slug={slug} column={await getColumn(c.env, slug)} views={views} board="story" />)
-})
+app.get('/story-board/:slug', (c) => renderBoardDetail(c, 'story'))
 app.get('/encyclopedia', (c) => c.html(<EncyclopediaListPage category={c.req.query('cat')} />))
 app.get('/encyclopedia/:slug', (c) => {
   const slug = c.req.param('slug')
@@ -178,7 +182,9 @@ app.get('/encyclopedia/:slug', (c) => {
   if (primary) return c.redirect(`/encyclopedia/${primary}`, 301)
   // 본문 없는 thin 용어: 페이지는 정상 제공하되 noindex,follow 헤더 (meta는 Layout에서 함께 출력)
   const term = getTerm(slug)
-  if (term && isThinTerm(term)) return c.html(<EncyclopediaDetailPage slug={slug} />, 200, { 'X-Robots-Tag': 'noindex, follow' })
+  // 없는 용어: 예전엔 200 + "용어를 찾을 수 없습니다"(soft 404) → 404 상태 + noindex
+  if (!term) return c.html(<EncyclopediaDetailPage slug={slug} />, 404, { 'X-Robots-Tag': 'noindex' })
+  if (isThinTerm(term)) return c.html(<EncyclopediaDetailPage slug={slug} />, 200, { 'X-Robots-Tag': 'noindex, follow' })
   return c.html(<EncyclopediaDetailPage slug={slug} />)
 })
 
@@ -1030,6 +1036,8 @@ app.get('/sitemap-content.xml', async (c) => {
   try {
     const columns = await listPublicColumns(c.env)
     columns.forEach((col: any) => {
+      // 얇은 후기·이야기 글(noindex, follow)은 사이트맵 제외 — 본문 보강 시 자동 복귀
+      if (isThinBoardPost(col)) return
       // 칼럼 대표이미지: 지정 cover → 본문 첫 이미지 fallback
       let img = col.cover || ''
       if (!img && Array.isArray(col.body)) {
