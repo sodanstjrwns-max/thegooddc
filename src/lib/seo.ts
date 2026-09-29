@@ -4,6 +4,11 @@
 import { CLINIC } from '../data/clinic'
 
 const BASE = `https://${CLINIC.domain}`
+// 병원 엔티티 @id 단일화 (2026-09-29): #dentist·#organization·#medicalclinic 3개 → #medicalclinic 하나
+export const CLINIC_ID = `${BASE}/#medicalclinic`
+// 공식 채널 (src/data/clinic.ts sns 에 있는 값만): 네이버 플레이스(예약 링크 주석의 36398883)·카카오 채널
+const NAVER_PLACE = 'https://map.naver.com/p/entry/place/36398883'
+const SAME_AS = [NAVER_PLACE, CLINIC.sns?.kakao, CLINIC.sns?.instagram, CLINIC.sns?.blog, CLINIC.sns?.youtube].filter((u): u is string => !!u)
 
 export interface SeoMeta {
   title: string
@@ -100,7 +105,7 @@ export function personSchema(doctor: { name: string; license: string; career: st
     '@id': `${BASE}/doctors/${doctor.slug}/#person`,
     name: doctor.name,
     jobTitle: doctor.license,
-    worksFor: { '@id': `${BASE}/#dentist` },
+    worksFor: { '@id': CLINIC_ID },
     url: `${BASE}/doctors/${doctor.slug}`,
     description: doctor.career.join(', '),
     image: img,
@@ -163,14 +168,42 @@ export function articleSchema(a: {
     image: { '@type': 'ImageObject', url: img, width: 1200, height: 630 },
     datePublished: a.datePublished,
     dateModified: a.dateModified,
-    author: { '@type': 'Person', name: a.authorName, url: `${BASE}/doctors/${a.authorSlug}` },
-    reviewedBy: { '@type': 'Person', name: a.authorName },
-    publisher: { '@id': `${BASE}/#organization` },
+    author: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName, url: `${BASE}/doctors/${a.authorSlug}` },
+    reviewedBy: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName },
+    publisher: { '@id': CLINIC_ID },
     inLanguage: 'ko-KR',
   }
   if (a.wordCount) schema.wordCount = a.wordCount
   if (a.section) schema.articleSection = a.section
   return schema
+}
+
+// BlogPosting (칼럼 본문 엔티티, 2026-09-29) — 날짜는 저장된 글 데이터(date/modified) 고정값
+export function blogPostingSchema(a: {
+  title: string; description: string; path: string
+  datePublished: string; dateModified: string; authorSlug: string; authorName: string
+  image?: string; wordCount?: number; section?: string
+}) {
+  const url = `${BASE}${a.path}`
+  const img = a.image ? (/^https?:\/\//.test(a.image) ? a.image : canonical(a.image)) : `${BASE}/images/og-default.jpg`
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${url}#article`,
+    headline: a.title,
+    description: a.description,
+    url,
+    mainEntityOfPage: url,
+    image: { '@type': 'ImageObject', url: img },
+    datePublished: a.datePublished,
+    dateModified: a.dateModified || a.datePublished,
+    author: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName, url: `${BASE}/doctors/${a.authorSlug}` },
+    publisher: { '@id': CLINIC_ID },
+    isPartOf: { '@id': `${BASE}/#website` },
+    inLanguage: 'ko-KR',
+    ...(a.wordCount ? { wordCount: a.wordCount } : {}),
+    ...(a.section ? { articleSection: a.section } : {}),
+  }
 }
 
 // City / AdministrativeArea (지역 SEO)
@@ -183,13 +216,14 @@ export function citySchema(area: { name: string; fullName: string }) {
 }
 
 // SpeakableSpecification (음성검색)
-export function speakableSchema() {
+// 셀렉터는 페이지 실제 DOM 에 있는 것만 넘길 것 (2026-09-29 — 홈 등 .aeo-answer 없는 페이지 교정)
+export function speakableSchema(selectors: string[] = ['h1', '.aeo-answer']) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     speakable: {
       '@type': 'SpeakableSpecification',
-      cssSelector: ['h1', '.aeo-answer'],
+      cssSelector: selectors,
     },
   }
 }
@@ -208,7 +242,7 @@ export function webSiteSchema() {
     name: CLINIC.name,
     alternateName: CLINIC.nameEn,
     inLanguage: 'ko-KR',
-    publisher: { '@id': `${BASE}/#organization` },
+    publisher: { '@id': CLINIC_ID },
     potentialAction: {
       '@type': 'SearchAction',
       target: { '@type': 'EntryPoint', urlTemplate: `${BASE}/encyclopedia?cat={search_term_string}` },
@@ -224,7 +258,7 @@ export function medicalClinicSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': ['MedicalClinic', 'Dentist'],
-    '@id': `${BASE}/#medicalclinic`,
+    '@id': CLINIC_ID,
     name: CLINIC.name,
     alternateName: CLINIC.nameEn,
     description: CLINIC.philosophy?.mission,
@@ -247,7 +281,10 @@ export function medicalClinicSchema() {
       addressCountry: 'KR',
     },
     geo: { '@type': 'GeoCoordinates', latitude: CLINIC.geo.lat, longitude: CLINIC.geo.lng },
-    hasMap: `https://map.naver.com/v5/search/${encodeURIComponent(CLINIC.name)}`,
+    hasMap: NAVER_PLACE,
+    sameAs: SAME_AS,
+    founder: { '@type': 'Person', name: CLINIC.director },
+    foundingDate: CLINIC.openedDate,
     areaServed: ['부산 강서구 명지', '부산 강서구', '부산광역시', '경남 김해', '경남 창원'].map((n) => ({
       '@type': 'City',
       name: n,
@@ -280,7 +317,7 @@ export function reviewSchema(review: { author: string; rating: number; body: str
   return {
     '@context': 'https://schema.org',
     '@type': 'Review',
-    itemReviewed: { '@id': `${BASE}/#medicalclinic` },
+    itemReviewed: { '@id': CLINIC_ID },
     author: { '@type': 'Person', name: review.author },
     reviewRating: { '@type': 'Rating', ratingValue: review.rating, bestRating: 5, worstRating: 1 },
     reviewBody: review.body,
@@ -369,7 +406,7 @@ export function procedureRichSchema(t: {
     ...(t.indications && t.indications.length
       ? { indication: t.indications.map((i) => ({ '@type': 'MedicalIndication', name: i })) }
       : {}),
-    provider: { '@id': `${BASE}/#medicalclinic` },
+    provider: { '@id': CLINIC_ID },
   }
 }
 
@@ -425,32 +462,15 @@ export function areaLocalBusinessSchema(area: {
   transit?: string
   geo?: { lat: number; lng: number }
 }) {
-  const streetAddress = CLINIC.address.replace(/^부산\s*강서구\s*/, '').trim()
+  // (2026-09-29) 지역마다 별도 병원 엔티티(#localclinic)를 만들지 않고, 본원 CLINIC_ID 에 이 지역 areaServed 만 덧붙인다.
   return {
     '@context': 'https://schema.org',
     '@type': ['MedicalClinic', 'Dentist'],
-    '@id': `${BASE}/clinic/${area.slug}/#localclinic`,
-    name: `${CLINIC.name} (${area.name} 인근 치과)`,
-    alternateName: CLINIC.nameEn,
-    description: `${area.fullName} 인근에서 임플란트·교정·심미치료를 제공하는 통합치의학과 치과. ${area.desc}.`,
-    url: `${BASE}/clinic/${area.slug}`,
-    mainEntityOfPage: { '@id': `${BASE}/#medicalclinic` },
-    telephone: CLINIC.phone,
-    priceRange: '₩₩',
-    image: `${BASE}/images/og-default.jpg`,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress,
-      addressLocality: CLINIC.addressLocality,
-      addressRegion: CLINIC.addressRegion,
-      postalCode: CLINIC.postalCode,
-      addressCountry: 'KR',
-    },
-    geo: { '@type': 'GeoCoordinates', latitude: CLINIC.geo.lat, longitude: CLINIC.geo.lng },
-    hasMap: `https://map.naver.com/v5/search/${encodeURIComponent(CLINIC.name)}`,
+    '@id': CLINIC_ID,
+    name: CLINIC.name,
+    url: BASE,
     areaServed: [
       { '@type': 'City', name: area.fullName, alternateName: area.name },
-      // 해당 지역 좌표 중심 반경 서비스 영역 — 로컬 검색 강화
       ...(area.geo
         ? [{
             '@type': 'GeoCircle',
@@ -459,14 +479,6 @@ export function areaLocalBusinessSchema(area: {
           }]
         : []),
     ],
-    openingHoursSpecification: (CLINIC.hours || [])
-      .filter((h: any) => !h.closed)
-      .map((h: any) => ({
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: dayToSchema(h.day),
-        opens: h.time.split(' - ')[0],
-        closes: h.time.split(' - ')[1],
-      })),
   }
 }
 
@@ -476,7 +488,7 @@ export function serviceAreaSchema(radiusKm = 20) {
     '@context': 'https://schema.org',
     '@type': 'Service',
     serviceType: '치과 진료 (임플란트·교정·심미치료)',
-    provider: { '@id': `${BASE}/#medicalclinic` },
+    provider: { '@id': CLINIC_ID },
     areaServed: {
       '@type': 'GeoCircle',
       geoMidpoint: { '@type': 'GeoCoordinates', latitude: CLINIC.geo.lat, longitude: CLINIC.geo.lng },
@@ -516,11 +528,13 @@ export function medicalWebPageSchema(opts: {
   path: string
   description: string
   about?: string // 다루는 시술/주제명
-  lastReviewed?: string // YYYY-MM-DD
+  aboutId?: string // MedicalProcedure @id
+  lastReviewed: string // YYYY-MM-DD (고정값 필수 — 화면 '최종 검토'와 동일)
+  doctorSlug?: string
   doctorName?: string
-  doctorLicense?: string
+  doctorTitle?: string
+  speakable?: string[]
 }) {
-  const reviewed = opts.lastReviewed || new Date().toISOString().slice(0, 10)
   return {
     '@context': 'https://schema.org',
     '@type': 'MedicalWebPage',
@@ -529,19 +543,24 @@ export function medicalWebPageSchema(opts: {
     url: `${BASE}${opts.path}`,
     description: opts.description,
     inLanguage: 'ko-KR',
-    lastReviewed: reviewed,
-    ...(opts.about ? { about: { '@type': 'MedicalProcedure', name: opts.about } } : {}),
+    lastReviewed: opts.lastReviewed,
+    dateModified: opts.lastReviewed,
+    ...(opts.aboutId
+      ? { about: { '@id': opts.aboutId } }
+      : opts.about ? { about: { '@type': 'MedicalProcedure', name: opts.about } } : {}),
     ...(opts.doctorName
       ? {
           reviewedBy: {
-            '@type': 'Physician',
+            '@type': ['Person', 'Physician'],
+            ...(opts.doctorSlug ? { '@id': `${BASE}/doctors/${opts.doctorSlug}/#person` } : {}),
             name: opts.doctorName,
-            ...(opts.doctorLicense ? { identifier: opts.doctorLicense } : {}),
+            ...(opts.doctorTitle ? { jobTitle: opts.doctorTitle } : {}),
             medicalSpecialty: 'Dentistry',
           },
         }
       : {}),
-    publisher: { '@id': `${BASE}/#medicalclinic` },
+    ...(opts.speakable ? { speakable: { '@type': 'SpeakableSpecification', cssSelector: opts.speakable } } : {}),
+    publisher: { '@id': CLINIC_ID },
     isPartOf: { '@id': `${BASE}/#website` },
   }
 }

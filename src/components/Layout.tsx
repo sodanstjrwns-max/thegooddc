@@ -2,7 +2,7 @@ import type { FC, PropsWithChildren } from 'hono/jsx'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { AREAS } from '../data/areas'
-import { canonical, dentistSchema, organizationSchema, medicalClinicSchema, webSiteSchema } from '../lib/seo'
+import { canonical, medicalClinicSchema, webSiteSchema } from '../lib/seo'
 import { ASSET_VERSION } from '../lib/asset-version'
 import { getActiveSettings } from '../lib/runtime-settings'
 
@@ -97,9 +97,9 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   const img = ogImage
     ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
     : canonical('/images/og-default.jpg')
-  // 전역 기반 스키마: WebSite(SearchAction) + MedicalClinic(NAP·@id 정의) + Dentist + Organization
-  // medicalClinicSchema가 #medicalclinic @id를 정의 → 각 페이지 procedure/review의 provider 참조 해소
-  const allSchemas = [webSiteSchema(), medicalClinicSchema(), dentistSchema(), organizationSchema(), ...schemas]
+  // 전역 기반 스키마: WebSite(SearchAction) + MedicalClinic(NAP·@id 정의)
+  // 병원 엔티티는 #medicalclinic 하나 (별도 #dentist·#organization 노드 제거, 2026-09-29)
+  const allSchemas = [webSiteSchema(), medicalClinicSchema(), ...schemas]
 
   return (
     <html lang="ko">

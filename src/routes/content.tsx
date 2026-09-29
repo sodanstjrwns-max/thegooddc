@@ -5,7 +5,7 @@ import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
 import { DOCTORS, getDoctor } from '../data/doctors'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms, isThinTerm } from '../data/encyclopedia'
-import { breadcrumbSchema, articleSchema, speakableSchema, faqSchema } from '../lib/seo'
+import { breadcrumbSchema, articleSchema, blogPostingSchema, speakableSchema, faqSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
 import type { Column, BoardKind, BoardMeta } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES, BOARDS } from '../lib/content-store'
@@ -313,7 +313,9 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       schemas={[
         breadcrumbSchema([{ name: '홈', path: '/' }, { name: bm.label, path: bm.path }, { name: c.title, path: `${bm.path}/${c.slug}` }]),
         articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
-        speakableSchema(),
+        // BlogPosting — 헤드라인·작성자·게시/수정일(저장된 글 데이터 고정값)·대표이미지·publisher @id (2026-09-29)
+        blogPostingSchema({ title: c.title, description: c.excerpt, path: `${bm.path}/${c.slug}`, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
+        speakableSchema(['h1', '.article-body > p:first-of-type']),
       ]}
     >
       <section class="page-hero">
@@ -375,7 +377,7 @@ export const EncyclopediaListPage: FC<{ category?: string }> = ({ category }) =>
       description={`치과 용어와 진료 정보를 정리한 백과사전입니다. 임플란트, 교정, 신경치료 등 ${TERMS.length}개 이상의 용어를 쉽게 설명합니다.`}
       path="/encyclopedia"
       keywords={['치과 용어', '치과 백과사전', '임플란트 용어', '치과 정보']}
-      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }]), speakableSchema()]}
+      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '백과사전', path: '/encyclopedia' }]), speakableSchema(['h1', '.page-hero h1 + p'])]}
     >
       <section class="page-hero">
         <div class="container ph-inner">

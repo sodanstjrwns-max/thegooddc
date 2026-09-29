@@ -4,6 +4,7 @@ import { Breadcrumb, FaqList } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS, GENERAL_TREATMENTS, getTreatment } from '../data/treatments'
 import { getDoctor } from '../data/doctors'
+import { TX_REVIEWED } from '../lib/content-dates'
 import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
 import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedureRichSchema, howToSchema, qaPageSchema, imageObjectSchema, medicalWebPageSchema, itemListSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
@@ -197,12 +198,14 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
       name: `${t.name} | ${CLINIC.name}`,
       path: `/treatments/${t.slug}`,
       description: t.summary,
-      about: t.name,
+      aboutId: `https://${CLINIC.domain}/treatments/${t.slug}/#procedure`,
+      lastReviewed: TX_REVIEWED,
+      doctorSlug: doctor?.slug,
       doctorName: doctor?.name,
-      doctorLicense: doctor?.license,
+      doctorTitle: doctor?.title,
+      speakable: t.qa.length > 0 ? ['h1', '.aeo-answer'] : ['h1', '.page-hero p'],
     }),
     faqSchema(t.faq),
-    speakableSchema(),
   ]
   // 대표 질문 1개를 QAPage로 강조 (직답 인용 가능성↑)
   if (t.qa.length > 0) {
@@ -289,6 +292,12 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
             </aside>
 
             <div class="article-body" style="margin:0">
+              {/* 감수 줄 — 스키마 reviewedBy·lastReviewed 와 동일 값 (2026-09-29) */}
+              {doctor && (
+                <p class="tx-reviewer" style="font-size:13px;color:var(--ink-soft);margin:0 0 20px">
+                  감수: <a href={`/doctors/${doctor.slug}`} style="color:inherit;text-decoration:underline">{doctor.name} {doctor.title}</a> · 최종 검토 <time datetime={TX_REVIEWED}>{TX_REVIEWED}</time>
+                </p>
+              )}
               {/* AEO: 질문형 H2 + 직답 (AI 답변 엔진이 그대로 인용하기 좋은 형태) */}
               {t.qa.length > 0 && (
                 <div id="qa" class="aeo-qa-block">

@@ -63,7 +63,8 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
       keywords={['명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과']}
       path="/"
       schemas={[
-        speakableSchema(),
+        // .aeo-answer 없는 페이지 — 실제 요소(h1·히어로 리드 문단)로 지정 (2026-09-29)
+        speakableSchema(['h1', '.hero .lead']),
         faqSchema(HOME_FAQS),
         // B1 리치 생태계 확장: 원장(Person) + 주력 시술(MedicalProcedure) + 경로(BreadcrumbList)
         personSchema(doctor),
@@ -158,7 +159,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
           {STATS.map((s) => (
             <div class="item">
               <div class="n">
-                <span data-count={String(s.n)}>{s.year ? s.n : 0}</span>{s.u && <span class="u">{s.u}</span>}
+                <span data-count={String(s.n)}>{s.year ? s.n : s.n.toLocaleString('en-US')}</span>{s.u && <span class="u">{s.u}</span>}
               </div>
               <div class="l">{s.l}</div>
             </div>
@@ -271,7 +272,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
               <div class="bento-glow"></div>
               <div class="ring" data-ring="98">
                 <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" cx="60" cy="60" r="52"/></svg>
-                <div class="ring-num"><span data-count="98">0</span><i>%</i></div>
+                <div class="ring-num"><span data-count="98">98</span><i>%</i></div>
               </div>
               <div class="bento-body">
                 <h3>계획대로 정확하게</h3>

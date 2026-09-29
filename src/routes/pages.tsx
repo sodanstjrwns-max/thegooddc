@@ -18,7 +18,7 @@ export const MissionPage: FC = () => {
       description={`${CLINIC.name}의 미션은 "${CLINIC.philosophy.mission}" 입니다. 비전은 ${CLINIC.philosophy.vision}가 되는 것. 강서구 명지에서 편안하고 정확한 진료를 제공합니다.`}
       path="/mission"
       keywords={['강서구 치과 소개', '명지 치과 철학', '더착한치과 미션']}
-      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema()]}
+      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '병원소개', path: '/mission' }]), speakableSchema(['h1', '.page-hero h1 + p'])]}
     >
       <section class="page-hero has-img">
         <div class="bg" data-parallax="0.12" style="background-image:url('/images/interior-reception.webp')"></div>
@@ -304,7 +304,7 @@ export const FaqPage: FC = () => {
       description="더착한치과 진료에 대해 자주 묻는 질문을 모았습니다. 임플란트, 투명교정, 스타일네이트, 충치, 잇몸치료 등 진료별 궁금증을 확인하세요."
       path="/faq"
       keywords={['강서구 치과 질문', '임플란트 질문', '투명교정 비용', '명지 치과 FAQ']}
-      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: 'FAQ', path: '/faq' }]), faqSchema(allFaqs.slice(0, 30)), speakableSchema()]}
+      schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: 'FAQ', path: '/faq' }]), faqSchema(allFaqs.slice(0, 30)), speakableSchema(['h1', '.faq-q'])]}
     >
       <section class="page-hero">
         <div class="container ph-inner">
