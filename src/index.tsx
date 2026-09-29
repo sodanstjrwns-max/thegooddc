@@ -18,6 +18,7 @@ import { TreatmentsListPage, TreatmentDetailPage } from './routes/treatments'
 import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { loadFees, saveFees, toPublic } from './lib/fees'
+import { TX_REVIEWED, CONTENT_DATES, latestDate, toYmd } from './lib/content-dates'
 import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { AreaPage, AreaHubPage } from './routes/area'
 import { fetchDashboardStats, renderStatsPage, STATS_KEY, MASTER_KEY } from './routes/stats'
@@ -976,102 +977,142 @@ Sitemap: https://${d}/sitemap-areas.xml
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 
-// 🚀 Sitemap Index — 검색엔진이 분할된 사이트맵을 한번에 발견
-app.get('/sitemap.xml', (c) => {
-  const base = `https://${CLINIC.domain}`
-  const now = new Date().toISOString().slice(0, 10)
-  const maps = ['sitemap-main.xml', 'sitemap-treatments.xml', 'sitemap-content.xml', 'sitemap-encyclopedia.xml', 'sitemap-areas.xml']
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${maps
-    .map((m) => `  <sitemap><loc>${base}/${m}</loc><lastmod>${now}</lastmod></sitemap>`)
-    .join('\n')}\n</sitemapindex>`
-  return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
-})
-
-function urlsetXml(base: string, urls: { loc: string; pri: string; lastmod?: string }[]) {
-  const now = new Date().toISOString().slice(0, 10)
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
-    .map((u) => `  <url><loc>${base}${u.loc}</loc><lastmod>${u.lastmod || now}</lastmod><priority>${u.pri}</priority></url>`)
+// ===== 사이트맵 — lastmod = 콘텐츠 실제 수정일 (날짜를 모르면 태그 생략, 오늘 날짜로 채우지 않음) =====
+//  - 진료: TX_REVIEWED (화면 '최종 검토'·lastReviewed 와 동일)
+//  - 정적 페이지·의료진·지역·백과 용어: lib/content-dates.ts CONTENT_DATES (본문 줄의 마지막 수정 커밋 날짜, 빌드 시 고정)
+//  - 칼럼·게시판·공지·케이스(KV): modified/date, 목록 페이지 = 최신 항목, 비용 = 수가표 '최종 갱신일'
+//  - 인덱스 lastmod = 하위 사이트맵 최신값
+// ※ 예전엔 new Date()(매일 오늘)를 찍었다 (2026-09-29 교정).
+type SmUrl = { loc: string; pri: string; lastmod?: string; img?: { url: string; caption?: string } }
+const smEsc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+function urlsetXml(base: string, urls: SmUrl[], withImages = false) {
+  const ns = withImages
+    ? 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
+    : 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset ${ns}>\n${urls
+    .map((u) => {
+      const imgTag = u.img ? `\n    <image:image><image:loc>${smEsc(u.img.url)}</image:loc>${u.img.caption ? `<image:caption>${smEsc(u.img.caption)}</image:caption>` : ''}</image:image>` : ''
+      return `  <url><loc>${base}${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.pri}</priority>${imgTag}</url>`
+    })
     .join('\n')}\n</urlset>`
 }
+const xmlHeaders = { 'Content-Type': 'application/xml; charset=utf-8' }
+const itemDate = (x: any) => latestDate(x?.modified, x?.date)
+const newestOf = (xs: any[]) => latestDate(xs.map(itemDate))
 
-// 메인 페이지군
-app.get('/sitemap-main.xml', (c) => {
-  const base = `https://${CLINIC.domain}`
-  const urls = [
-    { loc: '/', pri: '1.0' },
-    { loc: '/mission', pri: '0.8' },
-    { loc: '/treatments', pri: '0.9' },
-    { loc: '/doctors', pri: '0.8' },
-    { loc: '/cases', pri: '0.7' },
-    { loc: '/reviews-board', pri: '0.8' },
-    { loc: '/story-board', pri: '0.6' },
-    { loc: '/column', pri: '0.7' },
-    { loc: '/encyclopedia', pri: '0.7' },
-    { loc: '/directions', pri: '0.7' },
-    { loc: '/faq', pri: '0.8' },
-    { loc: '/pricing', pri: '0.6' },
-    { loc: '/notice', pri: '0.5' },
-    { loc: '/reservation', pri: '0.8' },
+// KV 동적 콘텐츠 (게시판 글·공지·케이스·수가표)
+async function dynamicContent(env: any) {
+  const safe = async <T,>(p: Promise<T>, fb: T): Promise<T> => { try { return await p } catch { return fb } }
+  const [columns, notices, cases, fees] = await Promise.all([
+    safe(listPublicColumns(env), [] as any[]),
+    safe(listNotices(env), [] as any[]),
+    safe(listCases(env), [] as any[]),
+    safe(loadFees(env), null as any),
+  ])
+  return { columns, notices, cases, feesUpdated: toYmd(fees?.updated) }
+}
+type Dyn = Awaited<ReturnType<typeof dynamicContent>>
+const boardNewest = (d: Dyn, board: BoardKind) => newestOf(d.columns.filter((x: any) => (x.board || 'column') === board))
+const termDate = (slug: string) => CONTENT_DATES.encyclopedia[slug] || CONTENT_DATES.pages.encFallback
+const areaDate = (areaSlug: string, txSlug: string) => latestDate(CONTENT_DATES.pages.areaTemplate, CONTENT_DATES.areas[areaSlug], TX_REVIEWED)
+
+function mainUrls(d: Dyn): SmUrl[] {
+  const P = CONTENT_DATES.pages
+  return [
+    { loc: '/', pri: '1.0', lastmod: P.home },
+    { loc: '/mission', pri: '0.8', lastmod: P.mission },
+    { loc: '/treatments', pri: '0.9', lastmod: TX_REVIEWED },
+    { loc: '/doctors', pri: '0.8', lastmod: P.doctorsList },
+    { loc: '/cases', pri: '0.7', lastmod: newestOf(d.cases) },
+    { loc: '/reviews-board', pri: '0.8', lastmod: boardNewest(d, 'reviews') },
+    { loc: '/story-board', pri: '0.6', lastmod: boardNewest(d, 'story') },
+    { loc: '/column', pri: '0.7', lastmod: boardNewest(d, 'column') },
+    { loc: '/encyclopedia', pri: '0.7', lastmod: latestDate(TERMS.map((t) => termDate(t.slug))) },
+    { loc: '/directions', pri: '0.7', lastmod: P.directions },
+    { loc: '/faq', pri: '0.8', lastmod: latestDate(P.faq, TX_REVIEWED) },
+    { loc: '/pricing', pri: '0.6', lastmod: d.feesUpdated || P.pricing },
+    { loc: '/notice', pri: '0.5', lastmod: newestOf(d.notices) },
+    { loc: '/reservation', pri: '0.8', lastmod: P.reservation },
   ]
-  return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
-})
-
+}
 // 진료 + 의료진
-app.get('/sitemap-treatments.xml', (c) => {
-  const base = `https://${CLINIC.domain}`
-  const urls: { loc: string; pri: string }[] = []
-  TREATMENTS.forEach((t) => urls.push({ loc: `/treatments/${t.slug}`, pri: t.category === 'core' ? '0.9' : '0.7' }))
-  DOCTORS.forEach((d) => urls.push({ loc: `/doctors/${d.slug}`, pri: '0.8' }))
-  return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
-})
-
+function treatmentUrls(): SmUrl[] {
+  const urls: SmUrl[] = []
+  TREATMENTS.forEach((t) => urls.push({ loc: `/treatments/${t.slug}`, pri: t.category === 'core' ? '0.9' : '0.7', lastmod: TX_REVIEWED }))
+  DOCTORS.forEach((doc) => urls.push({ loc: `/doctors/${doc.slug}`, pri: '0.8', lastmod: CONTENT_DATES.doctors[doc.slug] }))
+  return urls
+}
 // 칼럼 + 공지 (KV 동적 콘텐츠) — 이미지 사이트맵(칼럼 대표이미지) 포함
+function contentUrls(d: Dyn, base: string): SmUrl[] {
+  const urls: SmUrl[] = []
+  d.columns.forEach((col: any) => {
+    // 얇은 후기·이야기 글(noindex, follow)은 사이트맵 제외 — 본문 보강 시 자동 복귀
+    if (isThinBoardPost(col)) return
+    // 칼럼 대표이미지: 지정 cover → 본문 첫 이미지 fallback
+    let img = col.cover || ''
+    if (!img && Array.isArray(col.body)) {
+      for (const b of col.body) {
+        const m = (b?.p || '').match(/!\[(.*?)\]\((.*?)\)/)
+        if (m) { img = m[2]; break }
+      }
+    }
+    urls.push({
+      loc: `${BOARDS[(col.board || 'column') as BoardKind].path}/${col.slug}`,
+      pri: '0.7',
+      lastmod: itemDate(col),
+      img: img ? { url: /^https?:\/\//.test(img) ? img : `${base}${img}`, caption: col.coverAlt || col.title } : undefined,
+    })
+  })
+  // 공지 목록 페이지는 1회만, lastmod는 최신 공지 기준
+  if (d.notices.length) urls.push({ loc: `/notice`, pri: '0.5', lastmod: newestOf(d.notices) })
+  return urls.length ? urls : [{ loc: '/column', pri: '0.7' }]
+}
+// 백과사전 — 상세 용어는 우선순위 높임. 본문 없는 thin 용어(noindex)는 제외
+function encyclopediaUrls(): SmUrl[] {
+  const detailSlugs = new Set(DETAILED_TERMS.map((t) => t.slug))
+  return INDEXABLE_TERMS.map((t) => ({
+    loc: `/encyclopedia/${t.slug}`,
+    pri: detailSlugs.has(t.slug) ? '0.6' : '0.4',
+    lastmod: termDate(t.slug),
+  }))
+}
+// 지역 허브 + 지역×진료 조합
+function areaUrls(): SmUrl[] {
+  const urls: SmUrl[] = []
+  // 지역 허브(랜딩)는 권위 페이지 — 우선순위 높임. 허브 = 허브 템플릿·지역 데이터·해당 지역 조합 중 최신
+  getAreaHubs().forEach((h) => urls.push({
+    loc: h.url,
+    pri: '0.7',
+    lastmod: latestDate(CONTENT_DATES.pages.areaHubTemplate, CONTENT_DATES.areas[h.area.slug], TX_REVIEWED),
+  }))
+  getAreaCombinations().forEach((combo) => urls.push({ loc: combo.url, pri: '0.6', lastmod: areaDate(combo.area.slug, combo.treatment.slug) }))
+  return urls.length ? urls : [{ loc: '/directions', pri: '0.7', lastmod: CONTENT_DATES.pages.directions }]
+}
+
+// 🚀 Sitemap Index — 검색엔진이 분할된 사이트맵을 한번에 발견 (lastmod = 하위 사이트맵 최신 URL 날짜)
+app.get('/sitemap.xml', async (c) => {
+  const base = `https://${CLINIC.domain}`
+  const d = await dynamicContent(c.env)
+  const maps: [string, SmUrl[]][] = [
+    ['sitemap-main.xml', mainUrls(d)],
+    ['sitemap-treatments.xml', treatmentUrls()],
+    ['sitemap-content.xml', contentUrls(d, base)],
+    ['sitemap-encyclopedia.xml', encyclopediaUrls()],
+    ['sitemap-areas.xml', areaUrls()],
+  ]
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${maps
+    .map(([m, urls]) => {
+      const lm = latestDate(urls.map((u) => u.lastmod))
+      return `  <sitemap><loc>${base}/${m}</loc>${lm ? `<lastmod>${lm}</lastmod>` : ''}</sitemap>`
+    })
+    .join('\n')}\n</sitemapindex>`
+  return c.text(xml, 200, xmlHeaders)
+})
+app.get('/sitemap-main.xml', async (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, mainUrls(await dynamicContent(c.env))), 200, xmlHeaders))
+app.get('/sitemap-treatments.xml', (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, treatmentUrls()), 200, xmlHeaders))
 app.get('/sitemap-content.xml', async (c) => {
   const base = `https://${CLINIC.domain}`
-  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
-  const now = new Date().toISOString().slice(0, 10)
-  type CUrl = { loc: string; pri: string; lastmod?: string; img?: { url: string; caption?: string } }
-  const urls: CUrl[] = []
-  let latestColumn = ''
-  try {
-    const columns = await listPublicColumns(c.env)
-    columns.forEach((col: any) => {
-      // 얇은 후기·이야기 글(noindex, follow)은 사이트맵 제외 — 본문 보강 시 자동 복귀
-      if (isThinBoardPost(col)) return
-      // 칼럼 대표이미지: 지정 cover → 본문 첫 이미지 fallback
-      let img = col.cover || ''
-      if (!img && Array.isArray(col.body)) {
-        for (const b of col.body) {
-          const m = (b?.p || '').match(/!\[(.*?)\]\((.*?)\)/)
-          if (m) { img = m[2]; break }
-        }
-      }
-      const lastmod = (col.modified || col.date || '').slice(0, 10) || now
-      if (lastmod > latestColumn) latestColumn = lastmod
-      urls.push({
-        loc: `${BOARDS[col.board || 'column'].path}/${col.slug}`,
-        pri: '0.7',
-        lastmod,
-        img: img ? { url: /^https?:\/\//.test(img) ? img : `${base}${img}`, caption: col.coverAlt || col.title } : undefined,
-      })
-    })
-  } catch {}
-  // 공지 목록 페이지는 1회만, lastmod는 최신 공지 기준
-  try {
-    const notices = await listNotices(c.env)
-    if (notices.length) {
-      const latest = notices.map((n: any) => (n.modified || n.date || '').slice(0, 10)).filter(Boolean).sort().pop()
-      urls.push({ loc: `/notice`, pri: '0.5', lastmod: latest || now })
-    }
-  } catch {}
-  const body = urls.length ? urls : [{ loc: '/column', pri: '0.7' } as CUrl]
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${body
-    .map((u) => {
-      const imgTag = u.img ? `\n    <image:image><image:loc>${esc(u.img.url)}</image:loc>${u.img.caption ? `<image:caption>${esc(u.img.caption)}</image:caption>` : ''}</image:image>` : ''
-      return `  <url><loc>${base}${u.loc}</loc><lastmod>${u.lastmod || now}</lastmod><priority>${u.pri}</priority>${imgTag}</url>`
-    })
-    .join('\n')}\n</urlset>`
-  return c.text(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+  return c.text(urlsetXml(base, contentUrls(await dynamicContent(c.env), base), true), 200, xmlHeaders)
 })
 
 // ===== RSS 2.0 피드 (/rss.xml) — 칼럼·게시판 최신 글 (구독·AI 크롤러 발견성 + 네이버 서치어드바이저 RSS 제출용) =====
@@ -1080,7 +1121,7 @@ app.get('/rss.xml', async (c) => {
   const esc = (s: any) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
   const toRfc822 = (v: any): string => {
     const d = new Date(String(v || ''))
-    return isNaN(d.getTime()) ? new Date().toUTCString() : d.toUTCString()
+    return isNaN(d.getTime()) ? '' : d.toUTCString()
   }
   let cols: any[] = []
   try { cols = await listPublicColumns(c.env) } catch {}
@@ -1088,6 +1129,8 @@ app.get('/rss.xml', async (c) => {
     .slice()
     .sort((a: any, b: any) => String(b.date || '').localeCompare(String(a.date || '')))
     .slice(0, 50)
+  // lastBuildDate = 피드 항목 중 최신 작성·수정일 (없으면 생략 — 요청 시각 아님)
+  const lastBuild = toRfc822(latestDate(cols.map((x: any) => [x.modified, x.date])))
   const items = cols.map((col: any) => {
     const board = BOARDS[(col.board || 'column') as BoardKind]
     const url = `${base}${board.path}/${col.slug}`
@@ -1097,7 +1140,7 @@ app.get('/rss.xml', async (c) => {
     <guid isPermaLink="true">${url}</guid>
     <description>${esc(col.excerpt || col.title)}</description>
     <category>${esc(board.label)}</category>
-    <pubDate>${toRfc822(col.date)}</pubDate>
+    ${toRfc822(col.date) ? `<pubDate>${toRfc822(col.date)}</pubDate>` : ''}
   </item>`
   }).join('\n')
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1108,35 +1151,14 @@ app.get('/rss.xml', async (c) => {
   <atom:link href="${base}/rss.xml" rel="self" type="application/rss+xml"/>
   <description>${esc(CLINIC.name)} 원장이 직접 쓰는 치과 건강 칼럼 — 임플란트·교정·심미치료</description>
   <language>ko-KR</language>
-  <lastBuildDate>${cols.length ? toRfc822(cols[0].date) : new Date().toUTCString()}</lastBuildDate>
-${items}
+${lastBuild ? `  <lastBuildDate>${lastBuild}</lastBuildDate>\n` : ''}${items}
 </channel>
 </rss>`
   return c.text(rss, 200, { 'Content-Type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=1800' })
 })
 
-// 백과사전 — 상세 용어는 우선순위 높임. 본문 없는 thin 용어(noindex)는 제외
-app.get('/sitemap-encyclopedia.xml', (c) => {
-  const base = `https://${CLINIC.domain}`
-  const detailSlugs = new Set(DETAILED_TERMS.map((t) => t.slug))
-  const urls = INDEXABLE_TERMS.map((t) => ({
-    loc: `/encyclopedia/${t.slug}`,
-    pri: detailSlugs.has(t.slug) ? '0.6' : '0.4',
-  }))
-  return c.text(urlsetXml(base, urls), 200, { 'Content-Type': 'application/xml; charset=utf-8' })
-})
-
-// 지역 허브 + 지역×진료 조합
-app.get('/sitemap-areas.xml', (c) => {
-  const base = `https://${CLINIC.domain}`
-  const urls: { loc: string; pri: string }[] = []
-  // 지역 허브(랜딩)는 권위 페이지 — 우선순위 높임
-  getAreaHubs().forEach((h) => urls.push({ loc: h.url, pri: '0.7' }))
-  getAreaCombinations().forEach((combo) => urls.push({ loc: combo.url, pri: '0.6' }))
-  return c.text(urlsetXml(base, urls.length ? urls : [{ loc: '/directions', pri: '0.7' }]), 200, {
-    'Content-Type': 'application/xml; charset=utf-8',
-  })
-})
+app.get('/sitemap-encyclopedia.xml', (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, encyclopediaUrls()), 200, xmlHeaders))
+app.get('/sitemap-areas.xml', (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, areaUrls()), 200, xmlHeaders))
 
 // ===== SEO·AEO 자동 진단 엔드포인트 =====
 // 정적 데이터 기반으로 sitemap 누락·메타·스키마·AEO 자산을 점검해 JSON 리포트 반환

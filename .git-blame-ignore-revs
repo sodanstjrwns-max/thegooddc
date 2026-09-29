@@ -1,0 +1,9 @@
+# 콘텐츠 수정일 산출(scripts/content-dates.mjs)에서 건너뛸 커밋 — 본문(화면 문장·데이터) 변화 없이
+# 스키마·감수 줄·색인 설정·링크 대상만 바꾼 커밋. 사이트맵 lastmod 가 이런 커밋 날짜로 바뀌지 않게 한다.
+
+# 2026-09-29 soft 404·깨진 백과 링크 301·얇은 게시글 noindex
+dbd0b05
+# 2026-09-29 SEO/AEO: @id 단일화·BlogPosting·진료 검토일 고정·감수 줄·카운터 초기값·speakable
+0c2fc8f
+# 2026-09-29 BlogPosting 적용 범위 조정
+109c191
