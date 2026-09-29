@@ -313,8 +313,8 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       schemas={[
         breadcrumbSchema([{ name: '홈', path: '/' }, { name: bm.label, path: bm.path }, { name: c.title, path: `${bm.path}/${c.slug}` }]),
         articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
-        // BlogPosting — 헤드라인·작성자·게시/수정일(저장된 글 데이터 고정값)·대표이미지·publisher @id (2026-09-29)
-        blogPostingSchema({ title: c.title, description: c.excerpt, path: `${bm.path}/${c.slug}`, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
+        // BlogPosting — 원장 칼럼만(후기·이야기 게시판은 작성자가 원장이 아님). 헤드라인·작성자·게시/수정일(저장된 글 데이터 고정값)·대표이미지·publisher @id (2026-09-29)
+        ...(!isColumn ? [] : [blogPostingSchema({ title: c.title, description: c.excerpt, path: `${bm.path}/${c.slug}`, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label })]),
         speakableSchema(['h1', '.article-body > p:first-of-type']),
       ]}
     >
