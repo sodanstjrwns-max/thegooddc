@@ -15,6 +15,7 @@ interface LayoutProps {
   schemas?: object[]
   ogType?: string
   noindex?: boolean // true면 robots noindex,follow (thin 페이지 등 — 링크는 따라가되 색인 제외)
+  article?: { published?: string; modified?: string; section?: string; author?: string } // og:type=article 메타
 }
 
 const FA = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css'
@@ -92,7 +93,7 @@ const GtmNoscript: FC = () => {
 }
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
-  const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', noindex = false, children } = props
+  const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', noindex = false, article, children } = props
   const url = canonical(path)
   const img = ogImage
     ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
@@ -129,6 +130,10 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content={title} />
         <meta property="og:locale" content="ko_KR" />
+        {article?.published && <meta property="article:published_time" content={article.published} />}
+        {article?.modified && <meta property="article:modified_time" content={article.modified} />}
+        {article?.author && <meta property="article:author" content={article.author} />}
+        {article?.section && <meta property="article:section" content={article.section} />}
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -164,7 +169,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
 
         {/* JSON-LD */}
         {allSchemas.map((s) => (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s).replace(/</g, '\\u003c') }} />
         ))}
       </head>
       <body>

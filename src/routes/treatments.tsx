@@ -171,7 +171,7 @@ export const TreatmentsListPage: FC = () => (
 )
 
 // ===== 진료 상세 페이지 =====
-export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
+export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; title: string; date?: string }[]; cases?: { id: string; title: string; period?: string }[] }> = ({ slug, columns = [], cases = [] }) => {
   const t = getTreatment(slug)
   if (!t) return <NotFoundInline />
   const doctor = getDoctor(t.doctorSlug)
@@ -401,7 +401,7 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                     <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 콘텐츠</h3>
                     <div class="chip-row">
                       {related.map((r) => <a href={`/treatments/${r!.slug}`} class="chip"><i class={`fa-solid fa-${r!.icon}`}></i> {r!.shortName}</a>)}
-                      <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터</a>
+                      <a href={cases.length > 0 ? `/cases?category=${t.slug}` : '/cases'} class="chip"><i class="fa-solid fa-images"></i> {cases.length > 0 ? `${t.shortName} 비포/애프터` : '비포/애프터'}</a>
                       {(() => {
                         const term = encyTermForTreatment(t.slug)
                         return term
@@ -409,6 +409,24 @@ export const TreatmentDetailPage: FC<{ slug: string }> = ({ slug }) => {
                           : <a href="/encyclopedia" class="chip"><i class="fa-solid fa-book"></i> 백과사전</a>
                       })()}
                     </div>
+                  </div>
+                )}
+                {columns.length > 0 && (
+                  <div class="related-box reveal">
+                    <h3><i class="fa-solid fa-pen-nib" style="color:var(--brand);margin-right:8px"></i>{t.shortName} 원장 칼럼</h3>
+                    <ul class="col-link-list">
+                      {columns.map((c) => <li><a href={`/column/${c.slug}`}>{c.title}</a></li>)}
+                    </ul>
+                    <a href="/column" class="chip" style="margin-top:8px">칼럼 전체 보기</a>
+                  </div>
+                )}
+                {cases.length > 0 && (
+                  <div class="related-box reveal">
+                    <h3><i class="fa-solid fa-images" style="color:var(--brand);margin-right:8px"></i>{t.shortName} 비포/애프터 사례</h3>
+                    <ul class="col-link-list">
+                      {cases.map((cs) => <li><a href={`/cases/${cs.id}`}>{t.shortName} 사례 — {cs.title}{cs.period ? `, ${cs.period}` : ''}</a></li>)}
+                    </ul>
+                    <a href={`/cases?category=${t.slug}`} class="chip" style="margin-top:8px">{t.shortName} 사례 전체 보기</a>
                   </div>
                 )}
               </div>

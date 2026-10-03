@@ -19,7 +19,8 @@ import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
 import { loadFees, saveFees, toPublic } from './lib/fees'
 import { TX_REVIEWED, CONTENT_DATES, latestDate, toYmd } from './lib/content-dates'
-import { CasesPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
+import { CasesPage, CaseDetailPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
+import { paginate, pageHref, isThinCase, relatedColumns } from './lib/column-seo'
 import { AreaPage, AreaHubPage } from './routes/area'
 import { fetchDashboardStats, renderStatsPage, STATS_KEY, MASTER_KEY } from './routes/stats'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage, AdminFeesPage } from './routes/auth'
@@ -127,7 +128,17 @@ async function getSession(c: any, role: 'member' | 'admin'): Promise<SessionPayl
 app.get('/', async (c) => c.html(<HomePage popups={await getActivePopupNotices(c.env)} />))
 app.get('/mission', (c) => c.html(<MissionPage />))
 app.get('/treatments', (c) => c.html(<TreatmentsListPage />))
-app.get('/treatments/:slug', (c) => c.html(<TreatmentDetailPage slug={c.req.param('slug')} />))
+app.get('/treatments/:slug', async (c) => {
+  const slug = c.req.param('slug')
+  // 진료 상세 ↔ 칼럼·사례 내부 링크: 이 진료의 최신 칼럼 5편 + 비포애프터 4건
+  const [cols, cases] = await Promise.all([
+    listPublicColumns(c.env, 'column').catch(() => [] as any[]),
+    listCases(c.env).catch(() => [] as any[]),
+  ])
+  return c.html(<TreatmentDetailPage slug={slug}
+    columns={cols.filter((x: any) => x.related === slug).slice(0, 5)}
+    cases={sortCases(cases).filter((x: any) => x.category === slug).slice(0, 4)} />)
+})
 app.get('/doctors', (c) => c.html(<DoctorsListPage />))
 app.get('/doctors/:slug', (c) => c.html(<DoctorDetailPage slug={c.req.param('slug')} />))
 app.get('/directions', (c) => c.html(<DirectionsPage />))
@@ -135,10 +146,17 @@ app.get('/faq', (c) => c.html(<FaqPage />))
 app.get('/pricing', async (c) => c.html(<PricingPage doc={toPublic(await loadFees(c.env))} />))
 app.get('/notice', async (c) => c.html(<NoticePage notices={await listNotices(c.env)} />))
 app.get('/reservation', (c) => c.html(<ReservationPage />))
-app.get('/column', async (c) => {
-  const [columns, mediumPosts] = await Promise.all([listPublicColumns(c.env, 'column'), listMediumPosts(c.env)])
-  return c.html(<ColumnListPage columns={columns} mediumPosts={mediumPosts} board="column" />)
-})
+// 게시판 목록: 서버 페이지네이션 ?page=N (a 태그 링크, ?page=1·범위 밖은 목록으로 301) — PFWE 칼럼 표준 A5
+const BOARD_PER_PAGE = 12
+async function renderBoardList(c: any, board: BoardKind) {
+  const all = await listPublicColumns(c.env, board)
+  const raw = c.req.query('page')
+  const pg = paginate(all.length, raw, BOARD_PER_PAGE)
+  if (raw === '1' || !pg.valid) return c.redirect(BOARDS[board].path, 301)
+  const mediumPosts = board === 'column' && pg.page === 1 ? await listMediumPosts(c.env) : []
+  return c.html(<ColumnListPage columns={all.slice(pg.offset, pg.offset + pg.size)} mediumPosts={mediumPosts} board={board} page={pg.page} pages={pg.pages} total={all.length} offset={pg.offset} />)
+}
+app.get('/column', (c) => renderBoardList(c, 'column'))
 
 // 게시판 상세 공통: 중복본 301 → 없는 글은 진짜 404(noindex) → 얇은 후기·이야기 글은 noindex, follow
 async function renderBoardDetail(c: any, board: BoardKind) {
@@ -154,8 +172,15 @@ async function renderBoardDetail(c: any, board: BoardKind) {
   }
   const views = await bumpView(c.env, `column:${slug}`)
   const thin = isThinBoardPost(column)
+  // 원장 칼럼: 같은 진료 최신 칼럼 3편 + 같은 진료 비포애프터 3건 (내부 링크)
+  let related: any[] = [], relatedCases: any[] = []
+  if (board === 'column') {
+    const [cols, cases] = await Promise.all([listPublicColumns(c.env, 'column'), listCases(c.env)])
+    related = relatedColumns(cols, column, 3)
+    relatedCases = column.related ? sortCases(cases).filter((x) => x.category === column.related).slice(0, 3) : []
+  }
   return c.html(
-    <ColumnDetailPage slug={slug} column={column} views={views} board={board} noindex={thin} />,
+    <ColumnDetailPage slug={slug} column={column} views={views} board={board} noindex={thin} related={related} relatedCases={relatedCases} />,
     200,
     thin ? { 'X-Robots-Tag': NOINDEX_FOLLOW } : {},
   )
@@ -164,17 +189,11 @@ async function renderBoardDetail(c: any, board: BoardKind) {
 app.get('/column/:slug', (c) => renderBoardDetail(c, 'column'))
 
 // ===== 치료 후기 게시판 =====
-app.get('/reviews-board', async (c) => {
-  const columns = await listPublicColumns(c.env, 'reviews')
-  return c.html(<ColumnListPage columns={columns} board="reviews" />)
-})
+app.get('/reviews-board', (c) => renderBoardList(c, 'reviews'))
 app.get('/reviews-board/:slug', (c) => renderBoardDetail(c, 'reviews'))
 
 // ===== 치과 이야기 게시판 =====
-app.get('/story-board', async (c) => {
-  const columns = await listPublicColumns(c.env, 'story')
-  return c.html(<ColumnListPage columns={columns} board="story" />)
-})
+app.get('/story-board', (c) => renderBoardList(c, 'story'))
 app.get('/story-board/:slug', (c) => renderBoardDetail(c, 'story'))
 app.get('/encyclopedia', (c) => c.html(<EncyclopediaListPage category={c.req.query('cat')} />))
 app.get('/encyclopedia/:slug', (c) => {
@@ -189,9 +208,41 @@ app.get('/encyclopedia/:slug', (c) => {
   return c.html(<EncyclopediaDetailPage slug={slug} />)
 })
 
+// 비포/애프터: 최신 수정순 (KV 저장 순서 대신 실제 날짜)
+const sortCases = (xs: any[]) => [...xs].sort((a, b) => String(b.modified || '').localeCompare(String(a.modified || '')))
+const CASES_PER_PAGE = 12
 app.get('/cases', async (c) => {
   const session = await getSession(c, 'member')
-  return c.html(<CasesPage loggedIn={!!session} cases={await listCases(c.env)} />)
+  const all = sortCases(await listCases(c.env))
+  const counts = new Map<string, number>()
+  all.forEach((x) => counts.set(x.category, (counts.get(x.category) || 0) + 1))
+  const categories = TREATMENTS.filter((t) => counts.has(t.slug)).map((t) => ({ slug: t.slug, name: t.shortName, n: counts.get(t.slug) || 0 }))
+  const rawCat = c.req.query('category') || ''
+  const category = categories.some((x) => x.slug === rawCat) ? rawCat : ''
+  if (rawCat && !category) return c.redirect('/cases', 301)
+  const list = category ? all.filter((x) => x.category === category) : all
+  const base = category ? `/cases?category=${category}` : '/cases'
+  const raw = c.req.query('page')
+  const pg = paginate(list.length, raw, CASES_PER_PAGE)
+  if (raw === '1' || !pg.valid) return c.redirect(base, 301)
+  return c.html(<CasesPage loggedIn={!!session} cases={list.slice(pg.offset, pg.offset + pg.size)} category={category} page={pg.page} pages={pg.pages} total={list.length} offset={pg.offset} categories={categories} />)
+})
+// 사례별 개별 URL — 텍스트 공개, 진료 후 사진은 로그인 게이트 유지. 설명 300자 미만은 noindex,follow(+사이트맵 제외)
+app.get('/cases/:id', async (c) => {
+  const id = c.req.param('id')
+  const all = sortCases(await listCases(c.env))
+  const cs = all.find((x) => x.id === id)
+  if (!cs) return c.html(<CasesPage cases={[]} />, 404, { 'X-Robots-Tag': 'noindex' })
+  const session = await getSession(c, 'member')
+  const thin = isThinCase(cs)
+  const cols = await listPublicColumns(c.env, 'column')
+  const relCols = cols.filter((x) => x.related === cs.category).slice(0, 3)
+  const same = all.filter((x) => x.category === cs.category && x.id !== cs.id).slice(0, 3)
+  return c.html(
+    <CaseDetailPage cs={cs} loggedIn={!!session} noindex={thin} relatedColumns={relCols} sameCases={same} />,
+    200,
+    thin ? { 'X-Robots-Tag': NOINDEX_FOLLOW } : {},
+  )
 })
 
 // 지역 SEO: /area/:areaSlug-:treatmentSlug
@@ -572,6 +623,7 @@ app.post('/api/admin/columns/create', async (c) => {
   })
   // 새 글 → 구글 자동 색인 요청 (백그라운드, 실패해도 발행에 영향 없음)
   c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`${BOARDS[col.board || 'column'].path}/${col.slug}`), 'URL_UPDATED'))
+  c.executionCtx?.waitUntil(indexNowPing([absUrl(`${BOARDS[col.board || 'column'].path}/${col.slug}`), absUrl(BOARDS[col.board || 'column'].path)]))
   return c.redirect('/admin/columns?ok=created')
 })
 app.post('/api/admin/columns/update', async (c) => {
@@ -591,6 +643,7 @@ app.post('/api/admin/columns/update', async (c) => {
   })
   // 수정된 글 → 구글 재색인 요청 (콘텐츠 갱신 신호)
   if (upd) c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl(`${BOARDS[upd.board || 'column'].path}/${upd.slug}`), 'URL_UPDATED'))
+  if (upd) c.executionCtx?.waitUntil(indexNowPing([absUrl(`${BOARDS[upd.board || 'column'].path}/${upd.slug}`)]))
   return c.redirect('/admin/columns?ok=updated')
 })
 app.post('/api/admin/columns/delete', async (c) => {
@@ -608,7 +661,7 @@ app.post('/api/admin/columns/delete', async (c) => {
 app.post('/api/admin/cases/create', async (c) => {
   if (!(await requireAdmin(c))) return c.redirect('/admin')
   const f = await c.req.parseBody()
-  await createCase(c.env, {
+  const createdCase = await createCase(c.env, {
     title: String(f.title || ''),
     category: String(f.category || ''),
     doctor: String(f.doctor || 'hwang-wooseok'),
@@ -622,8 +675,9 @@ app.post('/api/admin/cases/create', async (c) => {
     photoOralBefore: String(f.photoOralBefore || ''),
     photoOralAfter: String(f.photoOralAfter || ''),
   })
-  // 새 비포애프터 → /cases 목록 페이지 재색인 요청 (개별 URL 없음)
+  // 새 비포애프터 → /cases 목록 재색인 요청 + 개별 URL(/cases/:id) IndexNow
   c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl('/cases'), 'URL_UPDATED'))
+  if (createdCase?.id) c.executionCtx?.waitUntil(indexNowPing([absUrl(`/cases/${createdCase.id}`), absUrl('/cases')]))
   return c.redirect('/admin/cases?ok=created')
 })
 app.post('/api/admin/cases/update', async (c) => {
@@ -643,8 +697,9 @@ app.post('/api/admin/cases/update', async (c) => {
     photoOralBefore: String(f.photoOralBefore || ''),
     photoOralAfter: String(f.photoOralAfter || ''),
   })
-  // 수정된 비포애프터 → /cases 재색인 요청
+  // 수정된 비포애프터 → /cases 재색인 요청 + 개별 URL IndexNow
   c.executionCtx?.waitUntil(notifyGoogleIndex(c.env, absUrl('/cases'), 'URL_UPDATED'))
+  if (f.id) c.executionCtx?.waitUntil(indexNowPing([absUrl(`/cases/${String(f.id)}`)]))
   return c.redirect('/admin/cases?ok=updated')
 })
 app.post('/api/admin/cases/delete', async (c) => {
@@ -900,6 +955,17 @@ app.get('/offline', (c) => {
 // IndexNow: 키 검증 파일 + 수동 핑 엔드포인트 (admin 가드)
 const INDEXNOW_KEY = 'a7f3e91c245d4b8e9d6f1c0a8b2e5d73'
 app.get(`/${INDEXNOW_KEY}.txt`, (c) => c.text(INDEXNOW_KEY))
+/** 발행·수정 시 IndexNow 핑 — waitUntil 로 응답 뒤 실행, 실패해도 저장에는 영향 없음 */
+async function indexNowPing(urls: string[]): Promise<void> {
+  const base = `https://${CLINIC.domain}`
+  try {
+    await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host: CLINIC.domain, key: INDEXNOW_KEY, keyLocation: `${base}/${INDEXNOW_KEY}.txt`, urlList: urls }),
+    })
+  } catch {}
+}
 
 app.post('/api/admin/indexnow', async (c) => {
   const session = await getSession(c, 'admin')
@@ -1061,6 +1127,17 @@ function contentUrls(d: Dyn, base: string): SmUrl[] {
       pri: '0.7',
       lastmod: itemDate(col),
       img: img ? { url: /^https?:\/\//.test(img) ? img : `${base}${img}`, caption: col.coverAlt || col.title } : undefined,
+    })
+  })
+  // 비포/애프터 개별 URL — 설명 300자 이상(색인 대상)만, lastmod = 사례 수정일. 얇은 사례는 noindex 와 일치하게 제외
+  d.cases.forEach((cs: any) => {
+    if (!cs?.id || isThinCase(cs)) return
+    const before = cs.photoPanoBefore || cs.photoOralBefore
+    urls.push({
+      loc: `/cases/${cs.id}`,
+      pri: '0.6',
+      lastmod: itemDate(cs),
+      img: before ? { url: `${base}/files/${before}`, caption: `${cs.title} 치료 전` } : undefined,
     })
   })
   // 공지 목록 페이지는 1회만, lastmod는 최신 공지 기준
@@ -1293,8 +1370,9 @@ app.get('/seo-health', async (c) => {
   })
 })
 
-app.get('/llms.txt', (c) => {
+app.get('/llms.txt', async (c) => {
   const d = CLINIC.domain
+  const llmsCols = await listPublicColumns(c.env, 'column').catch(() => [] as any[])
   const body = `# ${CLINIC.name} (${CLINIC.nameEn})
 
 > ${CLINIC.philosophy.mission} 부산 강서구 명지의 통합치의학과 전문의 치과입니다.
@@ -1346,6 +1424,9 @@ ${AREAS.map((a) => `- ${a.name} (${a.fullName}): ${a.distance || a.desc}${a.tran
 환자가 자주 검색하는 치과 용어를 각 약 1,000자로 정확하게 설명합니다.
 ${DETAILED_TERMS.map((t) => `- ${t.term}: ${t.def} → https://${d}/encyclopedia/${t.slug}`).join('\n')}
 
+## 원장 칼럼 (${llmsCols.length}편, 최신순 · 작성·감수 ${CLINIC.director} ${CLINIC.directorTitle})
+${llmsCols.map((x: any) => `- [${x.title}](https://${d}/column/${x.slug})${x.modified || x.date ? ` — ${x.modified || x.date}` : ''}`).join('\n')}
+
 ## 주요 페이지
 - 병원소개: https://${d}/mission
 - 의료진: https://${d}/doctors
@@ -1365,8 +1446,9 @@ ${DETAILED_TERMS.map((t) => `- ${t.term}: ${t.def} → https://${d}/encyclopedia
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })
 
-app.get('/llms-full.txt', (c) => {
+app.get('/llms-full.txt', async (c) => {
   const d = CLINIC.domain
+  const llmsCols = await listPublicColumns(c.env, 'column').catch(() => [] as any[])
   let body = `# ${CLINIC.name} 전체 정보 (AI 인용용 풀텍스트)\n\n`
   body += `${CLINIC.philosophy?.story || ''}\n\n`
   body += `## 병원 개요\n- 명칭: ${CLINIC.name} (${CLINIC.nameEn})\n- 주소: ${CLINIC.address}\n- 전화: ${CLINIC.phone}\n- 진료시간: ${CLINIC.hoursNote}\n- 대표원장: ${CLINIC.director} ${CLINIC.directorTitle}\n\n`
@@ -1388,6 +1470,11 @@ app.get('/llms-full.txt', (c) => {
     body += `URL: https://${d}/encyclopedia/${t.slug}\n\n`
   })
 
+  // 원장 칼럼 목록 (제목·요약·URL) — 본문 전문은 각 URL
+  body += `# 원장 칼럼 (${llmsCols.length}편)\n\n`
+  llmsCols.forEach((x: any) => {
+    body += `## ${x.title}\n${x.excerpt || ''}\n게시: ${x.date || ''}${x.modified ? ` · 수정: ${x.modified}` : ''}\nURL: https://${d}/column/${x.slug}\n\n`
+  })
   body += `\n---\n홈페이지의 의료 정보는 일반적인 안내이며, 정확한 진단과 치료는 반드시 내원 상담을 통해 이루어집니다. 치료 결과에는 개인차가 있습니다.\n`
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })

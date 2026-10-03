@@ -11,26 +11,79 @@ import type { Column, BoardKind, BoardMeta } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES, BOARDS } from '../lib/content-store'
 import type { CaseItem } from '../lib/content-store'
 import type { MediumPost } from '../lib/medium'
+import { answerSummary, faqsFromBlocks, caseHeadline, caseSummaryRows, pageHref, ymd } from '../lib/column-seo'
+
+const SITE = `https://${CLINIC.domain}`
+
+/** 서버 렌더 페이지 이동 (?page=N, a 태그) */
+const Pager: FC<{ base: string; page: number; pages: number; label: string }> = ({ base, page, pages, label }) => {
+  if (pages <= 1) return null
+  return (
+    <nav class="ssr-pager" aria-label={label}>
+      {page > 1 && <a href={pageHref(base, page - 1)} rel="prev">← 이전</a>}
+      {Array.from({ length: pages }, (_, i) => i + 1).map((n) =>
+        n === page ? <span class="current" aria-current="page">{n}</span> : <a href={pageHref(base, n)}>{n}</a>)}
+      {page < pages && <a href={pageHref(base, page + 1)} rel="next">다음 →</a>}
+    </nav>
+  )
+}
 
 // ============================================================
 // 비포 / 애프터 (애프터 사진 로그인 게이팅)
 // ============================================================
-export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ loggedIn = false, cases = SEED_CASES }) => (
+export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[]; category?: string; page?: number; pages?: number; total?: number; offset?: number; categories?: { slug: string; name: string; n: number }[] }> = ({ loggedIn = false, cases = SEED_CASES, category = '', page = 1, pages = 1, total, offset = 0, categories = [] }) => {
+  const catT = category ? getTreatment(category) : undefined
+  const base = category ? `/cases?category=${category}` : '/cases'
+  const path = pageHref(base, page)
+  const collection = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${SITE}${path}#collection`,
+    name: catT ? `${catT.shortName} 비포/애프터 사례` : '비포/애프터 사례',
+    url: `${SITE}${path}`,
+    isPartOf: { '@id': `${SITE}/#website` },
+    ...(catT ? { about: { '@id': `${SITE}/treatments/${catT.slug}/#procedure` } } : {}),
+    inLanguage: 'ko-KR',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: total ?? cases.length,
+      itemListElement: cases.map((cs, i) => ({ '@type': 'ListItem', position: offset + i + 1, url: `${SITE}/cases/${cs.id}`, name: caseHeadline(cs, getTreatment(cs.category)?.shortName) })),
+    },
+  }
+  const crumbs = [{ name: '홈', path: '/' }, { name: '비포/애프터', path: '/cases' }, ...(catT ? [{ name: catT.shortName, path: base }] : [])]
+  return (
   <Layout
-    title={`비포 / 애프터 | ${CLINIC.name} 강서구 명지 치과`}
-    description="더착한치과의 진료 전후 사례를 확인하세요. 임플란트, 투명교정, 스타일네이트 등 디지털 정밀 진료 케이스를 소개합니다."
-    path="/cases"
+    title={catT
+      ? `${catT.shortName} 비포/애프터 사례${page > 1 ? ` ${page}페이지` : ''} | ${CLINIC.name}`
+      : `비포 / 애프터${page > 1 ? ` ${page}페이지` : ''} | ${CLINIC.name} 강서구 명지 치과`}
+    description={catT
+      ? `${CLINIC.name} ${catT.shortName} 진료 사례 ${total ?? cases.length}건 — 진료 내용·치료 기간과 진료 전 사진을 공개합니다(진료 후 사진은 회원 공개). 결과에는 개인차가 있습니다.`
+      : '더착한치과의 진료 전후 사례를 확인하세요. 임플란트, 투명교정, 스타일네이트 등 디지털 정밀 진료 케이스를 소개합니다.'}
+    path={path}
     keywords={['강서구 치과 전후', '명지 임플란트 후기', '투명교정 전후', '스타일네이트 전후']}
-    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '비포/애프터', path: '/cases' }])]}
+    schemas={[breadcrumbSchema(crumbs), collection]}
   >
     <section class="page-hero">
       <div class="container ph-inner">
         <div class="hero-badge"><i class="fa-solid fa-images"></i> BEFORE / AFTER</div>
-        <h1>비포 / 애프터</h1>
+        <h1>{catT ? `${catT.shortName} 비포 / 애프터` : '비포 / 애프터'}</h1>
         <p>디지털 정밀 진료의 실제 사례입니다. 진료 후 사진은 의료법에 따라 로그인 후 확인하실 수 있습니다.</p>
       </div>
     </section>
-    <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '비포/애프터', path: '/cases' }]} />
+    <Breadcrumb items={crumbs} />
+
+    {categories.length > 0 && (
+      <section class="sec-sm" style="padding-bottom:0">
+        <div class="container">
+          <nav class="chip-row case-filter" aria-label="진료별 사례" style="justify-content:center">
+            <a href="/cases" class={`chip${category ? '' : ' is-active'}`} aria-current={category ? undefined : 'page'}>전체</a>
+            {categories.map((ct) => (
+              <a href={`/cases?category=${ct.slug}`} class={`chip${category === ct.slug ? ' is-active' : ''}`} aria-current={category === ct.slug ? 'page' : undefined}>{ct.name} <span style="opacity:.6">{ct.n}</span></a>
+            ))}
+          </nav>
+        </div>
+      </section>
+    )}
 
     {!loggedIn && (
       <section class="sec-sm">
@@ -69,13 +122,13 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
                 return (
                   <div class="ba-slider">
                     {hasBefore ? (
-                      <img src={`/files/${cs.photoPanoBefore || cs.photoOralBefore}`} alt={`${cs.title} 진료 전`} loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+                      <img src={`/files/${cs.photoPanoBefore || cs.photoOralBefore}`} alt={`${t?.shortName || '치과'} 치료 전 — ${cs.title}`} loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
                     ) : (
                       <div style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#114A7E,#1E6FB8);color:rgba(255,255,255,0.7);font-size:14px;font-weight:700">진료 전 (Before)</div>
                     )}
                     {loggedIn ? (
                       hasAfter ? (
-                        <img src={`/files/${cs.photoPanoAfter || cs.photoOralAfter}`} alt={`${cs.title} 진료 후`} loading="lazy" class="ba-after" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 50%)" />
+                        <img src={`/files/${cs.photoPanoAfter || cs.photoOralAfter}`} alt={`${t?.shortName || '치과'} 치료 후 — ${cs.title}`} loading="lazy" decoding="async" class="ba-after" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 50%)" />
                       ) : (
                         <div class="ba-after" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#1E6FB8,#2DD4BF);color:#fff;font-size:14px;font-weight:700;clip-path:inset(0 0 0 50%)">진료 후 (After)</div>
                       )
@@ -106,7 +159,7 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
                           {p.after && !loggedIn ? (
                             <div style="aspect-ratio:4/3;border-radius:8px;background:var(--bg-2);display:grid;place-items:center;color:var(--ink-faint);font-size:11px;font-weight:700;text-align:center"><span><i class="fa-solid fa-lock"></i><br />로그인 필요</span></div>
                           ) : (
-                            <img src={`/files/${p.key}`} alt={`${cs.title} ${p.label}`} loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px" />
+                            <img src={`/files/${p.key}`} alt={`${t?.shortName || '치과'} 치료 ${p.after ? '후' : '전'} — ${p.label.replace(/ \((전|후)\)$/, '')}`} loading="lazy" decoding="async" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px" />
                           )}
                           <figcaption style="font-size:11px;color:var(--ink-faint);text-align:center;margin-top:3px">{p.label}</figcaption>
                         </figure>
@@ -115,7 +168,7 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
                   )
                 })()}
                 <div style="padding:22px 24px">
-                  <h2 style="font-size:18px;margin-bottom:8px">{cs.title}</h2>
+                  <h2 style="font-size:18px;margin-bottom:8px"><a href={`/cases/${cs.id}`} style="color:inherit">{caseHeadline(cs, t?.shortName)}</a></h2>
                   <p style="color:var(--ink-soft);font-size:14px;margin:0 0 14px;line-height:1.6">{cs.desc}</p>
                   <div class="chip-row" style="gap:7px">
                     <span class="chip" style="font-size:12px;padding:6px 12px">{cs.age} {cs.gender}</span>
@@ -131,29 +184,188 @@ export const CasesPage: FC<{ loggedIn?: boolean; cases?: CaseItem[] }> = ({ logg
             )
           })}
         </div>
+        <Pager base={base} page={page} pages={pages} label="비포/애프터 목록 페이지" />
         <p style="text-align:center;color:var(--ink-soft);font-size:13px;margin-top:36px;line-height:1.7">
           ※ 위 사례는 개인의 구강 상태에 따라 결과가 다를 수 있으며, 모든 환자에게 동일한 결과를 보장하지 않습니다.
         </p>
       </div>
     </section>
   </Layout>
-)
+  )
+}
+
+// ============================================================
+// 비포 / 애프터 상세 (/cases/:id) — 사례별 개별 URL (PFWE 표준 B)
+// 진료 후 사진은 기존과 같이 로그인 게이트(/files/cases-after/* 403), 텍스트는 공개
+// ============================================================
+export const CaseDetailPage: FC<{ cs: CaseItem; loggedIn?: boolean; noindex?: boolean; relatedColumns?: Column[]; sameCases?: CaseItem[] }> = ({ cs, loggedIn = false, noindex = false, relatedColumns = [], sameCases = [] }) => {
+  const t = getTreatment(cs.category)
+  const dr = getDoctor(cs.doctor)
+  const txName = t?.shortName
+  const headline = caseHeadline(cs, txName)
+  const path = `/cases/${cs.id}`
+  const url = `${SITE}${path}`
+  const rows = caseSummaryRows(cs, txName, dr ? `${dr.name} ${dr.title}` : undefined)
+  const descText = String(cs.desc || '').replace(/\s+/g, ' ').trim()
+  let description = `${headline}. ${descText || rows.map((r) => `${r.label} ${r.value}`).join(', ')}`
+  if (description.length < 80) description = `${description} ${CLINIC.name} 진료 사례(결과는 개인차 있음).`
+  if (description.length > 160) description = description.slice(0, 157).replace(/\s+\S*$/, '') + '…'
+  const reviewed = ymd(cs.modified)
+  const reviewerId = dr ? `${SITE}/doctors/${dr.slug}/#person` : undefined
+  const beforePhotos = [
+    { key: cs.photoPanoBefore, label: '파노라마' },
+    { key: cs.photoOralBefore, label: '구내 사진' },
+  ].filter((x) => x.key)
+  const afterPhotos = [
+    { key: cs.photoPanoAfter, label: '파노라마' },
+    { key: cs.photoOralAfter, label: '구내 사진' },
+  ].filter((x) => x.key)
+  const crumbs = [
+    { name: '홈', path: '/' },
+    { name: '비포/애프터', path: '/cases' },
+    ...(t ? [{ name: t.shortName, path: `/cases?category=${t.slug}` }] : []),
+    { name: headline, path },
+  ]
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'MedicalWebPage',
+        '@id': `${url}#webpage`,
+        url,
+        name: headline,
+        description,
+        inLanguage: 'ko-KR',
+        isPartOf: { '@id': `${SITE}/#website` },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
+        ...(t ? { about: { '@id': `${SITE}/treatments/${t.slug}/#procedure` } } : {}),
+        ...(reviewerId ? { reviewedBy: { '@id': reviewerId } } : {}),
+        ...(reviewed ? { lastReviewed: reviewed, dateModified: reviewed } : {}),
+        // 진료 전 사진만 공개 → ImageObject 는 공개 사진만
+        ...(beforePhotos.length ? { image: beforePhotos.map((p) => ({ '@type': 'ImageObject', url: `${SITE}/files/${p.key}`, caption: `${txName || '치과'} 치료 전 — ${p.label}` })) } : {}),
+        speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '.answer-summary'] },
+        publisher: { '@id': `${SITE}/#medicalclinic` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${url}#breadcrumb`,
+        itemListElement: crumbs.map((cr, i) => ({ '@type': 'ListItem', position: i + 1, name: cr.name, item: `${SITE}${cr.path === '/' ? '/' : cr.path}` })),
+      },
+    ],
+  }
+  return (
+    <Layout title={`${headline} | ${CLINIC.name}`} description={description} path={path} noindex={noindex} schemas={[graph]}
+      keywords={[`${txName || '치과'} 사례`, `${txName || '치과'} 전후`, '강서구 치과', '명지 치과']}>
+      <section class="page-hero">
+        <div class="container ph-inner">
+          <div class="hero-badge"><i class="fa-solid fa-images"></i> BEFORE / AFTER{reviewed ? ` · ${reviewed}` : ''}</div>
+          <h1>{headline}</h1>
+        </div>
+      </section>
+      <Breadcrumb items={crumbs} />
+      <section class="sec">
+        <div class="container article-body">
+          <div class="aeo-answer answer-summary" id="case-summary" aria-label="사례 요약">
+            <p class="answer-summary-label">사례 요약</p>
+            <dl class="case-summary-dl">
+              {rows.map((r) => (<><dt>{r.label}</dt><dd>{r.value}</dd></>))}
+            </dl>
+          </div>
+
+          {(beforePhotos.length > 0 || afterPhotos.length > 0) && (
+            <div class="case-photo-grid">
+              {beforePhotos.map((p, i) => (
+                <figure>
+                  <img src={`/files/${p.key}`} alt={`${txName || '치과'} 치료 전 — ${p.label}`} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
+                  <figcaption>진료 전 · {p.label}</figcaption>
+                </figure>
+              ))}
+              {afterPhotos.map((p) => (
+                <figure>
+                  {loggedIn
+                    ? <img src={`/files/${p.key}`} alt={`${txName || '치과'} 치료 후 — ${p.label}`} loading="lazy" decoding="async" />
+                    : <div class="case-photo-lock"><span><i class="fa-solid fa-lock"></i><br />진료 후 사진은<br />로그인 후 열람</span></div>}
+                  <figcaption>진료 후 · {p.label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+          {!loggedIn && afterPhotos.length > 0 && (
+            <p style="text-align:center;margin:12px 0 0"><a href="/auth/login" class="btn btn-outline" style="padding:10px 20px"><i class="fa-solid fa-right-to-bracket"></i> 로그인하고 진료 후 사진 보기</a></p>
+          )}
+
+          {descText && (
+            <>
+              <h2>진료 과정</h2>
+              {String(cs.desc).split(/\r?\n+/).map((x) => x.trim()).filter(Boolean).map((para) => <p>{para}</p>)}
+            </>
+          )}
+          <p style="font-size:13px;color:var(--ink-soft);line-height:1.7">
+            ※ 촬영 조건을 동일하게 맞춰 기록한 사례이며, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다. 모든 환자에게 동일한 결과를 보장하지 않습니다.
+            {reviewed ? <> 최종 검토: <time datetime={reviewed}>{reviewed}</time></> : null}{dr ? ` · 담당 ${dr.name} ${dr.title} (${dr.license})` : ''}
+          </p>
+
+          <div class="related-box">
+            <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 칼럼</h3>
+            <div class="chip-row">
+              {t && <a href={`/treatments/${t.slug}`} class="chip"><i class={`fa-solid fa-${t.icon}`}></i> {t.shortName} 진료 안내</a>}
+              {t && <a href={`/cases?category=${t.slug}`} class="chip"><i class="fa-solid fa-images"></i> {t.shortName} 사례 더 보기</a>}
+              {dr && <a href={`/doctors/${dr.slug}`} class="chip"><i class="fa-solid fa-user-doctor"></i> {dr.name} {dr.title}</a>}
+            </div>
+            {relatedColumns.length > 0 && (
+              <>
+                <h3 style="margin-top:24px">관련 원장 칼럼</h3>
+                <ul class="col-link-list">{relatedColumns.map((c) => <li><a href={`/column/${c.slug}`}>{c.title}</a></li>)}</ul>
+              </>
+            )}
+            {sameCases.length > 0 && (
+              <>
+                <h3 style="margin-top:24px">같은 진료의 다른 사례</h3>
+                <ul class="col-link-list">{sameCases.map((x) => <li><a href={`/cases/${x.id}`}>{caseHeadline(x, txName)}</a></li>)}</ul>
+              </>
+            )}
+          </div>
+          <div style="margin-top:28px;text-align:center">
+            <a href="/cases" class="btn btn-outline"><i class="fa-solid fa-list"></i> 비포/애프터 목록으로</a>
+          </div>
+        </div>
+      </section>
+    </Layout>
+  )
+}
 
 // ============================================================
 // 원장 칼럼
 // ============================================================
 
-export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]; board?: BoardKind }> = ({ columns = SEED_COLUMNS, mediumPosts = [], board = 'column' }) => {
+export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]; board?: BoardKind; page?: number; pages?: number; total?: number; offset?: number }> = ({ columns = SEED_COLUMNS, mediumPosts = [], board = 'column', page = 1, pages = 1, total, offset = 0 }) => {
   const b: BoardMeta = BOARDS[board]
   const isColumn = board === 'column'
   const detailBase = isColumn ? '/column' : b.path
+  const path = pageHref(b.path, page)
+  // CollectionPage + ItemList (이 페이지에 실린 글) — 서버 페이지네이션과 같은 순서
+  const collection = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${SITE}${path}#collection`,
+    name: page > 1 ? `${b.heroTitle} ${page}페이지` : b.heroTitle,
+    url: `${SITE}${path}`,
+    description: b.metaDesc,
+    isPartOf: { '@id': `${SITE}/#website` },
+    inLanguage: 'ko-KR',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: total ?? columns.length,
+      itemListElement: columns.map((c, i) => ({ '@type': 'ListItem', position: offset + i + 1, url: `${SITE}${detailBase}/${c.slug}`, name: c.title })),
+    },
+  }
   return (
   <Layout
-    title={`${b.heroTitle} | ${CLINIC.name} 강서구 명지 치과`}
-    description={b.metaDesc}
-    path={b.path}
+    title={page > 1 ? `${b.heroTitle} ${page}페이지 | ${CLINIC.name}` : `${b.heroTitle} | ${CLINIC.name} 강서구 명지 치과`}
+    description={page > 1 ? `${b.metaDesc} (${page}페이지)` : b.metaDesc}
+    path={path}
     keywords={b.keywords}
-    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: b.label, path: b.path }])]}
+    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: b.label, path: b.path }]), collection]}
   >
     <section class="page-hero">
       <div class="container ph-inner">
@@ -192,10 +404,11 @@ export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]
           })}
         </div>
         )}
+        <Pager base={b.path} page={page} pages={pages} label={`${b.label} 목록 페이지`} />
       </div>
     </section>
 
-    {isColumn && mediumPosts.length > 0 && (
+    {isColumn && page === 1 && mediumPosts.length > 0 && (
       <section class="sec en-column-sec" id="english-column">
         <div class="container">
           <div class="en-column-head reveal">
@@ -233,7 +446,8 @@ export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]
 }
 
 // 리치 본문 렌더러: ### → H3, **x** → <strong>, - → <ul>, ![alt](url) → <img>, 일반 줄 → <p>+인링크
-const RichBody: FC<{ text: string }> = ({ text }) => {
+const RichBody: FC<{ text: string; altBase?: string; imgStart?: number }> = ({ text, altBase, imgStart = 0 }) => {
+  let imgN = imgStart
   const lines = text.split('\n')
   const out: any[] = []
   let listBuf: string[] = []
@@ -266,7 +480,15 @@ const RichBody: FC<{ text: string }> = ({ text }) => {
     const line = raw.trim()
     if (!line) { flushList(); continue }
     const img = line.match(/^!\[(.*?)\]\((.*?)\)$/)
-    if (img) { flushList(); out.push(<img src={img[2]} alt={img[1] || '본문 이미지'} style="max-width:100%;border-radius:12px;margin:8px 0" loading="lazy" />); continue }
+    if (img) {
+      flushList(); imgN++
+      // alt 없음·파일명(1.png 등)이면 글 제목 기반 alt (PFWE 칼럼 표준 A3)
+      const rawAlt = (img[1] || '').trim()
+      const badAlt = !rawAlt || /^[\w\-. ()]+\.(png|jpe?g|webp|gif|heic)$/i.test(rawAlt) || rawAlt === '본문 이미지'
+      const alt = badAlt ? (altBase ? `${altBase} 관련 이미지 ${imgN}` : '본문 이미지') : rawAlt
+      out.push(<img src={img[2]} alt={alt} style="max-width:100%;border-radius:12px;margin:8px 0" loading="lazy" decoding="async" />)
+      continue
+    }
     if (line.startsWith('### ')) { flushList(); out.push(<h3>{line.slice(4)}</h3>); continue }
     if (line.startsWith('> ')) { flushList(); out.push(<blockquote class="col-quote">{renderInline(line.slice(2))}</blockquote>); continue }
     if (line.startsWith('- ')) { listBuf.push(line.slice(2)); continue }
@@ -277,7 +499,7 @@ const RichBody: FC<{ text: string }> = ({ text }) => {
   return <>{out}</>
 }
 
-export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number; board?: BoardKind; noindex?: boolean }> = ({ slug, column, views = 0, board = 'column', noindex = false }) => {
+export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number; board?: BoardKind; noindex?: boolean; related?: Column[]; relatedCases?: CaseItem[] }> = ({ slug, column, views = 0, board = 'column', noindex = false, related = [], relatedCases = [] }) => {
   const bm: BoardMeta = BOARDS[board]
   const c = column ?? SEED_COLUMNS.find((x) => x.slug === slug)
   if (!c) {
@@ -301,20 +523,92 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
   const cover = c.cover || firstBodyImg || ''
   // 본문 글자수(SEO wordCount)
   const wordCount = c.body.reduce((acc, b) => acc + (b.h?.length || 0) + (b.p?.replace(/!\[.*?\]\(.*?\)/g, '').length || 0), 0)
+  const path = `${bm.path}/${c.slug}`
+  const url = `${SITE}${path}`
+  const summary = isColumn ? answerSummary(c.body) : ''
+  const faqs = isColumn ? faqsFromBlocks(c.body) : []
+  const authorId = `${SITE}/doctors/${dr.slug}/#person`
+  const coverAbs = cover ? (/^https?:\/\//.test(cover) ? cover : `${SITE}${cover}`) : `${SITE}/images/og-default.jpg`
+  const reviewed = ymd(c.modified) || ymd(c.date)
+  // 원장 칼럼: @graph(MedicalWebPage + BlogPosting + Physician + BreadcrumbList + FAQPage) @id 상호참조
+  const columnGraph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': ['Person', 'Physician'],
+        '@id': authorId,
+        name: dr.name,
+        jobTitle: dr.title,
+        description: dr.license,
+        url: `${SITE}/doctors/${dr.slug}`,
+        image: `${SITE}${dr.photo}`,
+        worksFor: { '@id': `${SITE}/#medicalclinic` },
+      },
+      {
+        '@type': 'MedicalWebPage',
+        '@id': `${url}#webpage`,
+        url,
+        name: c.title,
+        description: c.excerpt,
+        inLanguage: 'ko-KR',
+        isPartOf: { '@id': `${SITE}/#website` },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
+        mainEntity: { '@id': `${url}#article` },
+        ...(t ? { about: { '@id': `${SITE}/treatments/${t.slug}/#procedure` } } : {}),
+        reviewedBy: { '@id': authorId },
+        ...(reviewed ? { lastReviewed: reviewed } : {}),
+        speakable: { '@type': 'SpeakableSpecification', cssSelector: summary ? ['h1', '.answer-summary'] : ['h1'] },
+        publisher: { '@id': `${SITE}/#medicalclinic` },
+      },
+      {
+        '@type': 'BlogPosting',
+        '@id': `${url}#article`,
+        headline: c.title.slice(0, 110),
+        description: c.excerpt,
+        url,
+        mainEntityOfPage: { '@id': `${url}#webpage` },
+        image: { '@type': 'ImageObject', url: coverAbs },
+        ...(ymd(c.date) ? { datePublished: ymd(c.date) } : {}),
+        ...(reviewed ? { dateModified: reviewed } : {}),
+        author: { '@id': authorId },
+        publisher: { '@id': `${SITE}/#medicalclinic` },
+        isPartOf: { '@id': `${SITE}/#website` },
+        ...(t ? { about: { '@id': `${SITE}/treatments/${t.slug}/#procedure` }, articleSection: t.shortName } : { articleSection: bm.label }),
+        ...(wordCount ? { wordCount } : {}),
+        inLanguage: 'ko-KR',
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${url}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '홈', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: bm.label, item: `${SITE}${bm.path}` },
+          ...(t ? [{ '@type': 'ListItem', position: 3, name: t.shortName, item: `${SITE}/treatments/${t.slug}` }] : []),
+          { '@type': 'ListItem', position: t ? 4 : 3, name: c.title, item: url },
+        ],
+      },
+      ...(faqs.length >= 2 ? [{
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        isPartOf: { '@id': `${url}#webpage` },
+        mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      }] : []),
+    ],
+  }
+  // <title>: 원장 칼럼은 '{제목} | 더착한치과' (PFWE 표준 A2). 후기·이야기 게시판은 기존 형식 유지
   return (
     <Layout
-      title={`${c.title} | ${CLINIC.name} ${bm.label}`}
+      title={isColumn ? `${c.title} | ${CLINIC.name}` : `${c.title} | ${CLINIC.name} ${bm.label}`}
       description={c.excerpt}
-      path={`${bm.path}/${c.slug}`}
+      path={path}
       noindex={noindex}
       ogType="article"
       ogImage={cover || undefined}
+      article={{ published: ymd(c.date), modified: reviewed, section: t?.shortName || bm.label, author: isColumn ? `${dr.name} ${dr.title}` : undefined }}
       keywords={[bm.label, t?.shortName || '', '강서구 치과']}
-      schemas={[
+      schemas={isColumn ? [columnGraph] : [
         breadcrumbSchema([{ name: '홈', path: '/' }, { name: bm.label, path: bm.path }, { name: c.title, path: `${bm.path}/${c.slug}` }]),
         articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
-        // BlogPosting — 원장 칼럼만(후기·이야기 게시판은 작성자가 원장이 아님). 헤드라인·작성자·게시/수정일(저장된 글 데이터 고정값)·대표이미지·publisher @id (2026-09-29)
-        ...(!isColumn ? [] : [blogPostingSchema({ title: c.title, description: c.excerpt, path: `${bm.path}/${c.slug}`, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label })]),
         speakableSchema(['h1', '.article-body > p:first-of-type']),
       ]}
     >
@@ -337,19 +631,60 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
             </div>
           </div>
           )}
-          {c.body.map((blk) => (<>{blk.h && <h2>{blk.h}</h2>}<RichBody text={blk.p} /></>))}
+          {summary && (
+            <div class="aeo-answer answer-summary" id="column-answer" aria-label="핵심 답변">
+              <p class="answer-summary-label">핵심 답변</p>
+              <p>{summary}</p>
+            </div>
+          )}
+          {(() => {
+            let n = 0
+            return c.body.map((blk) => {
+              const start = n
+              n += (String(blk.p || '').match(/^\s*!\[/gm) || []).length
+              return (<>{blk.h && <h2>{blk.h}</h2>}<RichBody text={blk.p} altBase={c.title} imgStart={start} /></>)
+            })
+          })()}
+          {isColumn && (
+          <aside class="col-author-box" aria-label="작성·감수">
+            <a href={`/doctors/${dr.slug}`} class="col-author-photo"><img src={dr.photo} alt={`${dr.name} ${dr.title}`} width="88" height="88" loading="lazy" decoding="async" /></a>
+            <div>
+              <p class="col-author-role">작성·감수</p>
+              <p class="col-author-name"><a href={`/doctors/${dr.slug}`}>{dr.name} {dr.title}</a></p>
+              <p class="col-author-line">{dr.license}</p>
+              {dr.career?.[0] && <p class="col-author-line">{dr.career[0]}</p>}
+              {reviewed && <p class="col-author-line">최종 검토일 <time datetime={reviewed}>{reviewed}</time></p>}
+              <p class="col-author-note">※ 이 글은 일반적인 건강 정보이며, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다.</p>
+            </div>
+          </aside>
+          )}
           {isColumn && (
           <div class="related-box">
             <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 작성 의료진</h3>
             <div class="chip-row">
-              {t && <a href={`/treatments/${t.slug}`} class="chip"><i class={`fa-solid fa-${t.icon}`}></i> {t.shortName}</a>}
+              {t && <a href={`/treatments/${t.slug}`} class="chip"><i class={`fa-solid fa-${t.icon}`}></i> {t.shortName} 진료 안내</a>}
+              {t && relatedCases.length > 0 && <a href={`/cases?category=${t.slug}`} class="chip"><i class="fa-solid fa-images"></i> {t.shortName} 비포/애프터</a>}
               <a href={`/doctors/${dr.slug}`} class="chip"><i class="fa-solid fa-user-doctor"></i> {dr.name} {dr.title}</a>
             </div>
+            {related.length > 0 && (
+              <>
+                <h3 style="margin-top:24px">함께 읽으면 좋은 칼럼</h3>
+                <ul class="col-link-list">
+                  {related.map((r) => <li><a href={`/column/${r.slug}`}>{r.title}</a></li>)}
+                </ul>
+              </>
+            )}
+            {relatedCases.length > 0 && (
+              <>
+                <h3 style="margin-top:24px">관련 비포/애프터 사례</h3>
+                <ul class="col-link-list">
+                  {relatedCases.map((cs) => <li><a href={`/cases/${cs.id}`}>{caseHeadline(cs, getTreatment(cs.category)?.shortName)}</a></li>)}
+                </ul>
+              </>
+            )}
           </div>
           )}
-          {isColumn
-            ? <p style="font-size:13px;color:var(--ink-soft)">최종 검토: {c.modified} · 감수 {dr.name} {dr.title} ({dr.license})</p>
-            : <p style="font-size:13px;color:var(--ink-soft)">본 글은 개인의 경험이며, 치료 결과는 환자의 상태에 따라 다를 수 있습니다. 등록일: {c.date}</p>}
+          {!isColumn && <p style="font-size:13px;color:var(--ink-soft)">본 글은 개인의 경험이며, 치료 결과는 환자의 상태에 따라 다를 수 있습니다. 등록일: {c.date}</p>}
           <div style="margin-top:28px;text-align:center">
             <a href={bm.path} class="btn btn-outline"><i class="fa-solid fa-list"></i> {bm.label} 목록으로</a>
           </div>
