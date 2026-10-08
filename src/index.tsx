@@ -4,6 +4,7 @@ import { CLINIC } from './data/clinic'
 import { ASSET_VERSION } from './lib/asset-version'
 import { TREATMENTS, getTreatment } from './data/treatments'
 import { DOCTORS } from './data/doctors'
+import { columnDoctor, isAgencyColumn, CLINIC_GENERAL_INFO_NOTE } from './lib/authorship'
 import { TERMS, DETAILED_TERMS, TERM_REDIRECTS, INDEXABLE_TERMS, THIN_TERMS, getTerm, isThinTerm } from './data/encyclopedia'
 import { getAreaCombinations, getAreaHubs, getArea, AREAS } from './data/areas'
 import { searchRegions } from './data/regions'
@@ -625,7 +626,7 @@ app.post('/api/admin/columns/create', async (c) => {
     slug: String(f.slug || ''),
     excerpt: String(f.excerpt || ''),
     date: String(f.date || ''),
-    author: String(f.author || 'hwang-wooseok'),
+    author: String(f.author || 'clinic'), // 미지정 = 병원 발행 (lib/authorship.ts)
     related: String(f.related || ''),
     cover: String(f.cover || ''),
     coverAlt: String(f.coverAlt || ''),
@@ -645,7 +646,7 @@ app.post('/api/admin/columns/update', async (c) => {
     slug: String(f.slug || ''),
     excerpt: String(f.excerpt || ''),
     date: String(f.date || ''),
-    author: String(f.author || 'hwang-wooseok'),
+    author: String(f.author || 'clinic'), // 미지정 = 병원 발행 (lib/authorship.ts)
     related: String(f.related || ''),
     cover: String(f.cover || ''),
     coverAlt: String(f.coverAlt || ''),
@@ -1223,6 +1224,8 @@ app.get('/rss.xml', async (c) => {
     .slice(0, 50)
   // lastBuildDate = 피드 항목 중 최신 작성·수정일 (없으면 생략 — 요청 시각 아님)
   const lastBuild = toRfc822(latestDate(cols.map((x: any) => [x.modified, x.date])))
+  // 작성 주체 — 원장이 지정된 원장 칼럼만 원장, 대행사 시드·후기·이야기 글은 병원 (lib/authorship.ts)
+  const creatorOf = (col: any) => { const dr = columnDoctor(col); return dr ? `${dr.name} ${dr.title}` : CLINIC.name }
   const items = cols.map((col: any) => {
     const board = BOARDS[(col.board || 'column') as BoardKind]
     const url = `${base}${board.path}/${col.slug}`
@@ -1233,6 +1236,7 @@ app.get('/rss.xml', async (c) => {
     <description>${esc(col.excerpt || col.title)}</description>
     <category>${esc(board.label)}</category>
     ${toRfc822(col.date) ? `<pubDate>${toRfc822(col.date)}</pubDate>` : ''}
+    <dc:creator>${esc(creatorOf(col))}</dc:creator>
   </item>`
   }).join('\n')
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1241,7 +1245,7 @@ app.get('/rss.xml', async (c) => {
   <title>${esc(CLINIC.name)} 칼럼</title>
   <link>${base}/column</link>
   <atom:link href="${base}/rss.xml" rel="self" type="application/rss+xml"/>
-  <description>${esc(CLINIC.name)} 원장이 직접 쓰는 치과 건강 칼럼 — 임플란트·교정·심미치료</description>
+  <description>${esc(CLINIC.name)} 치과 건강 칼럼·치료 후기·병원 소식 — 임플란트·교정·심미치료</description>
   <language>ko-KR</language>
 ${lastBuild ? `  <lastBuildDate>${lastBuild}</lastBuildDate>\n` : ''}${items}
 </channel>
@@ -1442,9 +1446,12 @@ ${AREAS.map((a) => `- ${a.name} (${a.fullName}): ${a.distance || a.desc}${a.tran
 환자가 자주 검색하는 치과 용어를 각 약 1,000자로 정확하게 설명합니다.
 ${DETAILED_TERMS.map((t) => `- ${t.term}: ${t.def} → https://${d}/encyclopedia/${t.slug}`).join('\n')}
 
-## 원장 칼럼 (${llmsCols.length}편, 최신순 · 작성·감수 ${CLINIC.director} ${CLINIC.directorTitle})
-${llmsCols.map((x: any) => `- [${x.title}](https://${d}/column/${x.slug})${x.modified || x.date ? ` — ${x.modified || x.date}` : ''}`).join('\n')}
-
+## 원장 칼럼 (${llmsCols.filter((x: any) => !isAgencyColumn(x)).length}편, 최신순 · 작성·감수 ${CLINIC.director} ${CLINIC.directorTitle})
+${llmsCols.filter((x: any) => !isAgencyColumn(x)).map((x: any) => `- [${x.title}](https://${d}/column/${x.slug})${x.modified || x.date ? ` — ${x.modified || x.date}` : ''}`).join('\n')}
+${llmsCols.some((x: any) => isAgencyColumn(x)) ? `
+## 병원 발행 칼럼 (${llmsCols.filter((x: any) => isAgencyColumn(x)).length}편 — 원장 작성·감수 아님. ${CLINIC_GENERAL_INFO_NOTE})
+${llmsCols.filter((x: any) => isAgencyColumn(x)).map((x: any) => `- [${x.title}](https://${d}/column/${x.slug})${x.modified || x.date ? ` — ${x.modified || x.date}` : ''}`).join('\n')}
+` : ''}
 ## 주요 페이지
 - 병원소개: https://${d}/mission
 - 의료진: https://${d}/doctors
@@ -1489,10 +1496,15 @@ app.get('/llms-full.txt', async (c) => {
   })
 
   // 원장 칼럼 목록 (제목·요약·URL) — 본문 전문은 각 URL
-  body += `# 원장 칼럼 (${llmsCols.length}편)\n\n`
-  llmsCols.forEach((x: any) => {
-    body += `## ${x.title}\n${x.excerpt || ''}\n게시: ${x.date || ''}${x.modified ? ` · 수정: ${x.modified}` : ''}\nURL: https://${d}/column/${x.slug}\n\n`
-  })
+  // 원장 글과 병원 발행 글(대행사 시드, lib/authorship.ts)을 나눠 저자 주장을 화면과 맞춘다
+  const colBlock = (x: any) => `## ${x.title}\n${x.excerpt || ''}\n게시: ${x.date || ''}${x.modified ? ` · 수정: ${x.modified}` : ''}\nURL: https://${d}/column/${x.slug}\n\n`
+  const drCols = llmsCols.filter((x: any) => !isAgencyColumn(x)), clinicCols = llmsCols.filter((x: any) => isAgencyColumn(x))
+  body += `# 원장 칼럼 (${drCols.length}편)\n\n`
+  drCols.forEach((x: any) => { body += colBlock(x) })
+  if (clinicCols.length) {
+    body += `# 병원 발행 칼럼 (${clinicCols.length}편 — 원장 작성·감수 아님. ${CLINIC_GENERAL_INFO_NOTE})\n\n`
+    clinicCols.forEach((x: any) => { body += colBlock(x) })
+  }
   body += `\n---\n홈페이지의 의료 정보는 일반적인 안내이며, 정확한 진단과 치료는 반드시 내원 상담을 통해 이루어집니다. 치료 결과에는 개인차가 있습니다.\n`
   return c.text(body, 200, { 'Content-Type': 'text/plain; charset=utf-8' })
 })

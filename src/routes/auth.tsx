@@ -844,7 +844,7 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
             <div><label>날짜</label><input type="date" name="date" /></div>
           </div>
           <div class="row">
-            <div><label>작성 의료진</label><select name="author">{DOCTORS.map((d) => <option value={d.slug}>{d.name} {d.title}</option>)}</select></div>
+            <div><label>작성 의료진</label><select name="author"><option value="clinic" selected>병원 발행 (원장 작성·검토 아님)</option>{DOCTORS.map((d) => <option value={d.slug}>{d.name} {d.title} (직접 작성·검토)</option>)}</select></div>
             <div><label>관련 진료(선택)</label><select name="related"><option value="">선택 안 함</option>{treatOpts.map((t) => <option value={t.slug}>{t.name}</option>)}</select></div>
           </div>
           <div class="ed-wrap">
@@ -881,7 +881,7 @@ export const AdminColumnsPage: FC<{ columns: Column[]; ok?: string; views?: Reco
                   <div><label>날짜</label><input type="date" name="date" value={c.date} /></div>
                 </div>
                 <div class="row">
-                  <div><label>작성 의료진</label><select name="author">{DOCTORS.map((d) => <option value={d.slug} selected={d.slug === c.author}>{d.name} {d.title}</option>)}</select></div>
+                  <div><label>작성 의료진</label><select name="author"><option value="clinic" selected={!DOCTORS.some((d) => d.slug === c.author)}>병원 발행 (원장 작성·검토 아님)</option>{DOCTORS.map((d) => <option value={d.slug} selected={d.slug === c.author}>{d.name} {d.title} (직접 작성·검토)</option>)}</select></div>
                   <div><label>관련 진료</label><select name="related"><option value="" selected={!c.related}>선택 안 함</option>{treatOpts.map((t) => <option value={t.slug} selected={t.slug === c.related}>{t.name}</option>)}</select></div>
                 </div>
                 <div class="ed-wrap"><label>본문</label><EditorToolbar /><textarea name="bodyText" class="ed-area" style="min-height:260px">{bodyToText(c.body)}</textarea><div class="ed-statusbar"><span class="ed-count"></span><span class="ed-upstatus ed-uploading"></span></div><div class="ed-preview"></div><p class="ed-hint2">빈 줄 = 단락 구분 · 첫 줄 = 소제목 · <code>### / ** / * / - / &gt; / [링크](url)</code> · 사진 드래그·붙여넣기 지원</p></div>

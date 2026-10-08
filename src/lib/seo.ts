@@ -154,7 +154,8 @@ export function breadcrumbSchema(items: { name: string; path: string }[]) {
 // Article / MedicalWebPage (칼럼)
 export function articleSchema(a: {
   title: string; description: string; slug: string
-  datePublished: string; dateModified: string; authorSlug: string; authorName: string
+  // 원장 저자 근거가 없으면(후기·이야기 게시판·대행사 시드, lib/authorship.ts) 비워 둔다 → 병원 발행
+  datePublished: string; dateModified: string; authorSlug?: string; authorName?: string
   image?: string; wordCount?: number; section?: string
 }) {
   const img = a.image ? (/^https?:\/\//.test(a.image) ? a.image : canonical(a.image)) : `${BASE}/images/og-default.jpg`
@@ -168,8 +169,12 @@ export function articleSchema(a: {
     image: { '@type': 'ImageObject', url: img, width: 1200, height: 630 },
     datePublished: a.datePublished,
     dateModified: a.dateModified,
-    author: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName, url: `${BASE}/doctors/${a.authorSlug}` },
-    reviewedBy: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName },
+    ...(a.authorSlug && a.authorName
+      ? {
+          author: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName, url: `${BASE}/doctors/${a.authorSlug}` },
+          reviewedBy: { '@type': 'Person', '@id': `${BASE}/doctors/${a.authorSlug}/#person`, name: a.authorName },
+        }
+      : { author: { '@id': CLINIC_ID } }),
     publisher: { '@id': CLINIC_ID },
     inLanguage: 'ko-KR',
   }

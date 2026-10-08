@@ -58,7 +58,7 @@ export const BOARDS: Record<BoardKind, BoardMeta> = {
   column: {
     kind: 'column', path: '/column', label: '원장 칼럼', badge: 'COLUMN', icon: 'pen-nib',
     heroTitle: '원장 칼럼', heroDesc: '정확한 치과 정보를 직접 전합니다. 검증된 내용으로 건강한 선택을 돕겠습니다.',
-    metaDesc: '더착한치과 황우석 대표원장이 직접 쓰는 치과 건강 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다.',
+    metaDesc: '더착한치과 원장 칼럼입니다. 임플란트, 교정, 심미치료에 대한 정확한 정보를 전합니다.',
     keywords: ['치과 칼럼', '임플란트 정보', '강서구 치과 블로그', '명지 치과 칼럼'],
   },
   reviews: {
@@ -427,7 +427,7 @@ export async function createColumn(env: any, input: Partial<Column> & { bodyText
     excerpt: (input.excerpt || '').toString().trim(),
     date: (input.date || today()).toString(),
     modified: today(),
-    author: (input.author || 'hwang-wooseok').toString(),
+    author: (input.author || 'clinic').toString(), // 원장 자동 부여 금지 — 미지정은 병원 발행 (lib/authorship.ts)
     related: (input.related || '').toString(),
     cover: (input.cover || '').toString().trim(),
     coverAlt: (input.coverAlt || '').toString().trim(),

@@ -4,6 +4,8 @@ import { Breadcrumb } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, getTreatment } from '../data/treatments'
 import { DOCTORS, getDoctor } from '../data/doctors'
+import { columnDoctor, CLINIC_GENERAL_INFO_NOTE } from '../lib/authorship'
+import { CLINIC_ID } from '../lib/seo'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms, isThinTerm } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, blogPostingSchema, speakableSchema, faqSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
@@ -385,7 +387,7 @@ export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]
         ) : (
         <div class="tlist-grid">
           {columns.map((c) => {
-            const dr = getDoctor(c.author)
+            const dr = columnDoctor(c)
             return (
               <a href={`${detailBase}/${c.slug}`} class={`card reveal col-list-card ${c.cover ? 'has-thumb' : ''}`} style="text-decoration:none">
                 {c.cover && (
@@ -397,7 +399,7 @@ export const ColumnListPage: FC<{ columns?: Column[]; mediumPosts?: MediumPost[]
                   <div style="color:var(--ink-soft);font-size:13px;margin-bottom:10px">{c.date}</div>
                   <h2 style="font-size:21px;margin-bottom:12px;line-height:1.4">{c.title}</h2>
                   <p style="color:var(--ink-soft);font-size:15px;line-height:1.7;margin:0 0 16px">{c.excerpt}</p>
-                  <span style="color:var(--brand);font-weight:700;font-size:14px">{isColumn && dr ? `${dr.name} ${dr.title} · ` : ''}자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
+                  <span style="color:var(--brand);font-weight:700;font-size:14px">{isColumn ? (dr ? `${dr.name} ${dr.title} · ` : `${CLINIC.name} 발행 · `) : ''}자세히 보기 <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
               </a>
             )
@@ -510,7 +512,8 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
     )
   }
   const isColumn = board === 'column'
-  const dr = getDoctor(c.author) ?? getDoctor('hwang-wooseok')!
+  // 대행사 투입 칼럼·후기/이야기 게시판·원장 미지정 글은 병원 발행 — 원장 저자·감수 표시 없음 (lib/authorship.ts)
+  const drAuthor = columnDoctor(c)
   const t = getTreatment(c.related)
   // 대표이미지: 지정값 → 본문 첫 이미지 fallback
   const firstBodyImg = (() => {
@@ -527,23 +530,23 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
   const url = `${SITE}${path}`
   const summary = isColumn ? answerSummary(c.body) : ''
   const faqs = isColumn ? faqsFromBlocks(c.body) : []
-  const authorId = `${SITE}/doctors/${dr.slug}/#person`
+  const authorId = drAuthor ? `${SITE}/doctors/${drAuthor.slug}/#person` : undefined
   const coverAbs = cover ? (/^https?:\/\//.test(cover) ? cover : `${SITE}${cover}`) : `${SITE}/images/og-default.jpg`
   const reviewed = ymd(c.modified) || ymd(c.date)
   // 원장 칼럼: @graph(MedicalWebPage + BlogPosting + Physician + BreadcrumbList + FAQPage) @id 상호참조
   const columnGraph = {
     '@context': 'https://schema.org',
     '@graph': [
-      {
+      ...(drAuthor ? [{
         '@type': ['Person', 'Physician'],
         '@id': authorId,
-        name: dr.name,
-        jobTitle: dr.title,
-        description: dr.license,
-        url: `${SITE}/doctors/${dr.slug}`,
-        image: `${SITE}${dr.photo}`,
+        name: drAuthor.name,
+        jobTitle: drAuthor.title,
+        description: drAuthor.license,
+        url: `${SITE}/doctors/${drAuthor.slug}`,
+        image: `${SITE}${drAuthor.photo}`,
         worksFor: { '@id': `${SITE}/#medicalclinic` },
-      },
+      }] : []),
       {
         '@type': 'MedicalWebPage',
         '@id': `${url}#webpage`,
@@ -555,8 +558,8 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
         breadcrumb: { '@id': `${url}#breadcrumb` },
         mainEntity: { '@id': `${url}#article` },
         ...(t ? { about: { '@id': `${SITE}/treatments/${t.slug}/#procedure` } } : {}),
-        reviewedBy: { '@id': authorId },
-        ...(reviewed ? { lastReviewed: reviewed } : {}),
+        ...(authorId ? { reviewedBy: { '@id': authorId } } : {}),
+        ...(authorId && reviewed ? { lastReviewed: reviewed } : {}),
         speakable: { '@type': 'SpeakableSpecification', cssSelector: summary ? ['h1', '.answer-summary'] : ['h1'] },
         publisher: { '@id': `${SITE}/#medicalclinic` },
       },
@@ -570,7 +573,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
         image: { '@type': 'ImageObject', url: coverAbs },
         ...(ymd(c.date) ? { datePublished: ymd(c.date) } : {}),
         ...(reviewed ? { dateModified: reviewed } : {}),
-        author: { '@id': authorId },
+        author: { '@id': authorId || CLINIC_ID },
         publisher: { '@id': `${SITE}/#medicalclinic` },
         isPartOf: { '@id': `${SITE}/#website` },
         ...(t ? { about: { '@id': `${SITE}/treatments/${t.slug}/#procedure` }, articleSection: t.shortName } : { articleSection: bm.label }),
@@ -604,11 +607,11 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       noindex={noindex}
       ogType="article"
       ogImage={cover || undefined}
-      article={{ published: ymd(c.date), modified: reviewed, section: t?.shortName || bm.label, author: isColumn ? `${dr.name} ${dr.title}` : undefined }}
+      article={{ published: ymd(c.date), modified: reviewed, section: t?.shortName || bm.label, author: isColumn && drAuthor ? `${drAuthor.name} ${drAuthor.title}` : undefined }}
       keywords={[bm.label, t?.shortName || '', '강서구 치과']}
       schemas={isColumn ? [columnGraph] : [
         breadcrumbSchema([{ name: '홈', path: '/' }, { name: bm.label, path: bm.path }, { name: c.title, path: `${bm.path}/${c.slug}` }]),
-        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: dr.slug, authorName: dr.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
+        articleSchema({ title: c.title, description: c.excerpt, slug: c.slug, datePublished: c.date, dateModified: c.modified, authorSlug: drAuthor?.slug, authorName: drAuthor?.name, image: cover || undefined, wordCount: wordCount || undefined, section: t?.shortName || bm.label }),
         speakableSchema(['h1', '.article-body > p:first-of-type']),
       ]}
     >
@@ -622,12 +625,21 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       <section class="sec">
         <div class="container article-body">
           {c.cover && <img src={c.cover} alt={c.coverAlt || c.title} class="col-cover" loading="eager" width="1200" height="630" />}
-          {isColumn && (
+          {isColumn && drAuthor && (
           <div style="display:flex;align-items:center;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:32px">
             <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;color:#fff"><i class="fa-solid fa-user-doctor"></i></div>
             <div>
-              <a href={`/doctors/${dr.slug}`} style="font-weight:800;color:var(--ink)">{dr.name} {dr.title}</a>
-              <div style="font-size:13px;color:var(--ink-soft)">{dr.license}</div>
+              <a href={`/doctors/${drAuthor.slug}`} style="font-weight:800;color:var(--ink)">{drAuthor.name} {drAuthor.title}</a>
+              <div style="font-size:13px;color:var(--ink-soft)">{drAuthor.license}</div>
+            </div>
+          </div>
+          )}
+          {isColumn && !drAuthor && (
+          <div style="display:flex;align-items:center;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:32px">
+            <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;color:#fff"><i class="fa-solid fa-hospital"></i></div>
+            <div>
+              <span style="font-weight:800;color:var(--ink)">{CLINIC.name} 발행</span>
+              <div style="font-size:13px;color:var(--ink-soft)">{CLINIC_GENERAL_INFO_NOTE}</div>
             </div>
           </div>
           )}
@@ -645,14 +657,24 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
               return (<>{blk.h && <h2>{blk.h}</h2>}<RichBody text={blk.p} altBase={c.title} imgStart={start} /></>)
             })
           })()}
-          {isColumn && (
+          {isColumn && !drAuthor && (
+          <aside class="col-author-box" aria-label="작성·발행">
+            <div>
+              <p class="col-author-role">작성·발행</p>
+              <p class="col-author-name">{CLINIC.name}</p>
+              <p class="col-author-line">{CLINIC_GENERAL_INFO_NOTE}</p>
+              {ymd(c.date) && <p class="col-author-line">게시 <time datetime={ymd(c.date)}>{ymd(c.date)}</time>{reviewed && reviewed !== ymd(c.date) ? <> · 수정 <time datetime={reviewed}>{reviewed}</time></> : null}</p>}
+            </div>
+          </aside>
+          )}
+          {isColumn && drAuthor && (
           <aside class="col-author-box" aria-label="작성·감수">
-            <a href={`/doctors/${dr.slug}`} class="col-author-photo"><img src={dr.photo} alt={`${dr.name} ${dr.title}`} width="88" height="88" loading="lazy" decoding="async" /></a>
+            <a href={`/doctors/${drAuthor.slug}`} class="col-author-photo"><img src={drAuthor.photo} alt={`${drAuthor.name} ${drAuthor.title}`} width="88" height="88" loading="lazy" decoding="async" /></a>
             <div>
               <p class="col-author-role">작성·감수</p>
-              <p class="col-author-name"><a href={`/doctors/${dr.slug}`}>{dr.name} {dr.title}</a></p>
-              <p class="col-author-line">{dr.license}</p>
-              {dr.career?.[0] && <p class="col-author-line">{dr.career[0]}</p>}
+              <p class="col-author-name"><a href={`/doctors/${drAuthor.slug}`}>{drAuthor.name} {drAuthor.title}</a></p>
+              <p class="col-author-line">{drAuthor.license}</p>
+              {drAuthor.career?.[0] && <p class="col-author-line">{drAuthor.career[0]}</p>}
               {reviewed && <p class="col-author-line">최종 검토일 <time datetime={reviewed}>{reviewed}</time></p>}
               <p class="col-author-note">※ 이 글은 일반적인 건강 정보이며, 치료 결과는 개인의 구강 상태에 따라 다를 수 있습니다.</p>
             </div>
@@ -660,11 +682,11 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
           )}
           {isColumn && (
           <div class="related-box">
-            <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>관련 진료 · 작성 의료진</h3>
+            <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>{drAuthor ? '관련 진료 · 작성 의료진' : '관련 진료'}</h3>
             <div class="chip-row">
               {t && <a href={`/treatments/${t.slug}`} class="chip"><i class={`fa-solid fa-${t.icon}`}></i> {t.shortName} 진료 안내</a>}
               {t && relatedCases.length > 0 && <a href={`/cases?category=${t.slug}`} class="chip"><i class="fa-solid fa-images"></i> {t.shortName} 비포/애프터</a>}
-              <a href={`/doctors/${dr.slug}`} class="chip"><i class="fa-solid fa-user-doctor"></i> {dr.name} {dr.title}</a>
+              {drAuthor && <a href={`/doctors/${drAuthor.slug}`} class="chip"><i class="fa-solid fa-user-doctor"></i> {drAuthor.name} {drAuthor.title}</a>}
             </div>
             {related.length > 0 && (
               <>
