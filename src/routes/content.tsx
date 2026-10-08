@@ -9,6 +9,7 @@ import { CLINIC_ID } from '../lib/seo'
 import { TERMS, TERM_CATEGORIES, getTerm, getCoreTerms, isThinTerm } from '../data/encyclopedia'
 import { breadcrumbSchema, articleSchema, blogPostingSchema, speakableSchema, faqSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
+import { HubLink, ColumnHubLine, textHasHubLink } from '../lib/hub-link'
 import type { Column, BoardKind, BoardMeta } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES, BOARDS } from '../lib/content-store'
 import type { CaseItem } from '../lib/content-store'
@@ -657,6 +658,8 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
               return (<>{blk.h && <h2>{blk.h}</h2>}<RichBody text={blk.p} altBase={c.title} imgStart={start} /></>)
             })
           })()}
+          {/* 지역 안내 1문장 — "부산 명지 치과" 허브로 (칼럼·이야기, 본문에 이미 허브 링크가 있으면 생략) */}
+          {board !== 'reviews' && !textHasHubLink(c.body.map((b) => String(b.p || '')).join('\n')) && <ColumnHubLine slug={c.slug} />}
           {isColumn && !drAuthor && (
           <aside class="col-author-box" aria-label="작성·발행">
             <div>
@@ -914,6 +917,11 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
               </div>
             </div>
           )}
+
+          {/* 허브 링크 한 줄 — "부산 명지 치과" */}
+          <p class="hub-local-line" style="margin:24px 0 0;color:var(--ink-soft);line-height:1.75">
+            <i class="fa-solid fa-location-dot" style="color:var(--brand);margin-right:6px"></i>{CLINIC.name} 위치·진료시간은 <HubLink /> 안내에서 확인하실 수 있습니다.
+          </p>
         </div>
       </section>
     </Layout>

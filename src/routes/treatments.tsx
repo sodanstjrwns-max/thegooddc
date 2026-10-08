@@ -8,6 +8,7 @@ import { TX_REVIEWED } from '../lib/content-dates'
 import { TREATMENT_FABLES, STORY_CTA } from '../data/story'
 import { breadcrumbSchema, faqSchema, procedureSchema, speakableSchema, procedureRichSchema, howToSchema, qaPageSchema, imageObjectSchema, medicalWebPageSchema, itemListSchema } from '../lib/seo'
 import { InlinkText } from '../lib/inlink'
+import { HubLink } from '../lib/hub-link'
 import { getTerm, TERM_REDIRECTS } from '../data/encyclopedia'
 
 // 진료 slug 와 같은 백과사전 용어가 없는 진료과 → 대표 용어로 연결 (예전엔 /encyclopedia/{진료slug} 404성 링크)
@@ -429,6 +430,11 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
                     <a href={`/cases?category=${t.slug}`} class="chip" style="margin-top:8px">{t.shortName} 사례 전체 보기</a>
                   </div>
                 )}
+                {/* 오시는 길 · 진료 안내 — "부산 명지 치과" 허브 링크 1개 */}
+                <div class="related-box reveal">
+                  <h3><i class="fa-solid fa-location-dot" style="color:var(--brand);margin-right:8px"></i>오시는 길 · 진료 안내</h3>
+                  <p style="margin:0;line-height:1.75">명지오션시티 스타빌딩 6층 {CLINIC.name}에서 {t.shortName} 상담을 받으시려면, <HubLink /> 안내에서 진료시간·버스·주차 정보를 먼저 확인해 주세요.</p>
+                </div>
               </div>
             </div>
           </div>

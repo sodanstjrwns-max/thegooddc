@@ -89,7 +89,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
             </p>
             <p class="lead-sub">
               치의학박사·통합치의학 전문의가 디지털 가이드로 꼭 필요한 진료만 정확하게.
-              명지에서 오래 믿고 다니는 치과를 만듭니다. <a href="/clinic/myeongji" style="color:inherit;text-decoration:underline;text-underline-offset:3px">부산 명지 치과 안내</a>
+              명지에서 오래 믿고 다니는 치과를 만듭니다. <a href="/clinic/myeongji" style="color:inherit;text-decoration:underline;text-underline-offset:3px">부산 명지 치과</a> 안내
             </p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> {STORY_CTA.reserve}</a>
@@ -529,7 +529,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
           <div class="shead center" data-index="08">
             <span class="eyebrow center">Visit Us</span>
             <h2>오시는 길, <span class="gold">어렵지 않습니다</span></h2>
-            <p>명지오션시티 스타빌딩 6층. 지하 주차장 30대 · 주차비 지원까지 챙겨드립니다. 위치·진료시간·버스 노선은 <a href="/clinic/myeongji">부산 명지 치과 안내</a>에 정리했습니다.</p>
+            <p>명지오션시티 스타빌딩 6층. 지하 주차장 30대 · 주차비 지원까지 챙겨드립니다. 위치와 진료시간은 아래에서 확인하세요.</p>
           </div>
           <div class="visit-grid reveal">
             <div class="visit-map">

@@ -8,6 +8,7 @@ import {
   breadcrumbSchema, faqSchema, citySchema, cityRichSchema, speakableSchema,
   qaPageSchema, areaLocalBusinessSchema, serviceAreaSchema, collectionPageSchema,
 } from '../lib/seo'
+import { HubLink } from '../lib/hub-link'
 
 const BUS_ALL = [
   ...CLINIC.directions.bus.general,
@@ -62,6 +63,8 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
 
       <section class="sec">
         <div class="container article-body">
+          {/* "부산 명지 치과" 허브 링크 — 본문 첫 부분 (페이지당 허브 링크: 이 줄 + 푸터) */}
+          <p class="hub-local-line" style="margin:0 0 20px;color:var(--ink-soft);line-height:1.75"><i class="fa-solid fa-location-dot" style="color:var(--brand);margin-right:6px"></i>본원 위치·진료시간·주차 안내: <HubLink /> ({CLINIC.name}, 명지오션시티 스타빌딩 6층)</p>
           {/* AEO 직답 */}
           <h2>{area.name}에서 {t.shortName} 진료, {CLINIC.name}</h2>
           <p class="aeo-answer">
@@ -97,7 +100,8 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
               {otherTreatments.map((ot) => (
                 <a href={`/area/${area.slug}-${ot.slug}`} class="chip"><i class="fa-solid fa-tooth"></i> {area.name} {ot.name}</a>
               ))}
-              <a href={`/clinic/${area.slug}`} class="chip"><i class="fa-solid fa-hospital"></i> {area.name} 치과 전체보기</a>
+              {/* 명지는 위 허브 링크 한 줄로 대체 (페이지당 허브 링크 2개 이하) */}
+              {area.slug !== 'myeongji' && <a href={`/clinic/${area.slug}`} class="chip"><i class="fa-solid fa-hospital"></i> {area.name} 치과 전체보기</a>}
             </div>
           </div>
 
@@ -147,7 +151,8 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
   const area = getArea(areaSlug)
   if (!area) return <AreaNotFound />
 
-  const neighbors = getNeighborAreas(areaSlug, 5)
+  // 명지 허브는 본문 첫 줄에서 링크하므로 인근 칩에서는 제외 (허브 링크 2개 이하)
+  const neighbors = getNeighborAreas(areaSlug, 6).filter((n) => n.slug !== 'myeongji').slice(0, 5)
   const hubFaqs = [
     { q: `${area.name}에서 가까운 치과는 어디인가요?`, a: `${CLINIC.name}는 ${CLINIC.address}에 위치해 ${area.fullName}에서 ${area.distance || '가까운 거리'}입니다. ${area.transit || ''}` },
     { q: `${area.name}에서 어떤 진료를 받을 수 있나요?`, a: `${CLINIC.name}는 임플란트, 투명교정, 스타일네이트 심미치료, 치아교정을 포함한 통합치의학과 전 과목 진료를 제공합니다. ${area.name} 지역 환자분이 한 곳에서 모든 진료를 받으실 수 있습니다.` },
@@ -185,6 +190,8 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
 
       <section class="sec">
         <div class="container article-body">
+          {/* "부산 명지 치과" 허브 링크 — 본문 첫 부분 (페이지당 허브 링크: 이 줄 + 푸터) */}
+          <p class="hub-local-line" style="margin:0 0 20px;color:var(--ink-soft);line-height:1.75"><i class="fa-solid fa-location-dot" style="color:var(--brand);margin-right:6px"></i>본원 위치·진료시간·주차 안내: <HubLink /> ({CLINIC.name}, 명지오션시티 스타빌딩 6층)</p>
           <h2>{area.name}에서 가까운 치과를 찾으신다면</h2>
           <p class="aeo-answer">
             <strong class="aeo-tldr">한줄답:</strong> {CLINIC.name}는 {CLINIC.address}에 위치해 {area.fullName}에서 {area.distance || '가까운 거리'}입니다.

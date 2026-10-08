@@ -5,6 +5,7 @@ import { AREAS } from '../data/areas'
 import { canonical, medicalClinicSchema, webSiteSchema } from '../lib/seo'
 import { ASSET_VERSION } from '../lib/asset-version'
 import { getActiveSettings } from '../lib/runtime-settings'
+import { HUB_PATH, HUB_ANCHOR } from '../lib/hub-link'
 
 interface LayoutProps {
   title: string
@@ -180,7 +181,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <Header />
         <MobileDrawer />
         <main id="main" tabindex={-1}>{children}</main>
-        <Footer />
+        <Footer path={path} />
         <FloatingCTA />
         <script src={`/static/app.js?v=${ASSET_VERSION}`} defer></script>
       </body>
@@ -284,7 +285,7 @@ const MobileDrawer: FC = () => (
   </>
 )
 
-const Footer: FC = () => (
+const Footer: FC<{ path?: string }> = ({ path }) => (
   <footer class="site-footer">
     <div class="container">
       <div class="footer-top">
@@ -326,7 +327,10 @@ const Footer: FC = () => (
         </div>
         <div class="footer-col">
           <p class="footer-h">지역 안내</p>
-          {AREAS.slice(0, 8).map((a) => <a href={`/clinic/${a.slug}`}>{a.name} 치과</a>)}
+          {/* 명지 = "부산 명지 치과" 허브 → 대표 키워드 앵커 (허브 자신에서는 자기 링크 대신 텍스트) */}
+          {AREAS.slice(0, 8).map((a) => a.slug === 'myeongji'
+            ? (path === HUB_PATH ? <span>{HUB_ANCHOR}</span> : <a href={HUB_PATH}>{HUB_ANCHOR}</a>)
+            : <a href={`/clinic/${a.slug}`}>{a.name} 치과</a>)}
         </div>
       </div>
       <div class="footer-bottom">
