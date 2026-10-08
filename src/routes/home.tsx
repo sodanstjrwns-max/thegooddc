@@ -58,9 +58,9 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
   const doctor = DOCTORS[0]
   return (
     <Layout
-      title="더착한치과 | 강서구 명지 임플란트·투명교정·스타일네이트 치과"
-      description="부산 강서구 명지 더착한치과. 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만."
-      keywords={['명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과']}
+      title="명지 치과 | 더착한치과 — 부산 명지오션시티 임플란트·투명교정·스타일네이트"
+      description="부산 명지 치과 더착한치과(명지오션시티 스타빌딩 6층). 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만."
+      keywords={['명지 치과', '부산 명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과']}
       path="/"
       schemas={[
         // .aeo-answer 없는 페이지 — 실제 요소(h1·히어로 리드 문단)로 지정 (2026-09-29)
@@ -77,7 +77,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
       <section class="hero">
         <div class="container-wide hero-inner">
           <div class="hero-text reveal">
-            <span class="hero-badge"><i class="fa-solid fa-location-dot"></i> 부산 강서구 명지 · 통합치의학 전문의 진료</span>
+            <span class="hero-badge"><i class="fa-solid fa-location-dot"></i> 부산 명지 치과 · 통합치의학 전문의 진료</span>
             <h1 class="kinetic">
               <span class="line">치과 통증의 두려움을</span>
               <span class="line"><span class="accent-word">안심</span>으로</span>
@@ -89,7 +89,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
             </p>
             <p class="lead-sub">
               치의학박사·통합치의학 전문의가 디지털 가이드로 꼭 필요한 진료만 정확하게.
-              명지에서 오래 믿고 다니는 치과를 만듭니다.
+              명지에서 오래 믿고 다니는 치과를 만듭니다. <a href="/clinic/myeongji" style="color:inherit;text-decoration:underline;text-underline-offset:3px">부산 명지 치과 안내</a>
             </p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-gold btn-lg"><i class="fa-solid fa-calendar-check"></i> {STORY_CTA.reserve}</a>
@@ -529,7 +529,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
           <div class="shead center" data-index="08">
             <span class="eyebrow center">Visit Us</span>
             <h2>오시는 길, <span class="gold">어렵지 않습니다</span></h2>
-            <p>명지오션시티 스타빌딩 6층. 지하 주차장 30대 · 주차비 지원까지 챙겨드립니다.</p>
+            <p>명지오션시티 스타빌딩 6층. 지하 주차장 30대 · 주차비 지원까지 챙겨드립니다. 위치·진료시간·버스 노선은 <a href="/clinic/myeongji">부산 명지 치과 안내</a>에 정리했습니다.</p>
           </div>
           <div class="visit-grid reveal">
             <div class="visit-map">

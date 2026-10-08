@@ -765,6 +765,7 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
     )
   }
   const related = (term.related || []).map((s) => getTreatment(s)).filter(Boolean)
+  const seeTerms = (term.see || []).map((s) => getTerm(s)).filter((t) => t && t.slug !== term.slug)
   const hasBody = term.body && term.body.length > 0
   const hasQa = term.qa && term.qa.length > 0
   // 같은 카테고리의 다른 상세 용어 추천 (백과사전 내부 인링크 강화)
@@ -781,6 +782,7 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
       name: term.term,
       description: term.def,
       inDefinedTermSet: `${CLINIC.name} 치과 백과사전`,
+      ...(term.updated ? { dateModified: term.updated } : {}),
     },
   ]
   if (hasQa) schemas.push(faqSchema(term.qa!))
@@ -808,8 +810,25 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
           {/* AEO 직답 — 정의 요약 */}
           <p class="aeo-answer">{term.def}</p>
 
+          {/* 보강 용어: 소제목별 본문 (encyclopedia-enrich.ts) */}
+          {term.sections && term.sections.length > 0 && (
+            <div class="term-body">
+              {term.sections.map((sec) => (
+                <>
+                  <h2>{sec.h}</h2>
+                  {sec.p.map((para) => (
+                    <p>
+                      <InlinkText text={para} currentSlug={term.slug} />
+                    </p>
+                  ))}
+                </>
+              ))}
+              {term.updated && <p class="term-reviewed" style="color:var(--ink-soft);font-size:14px">감수 {CLINIC.director} {CLINIC.directorTitle} · 최종 검토 {term.updated}</p>}
+            </div>
+          )}
+
           {/* 1000자 상세 본문 (자동 인링크 적용) */}
-          {hasBody && (
+          {hasBody && !(term.sections && term.sections.length) && (
             <div class="term-body">
               {term.body!.map((para) => (
                 <p>
@@ -846,6 +865,18 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
               <div class="chip-row">
                 {related.map((t) => <a href={`/treatments/${t!.slug}`} class="chip"><i class={`fa-solid fa-${t!.icon}`}></i> {t!.shortName}</a>)}
                 <a href="/cases" class="chip"><i class="fa-solid fa-images"></i> 비포/애프터</a>
+              </div>
+            </div>
+          )}
+
+          {/* 보강 용어: 함께 보면 좋은 용어 */}
+          {seeTerms.length > 0 && (
+            <div class="related-box">
+              <h3><i class="fa-solid fa-book-medical" style="color:var(--brand);margin-right:8px"></i>함께 보면 좋은 용어</h3>
+              <div class="chip-row">
+                {seeTerms.map((t) => (
+                  <a href={`/encyclopedia/${t!.slug}`} class="chip">{t!.term}</a>
+                ))}
               </div>
             </div>
           )}

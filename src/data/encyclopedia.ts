@@ -12,6 +12,28 @@ export interface Term {
   related?: string[] // 관련 진료 slug
   body?: string[] // 상세 설명 단락 배열 (약 1000자, 엄선 200개 용어)
   qa?: { q: string; a: string }[] // AEO 질문·답변 (FAQ 스키마)
+  sections?: { h: string; p: string[] }[] // 보강 용어: 소제목별 본문 (encyclopedia-enrich.ts)
+  see?: string[] // 보강 용어: 관련 용어 slug
+  updated?: string // 보강 용어: 실제 수정일 (YYYY-MM-DD 고정값)
+}
+
+import { ENCYCLOPEDIA_ENRICH, ENRICHED_TERM_MERGES, ENCYCLOPEDIA_ENRICH_DATE } from './encyclopedia-enrich'
+
+// 얇은 용어 보강 오버레이 (2026-10-08) — 본문·FAQ 가 없는 용어에만 적용
+function applyEnrich(t: Term): Term {
+  const e = ENCYCLOPEDIA_ENRICH[t.slug]
+  if (!e || (t.body && t.body.length) || (t.qa && t.qa.length)) return t
+  return {
+    ...t,
+    term: e.term || t.term,
+    def: e.def,
+    sections: e.sections,
+    body: e.sections.flatMap((s) => s.p),
+    qa: e.qa,
+    related: e.related.length ? e.related : t.related,
+    see: e.see,
+    updated: ENCYCLOPEDIA_ENRICH_DATE,
+  }
 }
 
 // 핵심 용어 (상세 정의) — 자동 인링크 대상
@@ -275,7 +297,7 @@ function toSlug(idx: number) {
   return `term-${idx + 100}`
 }
 
-const EXTRA_TERMS: Term[] = EXTRA_TERM_DATA.map(([term, category, def], i) => ({
+const EXTRA_TERMS: Term[] = EXTRA_TERM_DATA.map(([term, category, def], i) => applyEnrich({
   slug: toSlug(i),
   term,
   category,
@@ -363,6 +385,17 @@ for (const t of [...CORE_TERMS, ...EXTRA_TERMS]) {
   if (target && target !== t.slug) TERM_REDIRECTS[t.slug] = TERM_REDIRECTS[target] || target
 }
 
+// 같은 뜻의 얇은 용어 → 상세 본문이 있는 대표 용어로 301 병합 (2026-10-08, encyclopedia-enrich.ts)
+for (const [from, to] of Object.entries(ENRICHED_TERM_MERGES)) {
+  if (!TERM_REDIRECTS[from]) TERM_REDIRECTS[from] = TERM_REDIRECTS[to] || to
+}
+// 체인 방지: 병합된 slug 를 가리키던 기존 리다이렉트는 최종 대표 용어로 바로 보냄
+for (const k of Object.keys(TERM_REDIRECTS)) {
+  let v = TERM_REDIRECTS[k]
+  for (let i = 0; i < 5 && TERM_REDIRECTS[v]; i++) v = TERM_REDIRECTS[v]
+  TERM_REDIRECTS[k] = v
+}
+
 export const TERMS: Term[] = ALL_TERMS.filter((t) => !TERM_REDIRECTS[t.slug])
 
 // 상세 본문(body)을 가진 용어만 추린 목록 (목록 페이지 "상세" 뱃지·우선 노출용)
@@ -390,5 +423,6 @@ export function getTerm(slug: string): Term | undefined {
 
 // 본문 텍스트에서 용어 자동 인링크 (백과사전 ↔ 진료)
 export function getCoreTerms(): Term[] {
-  return CORE_TERMS
+  // 병합(301)된 핵심 용어는 대표 용어 slug 로 바로 링크 (리다이렉트 경유 방지)
+  return CORE_TERMS.map((t) => (TERM_REDIRECTS[t.slug] ? { ...t, slug: TERM_REDIRECTS[t.slug] } : t))
 }

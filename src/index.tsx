@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { CLINIC } from './data/clinic'
 import { ASSET_VERSION } from './lib/asset-version'
-import { TREATMENTS } from './data/treatments'
+import { TREATMENTS, getTreatment } from './data/treatments'
 import { DOCTORS } from './data/doctors'
 import { TERMS, DETAILED_TERMS, TERM_REDIRECTS, INDEXABLE_TERMS, THIN_TERMS, getTerm, isThinTerm } from './data/encyclopedia'
 import { getAreaCombinations, getAreaHubs, getArea, AREAS } from './data/areas'
@@ -22,6 +22,7 @@ import { TX_REVIEWED, CONTENT_DATES, latestDate, toYmd } from './lib/content-dat
 import { CasesPage, CaseDetailPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
 import { paginate, pageHref, isThinCase, relatedColumns } from './lib/column-seo'
 import { AreaPage, AreaHubPage } from './routes/area'
+import { MyeongjiHubPage, MYEONGJI_HUB_UPDATED, MYEONGJI_HUB_PATH } from './routes/myeongji-hub'
 import { fetchDashboardStats, renderStatsPage, STATS_KEY, MASTER_KEY } from './routes/stats'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage, AdminFeesPage } from './routes/auth'
 import {
@@ -68,7 +69,13 @@ const app = new Hono<{ Bindings: Bindings }>()
 app.use('*', async (c, next) => {
   const url = new URL(c.req.url)
   let changed = false
-  if (url.hostname.startsWith('www.')) {
+  // *.pages.dev 프로덕션 별칭 → 본 도메인 301 (해시 프리뷰 xxxx.thegooddental.pages.dev 는 그대로 둠)
+  if (url.hostname === 'thegooddental.pages.dev') {
+    url.hostname = CLINIC.domain
+    url.protocol = 'https:'
+    url.port = ''
+    changed = true
+  } else if (url.hostname.startsWith('www.')) {
     url.hostname = url.hostname.slice(4)
     url.protocol = 'https:'
     url.port = ''
@@ -130,6 +137,8 @@ app.get('/mission', (c) => c.html(<MissionPage />))
 app.get('/treatments', (c) => c.html(<TreatmentsListPage />))
 app.get('/treatments/:slug', async (c) => {
   const slug = c.req.param('slug')
+  // 없는 진료 slug → 404 (예전엔 '진료를 찾을 수 없습니다' 화면이 200 으로 열리던 soft 404)
+  if (!getTreatment(slug)) return c.notFound()
   // 진료 상세 ↔ 칼럼·사례 내부 링크: 이 진료의 최신 칼럼 5편 + 비포애프터 4건
   const [cols, cases] = await Promise.all([
     listPublicColumns(c.env, 'column').catch(() => [] as any[]),
@@ -265,6 +274,8 @@ app.get('/area/:combo', (c) => {
 app.get('/clinic/:area', (c) => {
   const area = c.req.param('area')
   if (!getArea(area)) return c.notFound()
+  // "부산 명지 치과" 대표 키워드 허브 — 명지오션시티 본원 고유 본문 (src/routes/myeongji-hub.tsx)
+  if (area === 'myeongji') return c.html(<MyeongjiHubPage />)
   return c.html(<AreaHubPage areaSlug={area} />)
 })
 
@@ -1079,7 +1090,8 @@ async function dynamicContent(env: any) {
 }
 type Dyn = Awaited<ReturnType<typeof dynamicContent>>
 const boardNewest = (d: Dyn, board: BoardKind) => newestOf(d.columns.filter((x: any) => (x.board || 'column') === board))
-const termDate = (slug: string) => CONTENT_DATES.encyclopedia[slug] || CONTENT_DATES.pages.encFallback
+// 보강 용어(encyclopedia-enrich.ts)는 보강 실제 날짜(고정값)를 우선 사용
+const termDate = (slug: string) => getTerm(slug)?.updated || CONTENT_DATES.encyclopedia[slug] || CONTENT_DATES.pages.encFallback
 const areaDate = (areaSlug: string, txSlug: string) => latestDate(CONTENT_DATES.pages.areaTemplate, CONTENT_DATES.areas[areaSlug], TX_REVIEWED)
 
 function mainUrls(d: Dyn): SmUrl[] {
@@ -1159,8 +1171,11 @@ function areaUrls(): SmUrl[] {
   // 지역 허브(랜딩)는 권위 페이지 — 우선순위 높임. 허브 = 허브 템플릿·지역 데이터·해당 지역 조합 중 최신
   getAreaHubs().forEach((h) => urls.push({
     loc: h.url,
-    pri: '0.7',
-    lastmod: latestDate(CONTENT_DATES.pages.areaHubTemplate, CONTENT_DATES.areas[h.area.slug], TX_REVIEWED),
+    // "부산 명지 치과" 허브는 고유 본문(myeongji-hub.tsx) — 실제 수정일 고정값, 우선순위 상향
+    pri: h.url === MYEONGJI_HUB_PATH ? '0.9' : '0.7',
+    lastmod: h.url === MYEONGJI_HUB_PATH
+      ? latestDate(MYEONGJI_HUB_UPDATED, TX_REVIEWED)
+      : latestDate(CONTENT_DATES.pages.areaHubTemplate, CONTENT_DATES.areas[h.area.slug], TX_REVIEWED),
   }))
   getAreaCombinations().forEach((combo) => urls.push({ loc: combo.url, pri: '0.6', lastmod: areaDate(combo.area.slug, combo.treatment.slug) }))
   return urls.length ? urls : [{ loc: '/directions', pri: '0.7', lastmod: CONTENT_DATES.pages.directions }]
@@ -1403,6 +1418,9 @@ ${CLINIC.hours.map((h: any) => `- ${h.day}요일: ${h.closed ? '정기휴무' : 
 - Q. 어떤 진료를 받을 수 있나요? A. 디지털 가이드 임플란트, 투명교정, 스타일네이트·라미네이트 등 심미치료를 비롯해 통합치의학과 전반의 진료를 제공합니다.
 - Q. 주차가 가능한가요? A. 스타빌딩 지하 1·2층 주차장에 30대까지 주차 가능합니다. 만차 시 주변 유료 주차장 이용 후 영수증 사진과 계좌를 주차 지원 전용번호(010-5958-2875)로 보내주시면 주차비를 지원해 드립니다. (진료 상담·예약은 대표번호 ${CLINIC.phone})
 - Q. 대표원장은 누구인가요? A. ${CLINIC.director} ${CLINIC.directorTitle}(치의학박사, 통합치의학과 전문의)입니다.
+
+## 부산 명지 치과 안내 (위치·진료시간·주차·버스·FAQ)
+- 부산 명지 치과 | 더착한치과 → https://${d}/clinic/myeongji
 
 ## 핵심 진료
 ${TREATMENTS.filter((t) => t.category === 'core').map((t) => `- ${t.name}: ${t.tagline} → https://${d}/treatments/${t.slug}`).join('\n')}
