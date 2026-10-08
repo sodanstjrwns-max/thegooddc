@@ -823,7 +823,7 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
                   ))}
                 </>
               ))}
-              {term.updated && <p class="term-reviewed" style="color:var(--ink-soft);font-size:14px">감수 {CLINIC.director} {CLINIC.directorTitle} · 최종 검토 {term.updated}</p>}
+              <p class="term-reviewed" style="color:var(--ink-soft);font-size:14px">일반 건강정보입니다. 진료 판단은 내원 상담에서 원장이 직접 합니다.</p>
             </div>
           )}
 

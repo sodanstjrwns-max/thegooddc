@@ -13,7 +13,7 @@ import { TREATMENTS } from '../data/treatments'
 import { breadcrumbSchema, faqSchema, speakableSchema, canonical, CLINIC_ID } from '../lib/seo'
 
 export const MYEONGJI_HUB_PATH = '/clinic/myeongji'
-/** 허브 본문을 실제로 바꾼 날짜 (사이트맵 lastmod·dateModified·화면 검토일 공용, 고정값) */
+/** 허브 본문을 실제로 바꾼 날짜 (사이트맵 lastmod·dateModified·화면 기준일 공용, 고정값) */
 export const MYEONGJI_HUB_UPDATED = '2026-10-08'
 export const MYEONGJI_HUB_TITLE = '부산 명지 치과 | 더착한치과 — 명지오션시티4로 스타빌딩 6층'
 const H1 = '부산 명지 치과, 더착한치과'
@@ -75,8 +75,8 @@ export const MyeongjiHubPage: FC = () => {
         { '@type': 'Place', name: '명지오션시티' },
         { '@type': 'Place', name: '명지국제신도시' },
       ],
-      reviewedBy: { '@type': 'Person', '@id': `https://${CLINIC.domain}/doctors/hwang-wooseok/#person`, name: CLINIC.director },
-      lastReviewed: MYEONGJI_HUB_UPDATED,
+      // 원장 감수 기록 없음 → reviewedBy·lastReviewed 넣지 않음 (병원 publisher 만)
+      publisher: { '@id': CLINIC_ID },
       dateModified: MYEONGJI_HUB_UPDATED,
     },
     breadcrumbSchema(crumbs),
@@ -99,7 +99,7 @@ export const MyeongjiHubPage: FC = () => {
       <section class="sec">
         <div class="container article-body">
           <p class="aeo-answer"><strong class="aeo-tldr">한줄답:</strong> {ANSWER}</p>
-          <p style="color:var(--ink-soft);font-size:14px">감수 {CLINIC.director} {CLINIC.directorTitle} · 최종 검토 {MYEONGJI_HUB_UPDATED}</p>
+          <p style="color:var(--ink-soft);font-size:14px">일반 안내 정보입니다(기준일 {MYEONGJI_HUB_UPDATED}). 진료 판단은 내원 상담에서 원장이 직접 합니다.</p>
 
           <h2>명지오션시티 어디에 있나요?</h2>
           <p>주소는 <strong>{CLINIC.address}</strong>(명지동)입니다. 명지오션시티 생활권 안에 있어 명지시장, 강서 기적의 도서관 쪽에서도 가깝고, 명지국제신도시에서는 차로 오시기 편합니다.</p>
