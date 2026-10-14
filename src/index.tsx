@@ -863,13 +863,12 @@ app.get('/manifest.webmanifest', (c) => {
     lang: 'ko',
     categories: ['medical', 'health'],
     icons: [
-      { src: '/static/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/static/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/static/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/favicon-192.png?v=fav20261014', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/favicon-512.png?v=fav20261014', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
     shortcuts: [
-      { name: '예약 신청', short_name: '예약', url: '/reservation', icons: [{ src: '/static/icon-192.png', sizes: '192x192' }] },
-      { name: '오시는 길', short_name: '오시는 길', url: '/directions', icons: [{ src: '/static/icon-192.png', sizes: '192x192' }] },
+      { name: '예약 신청', short_name: '예약', url: '/reservation', icons: [{ src: '/favicon-192.png?v=fav20261014', sizes: '192x192' }] },
+      { name: '오시는 길', short_name: '오시는 길', url: '/directions', icons: [{ src: '/favicon-192.png?v=fav20261014', sizes: '192x192' }] },
     ],
   }, 200, { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'public, max-age=86400' })
 })
@@ -884,8 +883,8 @@ const PRECACHE = [
   '/offline',
   '/static/style.css?v=${ASSET_VERSION}',
   '/static/app.js?v=${ASSET_VERSION}',
-  '/static/icon-192.png',
-  '/static/icon-512.png',
+  '/favicon-192.png?v=fav20261014',
+  '/favicon-512.png?v=fav20261014',
   '/manifest.webmanifest',
 ];
 
