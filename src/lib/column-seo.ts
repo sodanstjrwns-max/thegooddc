@@ -125,3 +125,16 @@ export function ymd(v?: string | null): string | undefined {
   const m = String(v || '').match(/^(\d{4}-\d{2}-\d{2})/)
   return m ? m[1] : undefined
 }
+
+// ── 칼럼 og 경량본 (2026-10-14) ─────────────────────────────
+// R2 media/ 원본(PNG 1.7~2.9MB)을 og 로 그대로 쓰면 무겁다 → og/<원본 키에서 확장자 뺀 것>.jpg (1200×630 JPEG ≤300KB).
+// 기존 글은 일괄 변환본을 R2 에 올렸고, 새 업로드는 편집기가 브라우저에서 만들어 함께 올린다(kind=og).
+// 경량본이 없으면 /files/og/... 가 원본으로 302 (index.tsx /files/*).
+export function ogKeyFor(mediaKey: string): string {
+  return `og/${mediaKey.replace(/\.[a-z0-9]+$/i, '')}.jpg`
+}
+/** 칼럼 대표이미지 경로 → og 용 경로. /files/media/* 만 경량본으로, 나머지(/images/* 등)는 그대로 */
+export function ogImageFor(cover: string): string {
+  const m = (cover || '').match(/^(?:https?:\/\/(?:www\.)?thegooddc\.kr)?\/files\/(media\/[\w.-]+\.(?:png|jpe?g|webp|gif))$/i)
+  return m ? `/files/${ogKeyFor(m[1])}` : cover
+}

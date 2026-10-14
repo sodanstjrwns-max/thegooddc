@@ -33,6 +33,19 @@ const CORE_IMG: Record<string, string> = {
   minish: '/images/core-minish-v2.webp',
 }
 
+// 진료별 og:image (1200×630 jpg, 2026-10-14) — 이전엔 핵심 3개만 1000×750 webp, 나머지는 og-default 공통.
+// 원내 실사(op-*·interior-*·case-denture) 또는 핵심 진료 제품 사진의 1200×630 크롭. 명지 하위 페이지 사진과는 겹치지 않게.
+const TX_OG: Record<string, { src: string; alt: string }> = {
+  implant: { src: '/images/og/tx-implant-1200x630.jpg', alt: '디지털 가이드 임플란트 — 임플란트 픽스처와 크라운' },
+  'clear-aligner': { src: '/images/og/tx-clear-aligner-1200x630.jpg', alt: '투명교정 — 투명 교정 장치' },
+  minish: { src: '/images/og/tx-minish-1200x630.jpg', alt: '스타일네이트 — 얇은 세라믹 라미네이트' },
+  orthodontics: { src: '/images/og/tx-orthodontics-1200x630.jpg', alt: '더착한치과 원내 인포메이션 데스크와 라운지' },
+  conservative: { src: '/images/og/tx-conservative-1200x630.jpg', alt: '대표원장이 정밀하게 진료하는 모습' },
+  periodontics: { src: '/images/og/tx-periodontics-1200x630.jpg', alt: '대표원장과 스태프가 함께 진료하는 모습' },
+  integrated: { src: '/images/og/tx-integrated-1200x630.jpg', alt: '대표원장이 스태프와 함께 진료하는 모습' },
+  prosthodontics: { src: '/images/og/tx-prosthodontics-1200x630.jpg', alt: '대표원장이 보철 진료를 하는 모습' },
+}
+
 // 진료별 임상 메타데이터 (procedureRichSchema 강화용 — AI가 깊게 인용)
 const PROC_META: Record<string, { bodyLocation?: string; preparation?: string; followup?: string; howPerformed?: string }> = {
   implant: {
@@ -179,7 +192,7 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
   const related = t.relatedTreatments.map((s) => getTreatment(s)).filter(Boolean)
   const fable = TREATMENT_FABLES[t.slug]
   const meta = PROC_META[t.slug]
-  const heroImg = CORE_IMG[t.slug]
+  const og = TX_OG[t.slug]
 
   // AEO: 진료 과정을 HowTo로 구조화 — process(명시적 단계) 우선, 없으면 섹션 기반
   const howToSteps = t.process && t.process.length
@@ -221,8 +234,8 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
     richSchemas.push(itemListSchema({ name: `${t.shortName} 세부 진료`, path: `/treatments/${t.slug}`, items: t.subProcedures }))
   }
   // 대표 이미지가 있으면 ImageObject
-  if (heroImg) {
-    richSchemas.push(imageObjectSchema({ url: heroImg, caption: `${CLINIC.name} ${t.name}` }))
+  if (og) {
+    richSchemas.push(imageObjectSchema({ url: og.src, caption: `${CLINIC.name} ${t.name}` }))
   }
 
   return (
@@ -231,7 +244,8 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
       description={t.summary}
       path={`/treatments/${t.slug}`}
       keywords={t.keywords}
-      ogImage={heroImg}
+      ogImage={og?.src}
+      ogImageAlt={og ? `${t.name} — ${og.alt}` : undefined}
       schemas={richSchemas}
     >
       <section class="page-hero has-img">

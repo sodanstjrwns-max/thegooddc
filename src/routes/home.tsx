@@ -7,6 +7,8 @@ import { STORY_CHAPTERS, STORY_CTA, CASE_STORIES } from '../data/story'
 import { JourneyPathVector } from '../components/vectors'
 import { speakableSchema, faqSchema, personSchema, procedureRichSchema, breadcrumbSchema } from '../lib/seo'
 import { ASSET_VERSION } from '../lib/asset-version'
+import { myeongjiItemListSchema } from '../data/myeongji-cards'
+import { MyeongjiCardGrid } from '../components/MyeongjiCards'
 
 // 홈 핵심 FAQ — 검색·AI 답변 노출도가 가장 높은 페이지의 직답형 FAQPage
 const HOME_FAQS = [
@@ -70,6 +72,8 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
         personSchema(doctor),
         ...CORE_TREATMENTS.map((t) => procedureRichSchema({ name: t.name, slug: t.slug, summary: t.summary })),
         breadcrumbSchema([{ name: '홈', path: '/' }]),
+        // 화면 '명지 진료 안내' 사진 카드 6장과 1:1 (2026-10-14)
+        myeongjiItemListSchema('/'),
       ]}
     >
       {popups.length > 0 && <NoticePopups notices={popups} />}
@@ -239,6 +243,18 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
               </a>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ===================== 명지 진료 안내 — 하위 페이지 6장 사진 카드 (2026-10-14) ===================== */}
+      <section class="mj-home" id="myeongji-care" aria-labelledby="mj-home-title" style="padding:0 0 110px">
+        <div class="container">
+          <div class="shead">
+            <span class="eyebrow">Myeongji Care Guide</span>
+            <h2 id="mj-home-title">명지에서 받는 <em>여섯 가지 진료</em></h2>
+            <p>명지오션시티 본원 기준으로 진료별 선택 기준과 내원 정보를 한 장씩 정리했습니다.</p>
+          </div>
+          <MyeongjiCardGrid idPrefix="home-mj" />
         </div>
       </section>
 

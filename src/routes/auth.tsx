@@ -725,6 +725,32 @@ const EDITOR_JS = `
 
     // ---------- 이미지 업로드(alt 입력) ----------
     var upCount=0;
+    // og 경량본: 업로드한 원본을 브라우저에서 1200x630 JPEG(가운데 크롭)로 만들어 og/<키>.jpg 로 함께 저장 (2026-10-14)
+    window.__pfMakeOg = window.__pfMakeOg || function(file, key){
+      try{
+        if(!key || key.indexOf('media/')!==0 || !window.URL || !document.createElement('canvas').toBlob) return;
+        var src=URL.createObjectURL(file); var im=new Image();
+        im.onload=function(){
+          // 배경 = 같은 사진 꽉 채워 흐리게, 전경 = 사진 전체 contain (카드형 이미지 글자 잘림 방지)
+          var W=1200,H=630,nw=im.naturalWidth,nh=im.naturalHeight;
+          var rc=Math.max(W/nw,H/nh), rf=Math.min(W/nw,H/nh);
+          var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+          var cx=cv.getContext('2d'); cx.fillStyle='#ffffff'; cx.fillRect(0,0,W,H);
+          try{ cx.filter='blur(28px) brightness(0.92)'; }catch(e){}
+          cx.drawImage(im,(W-nw*rc)/2,(H-nh*rc)/2,nw*rc,nh*rc);
+          try{ cx.filter='none'; }catch(e){}
+          cx.drawImage(im,(W-nw*rf)/2,(H-nh*rf)/2,nw*rf,nh*rf); URL.revokeObjectURL(src);
+          var send=function(q){ cv.toBlob(function(b){
+            if(!b) return; if(b.size>290*1024 && q>0.5) return send(q-0.1);
+            var f2=new FormData(); f2.append('file',new File([b],'og.jpg',{type:'image/jpeg'})); f2.append('kind','og'); f2.append('ogFor',key);
+            fetch('/api/admin/upload',{method:'POST',body:f2}).catch(function(){});
+          },'image/jpeg',q); };
+          send(0.82);
+        };
+        im.onerror=function(){ URL.revokeObjectURL(src); };
+        im.src=src;
+      }catch(e){}
+    };
     function setStatus(){ if(statusEl) statusEl.textContent = upCount>0 ? ('사진 '+upCount+'장 업로드 중...') : ''; }
     function uploadImages(files, askAlt){
       Array.prototype.forEach.call(files, function(file){
@@ -738,7 +764,7 @@ const EDITOR_JS = `
         var fd=new FormData(); fd.append('file',file); fd.append('kind','media');
         fetch('/api/admin/upload',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(j){
           upCount--; setStatus();
-          if(j.ok){ ta.value = ta.value.replace(marker, '\\n!['+(alt||'본문 이미지')+']('+j.url+')\\n'); }
+          if(j.ok){ ta.value = ta.value.replace(marker, '\\n!['+(alt||'본문 이미지')+']('+j.url+')\\n'); window.__pfMakeOg(file, j.key); }
           else { ta.value = ta.value.replace(marker,''); alert(j.error||'업로드 실패'); }
           sync();
         }).catch(function(){ upCount--; setStatus(); ta.value=ta.value.replace(marker,''); alert('업로드 중 오류'); sync(); });
@@ -787,7 +813,7 @@ const EDITOR_JS = `
       if(btn){ btn.disabled=true; var ot=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 업로드 중'; }
       var fd=new FormData(); fd.append('file',file); fd.append('kind','media');
       fetch('/api/admin/upload',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(j){
-        if(j.ok){ urlInput.value=j.url; setThumb(j.url); } else alert(j.error||'업로드 실패');
+        if(j.ok){ urlInput.value=j.url; setThumb(j.url); if(window.__pfMakeOg) window.__pfMakeOg(file, j.key); } else alert(j.error||'업로드 실패');
       }).catch(function(){ alert('업로드 중 오류'); }).finally(function(){ if(btn){ btn.disabled=false; btn.innerHTML=ot; } fileInput.value=''; });
     });
   });

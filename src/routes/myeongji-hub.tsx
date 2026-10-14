@@ -11,10 +11,12 @@ import { Breadcrumb, FaqList } from '../components/ui'
 import { CLINIC } from '../data/clinic'
 import { TREATMENTS } from '../data/treatments'
 import { breadcrumbSchema, faqSchema, speakableSchema, canonical, CLINIC_ID } from '../lib/seo'
+import { myeongjiItemListSchema } from '../data/myeongji-cards'
+import { MyeongjiCardGrid } from '../components/MyeongjiCards'
 
 export const MYEONGJI_HUB_PATH = '/clinic/myeongji'
 /** 허브 본문을 실제로 바꾼 날짜 (사이트맵 lastmod·dateModified·화면 기준일 공용, 고정값) */
-export const MYEONGJI_HUB_UPDATED = '2026-10-08'
+export const MYEONGJI_HUB_UPDATED = '2026-10-14'
 export const MYEONGJI_HUB_TITLE = '부산 명지 치과 | 더착한치과 — 명지오션시티4로 스타빌딩 6층'
 const H1 = '부산 명지 치과, 더착한치과'
 const DESC =
@@ -81,6 +83,8 @@ export const MyeongjiHubPage: FC = () => {
     },
     breadcrumbSchema(crumbs),
     faqSchema(MYEONGJI_HUB_FAQS),
+    // 화면 '명지 진료 안내' 사진 카드 6장과 1:1 (2026-10-14)
+    myeongjiItemListSchema(MYEONGJI_HUB_PATH),
     speakableSchema(['h1', '.aeo-answer']),
   ]
   return (
@@ -131,7 +135,8 @@ export const MyeongjiHubPage: FC = () => {
               <li><a href={`/treatments/${t.slug}`}><strong>{t.shortName}</strong></a>{TX_NOTE[t.slug] ? ` — ${TX_NOTE[t.slug]}` : ''}</li>
             ))}
           </ul>
-          <p>명지 기준 진료별 안내: <a href="/area/myeongji-implant">명지 임플란트</a> · <a href="/area/myeongji-clear-aligner">명지 투명교정</a> · <a href="/area/myeongji-minish">명지 스타일네이트</a> · <a href="/area/myeongji-orthodontics">명지 치아교정</a></p>
+          <h3 style="margin:28px 0 16px">명지 기준 진료별 안내</h3>
+          <MyeongjiCardGrid idPrefix="hub-mj" />
 
           <h2>처음 방문하면 어떻게 진행되나요?</h2>
           <ol class="hub-steps">

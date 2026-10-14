@@ -13,6 +13,7 @@ interface LayoutProps {
   path: string
   keywords?: string[]
   ogImage?: string
+  ogImageAlt?: string // og:image:alt (없으면 title)
   schemas?: object[]
   ogType?: string
   noindex?: boolean // true면 robots noindex,follow (thin 페이지 등 — 링크는 따라가되 색인 제외)
@@ -94,7 +95,7 @@ const GtmNoscript: FC = () => {
 }
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
-  const { title, description, path, keywords, ogImage, schemas = [], ogType = 'website', noindex = false, article, children } = props
+  const { title, description, path, keywords, ogImage, ogImageAlt, schemas = [], ogType = 'website', noindex = false, article, children } = props
   const url = canonical(path)
   const img = ogImage
     ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
@@ -129,7 +130,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <meta property="og:image" content={img} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content={title} />
+        <meta property="og:image:alt" content={ogImageAlt || title} />
         <meta property="og:locale" content="ko_KR" />
         {article?.published && <meta property="article:published_time" content={article.published} />}
         {article?.modified && <meta property="article:modified_time" content={article.modified} />}

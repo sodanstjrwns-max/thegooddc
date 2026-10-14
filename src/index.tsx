@@ -21,9 +21,11 @@ import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, Reservat
 import { loadFees, saveFees, toPublic } from './lib/fees'
 import { TX_REVIEWED, CONTENT_DATES, latestDate, toYmd } from './lib/content-dates'
 import { CasesPage, CaseDetailPage, ColumnListPage, ColumnDetailPage, EncyclopediaListPage, EncyclopediaDetailPage } from './routes/content'
-import { paginate, pageHref, isThinCase, relatedColumns } from './lib/column-seo'
+import { paginate, pageHref, isThinCase, relatedColumns, ogKeyFor } from './lib/column-seo'
 import { AreaPage, AreaHubPage } from './routes/area'
 import { MyeongjiHubPage, MYEONGJI_HUB_UPDATED, MYEONGJI_HUB_PATH } from './routes/myeongji-hub'
+import { MyeongjiExtraPage, isMyeongjiExtra } from './routes/myeongji-extra'
+import { MYEONGJI_CARDS, MYEONGJI_CARDS_UPDATED, MYEONGJI_EXTRA_KEYS } from './data/myeongji-cards'
 import { fetchDashboardStats, renderStatsPage, STATS_KEY, MASTER_KEY } from './routes/stats'
 import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminNoticesPage, AdminColumnsPage, AdminCasesPage, AdminMembersPage, AdminReservationsPage, AdminSettingsPage, AdminAnalyticsPage, AdminFeesPage } from './routes/auth'
 import {
@@ -268,6 +270,8 @@ app.get('/area/:combo', (c) => {
     }
   }
   if (!matched) return c.notFound()
+  // 명지 신설 하위 페이지(충치치료·잇몸치료) — 고유 본문 (src/routes/myeongji-extra.tsx)
+  if (matched.area === 'myeongji' && isMyeongjiExtra(matched.treatment)) return c.html(<MyeongjiExtraPage txKey={matched.treatment} />)
   return c.html(<AreaPage areaSlug={matched.area} treatmentSlug={matched.treatment} />)
 })
 
@@ -787,6 +791,15 @@ app.post('/api/admin/upload', async (c) => {
     if (!file || typeof file === 'string') return c.json({ ok: false, error: '파일이 없습니다.' }, 400)
     if (!/^image\//.test(file.type)) return c.json({ ok: false, error: '이미지 파일만 업로드할 수 있습니다.' }, 400)
     if (file.size > 8 * 1024 * 1024) return c.json({ ok: false, error: '8MB 이하 이미지만 업로드할 수 있습니다.' }, 400)
+    // og 경량본(2026-10-14): 편집기가 media 업로드 직후 브라우저에서 만든 1200×630 JPEG 를 og/<원본 키>.jpg 로 저장
+    if (kind === 'og') {
+      const ogFor = String(form.ogFor || '')
+      if (!/^media\/[\w.-]+\.(png|jpe?g|webp|gif)$/i.test(ogFor)) return c.json({ ok: false, error: '잘못된 og 대상입니다.' }, 400)
+      if (file.type !== 'image/jpeg' || file.size > 600 * 1024) return c.json({ ok: false, error: 'og 이미지는 600KB 이하 JPEG 만 가능합니다.' }, 400)
+      const ogKey = ogKeyFor(ogFor)
+      await c.env.R2.put(ogKey, await file.arrayBuffer(), { httpMetadata: { contentType: 'image/jpeg' } })
+      return c.json({ ok: true, key: ogKey, url: `/files/${ogKey}` })
+    }
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
     const prefix = kind === 'after' ? 'cases-after' : 'media'
     const key = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
@@ -808,7 +821,16 @@ app.get('/files/*', async (c) => {
     if (!member && !admin) return c.text('로그인 후 열람할 수 있습니다.', 403)
   }
   const obj = await c.env.R2.get(key)
-  if (!obj) return c.notFound()
+  if (!obj) {
+    // og 경량본이 아직 없으면 원본으로 (확장자 모름 → head 로 확인)
+    const m = key.match(/^og\/(media\/[\w.-]+)\.jpg$/)
+    if (m) {
+      for (const ext of ['png', 'jpg', 'jpeg', 'webp', 'gif']) {
+        if (await c.env.R2.head(`${m[1]}.${ext}`)) return c.redirect(`/files/${m[1]}.${ext}`, 302)
+      }
+    }
+    return c.notFound()
+  }
   return new Response(obj.body as any, {
     headers: {
       'Content-Type': obj.httpMetadata?.contentType || 'application/octet-stream',
@@ -1060,7 +1082,7 @@ Sitemap: https://${d}/sitemap-areas.xml
 //  - 칼럼·게시판·공지·케이스(KV): modified/date, 목록 페이지 = 최신 항목, 비용 = 수가표 '최종 갱신일'
 //  - 인덱스 lastmod = 하위 사이트맵 최신값
 // ※ 예전엔 new Date()(매일 오늘)를 찍었다 (2026-09-29 교정).
-type SmUrl = { loc: string; pri: string; lastmod?: string; img?: { url: string; caption?: string } }
+type SmUrl = { loc: string; pri: string; lastmod?: string; img?: { url: string; caption?: string; title?: string } }
 const smEsc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
 function urlsetXml(base: string, urls: SmUrl[], withImages = false) {
   const ns = withImages
@@ -1068,7 +1090,7 @@ function urlsetXml(base: string, urls: SmUrl[], withImages = false) {
     : 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset ${ns}>\n${urls
     .map((u) => {
-      const imgTag = u.img ? `\n    <image:image><image:loc>${smEsc(u.img.url)}</image:loc>${u.img.caption ? `<image:caption>${smEsc(u.img.caption)}</image:caption>` : ''}</image:image>` : ''
+      const imgTag = u.img ? `\n    <image:image><image:loc>${smEsc(u.img.url)}</image:loc>${u.img.title ? `<image:title>${smEsc(u.img.title)}</image:title>` : ''}${u.img.caption ? `<image:caption>${smEsc(u.img.caption)}</image:caption>` : ''}</image:image>` : ''
       return `  <url><loc>${base}${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.pri}</priority>${imgTag}</url>`
     })
     .join('\n')}\n</urlset>`
@@ -1177,7 +1199,22 @@ function areaUrls(): SmUrl[] {
       ? latestDate(MYEONGJI_HUB_UPDATED, TX_REVIEWED)
       : latestDate(CONTENT_DATES.pages.areaHubTemplate, CONTENT_DATES.areas[h.area.slug], TX_REVIEWED),
   }))
-  getAreaCombinations().forEach((combo) => urls.push({ loc: combo.url, pri: '0.6', lastmod: areaDate(combo.area.slug, combo.treatment.slug) }))
+  // 명지 핵심 6장: 대표 사진(og 와 같은 파일)을 image:image 로, 신설 2장(충치·잇몸)도 등록 (2026-10-14)
+  const mjCard = new Map(MYEONGJI_CARDS.map((x) => [x.url, x]))
+  const mjImg = (url: string) => {
+    const k = mjCard.get(url)
+    return k ? { url: `https://${CLINIC.domain}${k.og}`, caption: k.alt, title: k.name } : undefined
+  }
+  getAreaCombinations().forEach((combo) => urls.push({
+    loc: combo.url,
+    pri: mjCard.has(combo.url) ? '0.8' : '0.6',
+    lastmod: mjCard.has(combo.url) ? latestDate(areaDate(combo.area.slug, combo.treatment.slug), MYEONGJI_CARDS_UPDATED) : areaDate(combo.area.slug, combo.treatment.slug),
+    img: mjImg(combo.url),
+  }))
+  MYEONGJI_EXTRA_KEYS.forEach((k) => {
+    const url = `/area/myeongji-${k}`
+    urls.push({ loc: url, pri: '0.8', lastmod: MYEONGJI_CARDS_UPDATED, img: mjImg(url) })
+  })
   return urls.length ? urls : [{ loc: '/directions', pri: '0.7', lastmod: CONTENT_DATES.pages.directions }]
 }
 
@@ -1253,7 +1290,7 @@ ${lastBuild ? `  <lastBuildDate>${lastBuild}</lastBuildDate>\n` : ''}${items}
 })
 
 app.get('/sitemap-encyclopedia.xml', (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, encyclopediaUrls()), 200, xmlHeaders))
-app.get('/sitemap-areas.xml', (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, areaUrls()), 200, xmlHeaders))
+app.get('/sitemap-areas.xml', (c) => c.text(urlsetXml(`https://${CLINIC.domain}`, areaUrls(), true), 200, xmlHeaders))
 
 // ===== SEO·AEO 자동 진단 엔드포인트 =====
 // 정적 데이터 기반으로 sitemap 누락·메타·스키마·AEO 자산을 점검해 JSON 리포트 반환
@@ -1440,6 +1477,9 @@ ${AREAS.map((a) => `- ${a.name} (${a.fullName}): ${a.distance || a.desc}${a.tran
 
 ## 지역 × 진료 안내 (${getAreaCombinations().length}개)
 지역별로 임플란트·투명교정·스타일네이트·치아교정 안내 페이지를 제공합니다. 예) https://${d}/area/myeongji-implant (명지 임플란트)
+
+## 명지 진료 안내 (본원 소재지 명지 기준 ${MYEONGJI_CARDS.length}개)
+${MYEONGJI_CARDS.map((x) => `- ${x.name}: ${x.line} → https://${d}${x.url}`).join('\n')}
 
 ## 치과 용어 백과사전 (상세 ${DETAILED_TERMS.length}개)
 환자가 자주 검색하는 치과 용어를 각 약 1,000자로 정확하게 설명합니다.

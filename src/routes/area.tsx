@@ -9,6 +9,8 @@ import {
   qaPageSchema, areaLocalBusinessSchema, serviceAreaSchema, collectionPageSchema,
 } from '../lib/seo'
 import { HubLink } from '../lib/hub-link'
+import { getMyeongjiCard, myeongjiPageSchema, MYEONGJI_CARDS } from '../data/myeongji-cards'
+import { MyeongjiLeadFigure } from '../components/MyeongjiCards'
 
 const BUS_ALL = [
   ...CLINIC.directions.bus.general,
@@ -27,7 +29,11 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
 
   const kw = `${area.name} ${t.shortName}`
   const neighbors = getNeighborAreas(areaSlug, 4)
-  const otherTreatments = AREA_TREATMENTS.filter((x) => x.slug !== t.slug)
+  // 명지 핵심 6장(사진 카드)은 고유 대표 사진·제목을 쓰고, 형제 링크도 6장 기준 (2026-10-14)
+  const card = areaSlug === 'myeongji' ? getMyeongjiCard(t.slug) : undefined
+  const otherTreatments = card
+    ? MYEONGJI_CARDS.filter((x) => x.key !== t.slug).map((x) => ({ slug: x.key, name: x.name.replace(/^명지 /, '') }))
+    : AREA_TREATMENTS.filter((x) => x.slug !== t.slug)
 
   const localFaqs = [
     { q: `${kw} 치과는 어디에 있나요?`, a: `${CLINIC.name}는 ${CLINIC.address}에 위치하며, ${area.desc} 지역에서 가까워 ${area.name} 지역 환자분들이 편리하게 내원하실 수 있습니다.` },
@@ -37,11 +43,14 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
     ...t.faq.slice(0, 2),
   ]
 
+  const description = `${area.fullName} 인근 ${t.name} 진료. ${area.distance || ''} ${CLINIC.name}는 ${t.summary.slice(0, 80)}`
   return (
     <Layout
-      title={`${kw} | ${CLINIC.name} 강서구 명지 치과`}
-      description={`${area.fullName} 인근 ${t.name} 진료. ${area.distance || ''} ${CLINIC.name}는 ${t.summary.slice(0, 80)}`}
+      title={card ? card.title : `${kw} | ${CLINIC.name} 강서구 명지 치과`}
+      description={description}
       path={`/area/${areaSlug}-${treatmentSlug}`}
+      ogImage={card?.og}
+      ogImageAlt={card?.alt}
       keywords={[kw, `${area.name} 치과`, `${kw} 치과`, `${area.name} ${t.shortName} 잘하는곳`, ...t.keywords.slice(0, 2)]}
       schemas={[
         breadcrumbSchema([{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }, { name: kw, path: `/area/${areaSlug}-${treatmentSlug}` }]),
@@ -50,6 +59,7 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
         qaPageSchema({ question: `${area.name}에서 ${t.shortName} 진료를 받을 수 있나요?`, answer: localFaqs[1].a }),
         serviceAreaSchema(20),
         speakableSchema(),
+        ...(card ? [myeongjiPageSchema(card, description)] : []),
       ]}
     >
       <section class="page-hero">
@@ -63,6 +73,7 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
 
       <section class="sec">
         <div class="container article-body">
+          {card && <MyeongjiLeadFigure src={card.body} alt={card.alt} />}
           {/* "부산 명지 치과" 허브 링크 — 본문 첫 부분 (페이지당 허브 링크: 이 줄 + 푸터) */}
           <p class="hub-local-line" style="margin:0 0 20px;color:var(--ink-soft);line-height:1.75"><i class="fa-solid fa-location-dot" style="color:var(--brand);margin-right:6px"></i>본원 위치·진료시간·주차 안내: <HubLink /> ({CLINIC.name}, 명지오션시티 스타빌딩 6층)</p>
           {/* AEO 직답 */}

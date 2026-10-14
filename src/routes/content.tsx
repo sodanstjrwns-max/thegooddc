@@ -14,7 +14,7 @@ import type { Column, BoardKind, BoardMeta } from '../lib/content-store'
 import { SEED_COLUMNS, SEED_CASES, BOARDS } from '../lib/content-store'
 import type { CaseItem } from '../lib/content-store'
 import type { MediumPost } from '../lib/medium'
-import { answerSummary, faqsFromBlocks, caseHeadline, caseSummaryRows, pageHref, ymd } from '../lib/column-seo'
+import { answerSummary, faqsFromBlocks, caseHeadline, caseSummaryRows, pageHref, ymd, ogImageFor } from '../lib/column-seo'
 
 const SITE = `https://${CLINIC.domain}`
 
@@ -607,7 +607,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
       path={path}
       noindex={noindex}
       ogType="article"
-      ogImage={cover || undefined}
+      ogImage={cover ? ogImageFor(cover) : undefined}
       article={{ published: ymd(c.date), modified: reviewed, section: t?.shortName || bm.label, author: isColumn && drAuthor ? `${drAuthor.name} ${drAuthor.title}` : undefined }}
       keywords={[bm.label, t?.shortName || '', '강서구 치과']}
       schemas={isColumn ? [columnGraph] : [
