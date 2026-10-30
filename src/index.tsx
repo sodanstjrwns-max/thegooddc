@@ -90,6 +90,8 @@ app.use('*', async (c, next) => {
   }
   if (changed) return c.redirect(url.toString(), 301)
   await next()
+  // 미리보기 별칭(immersive-preview.thegooddental.pages.dev 등)은 검색 색인 제외
+  if (url.hostname.endsWith('.pages.dev')) c.header('X-Robots-Tag', 'noindex, nofollow')
 })
 
 // 동적 HTML 응답에도 기본 헤더 적용 (_headers는 정적 자산에만 적용됨).
