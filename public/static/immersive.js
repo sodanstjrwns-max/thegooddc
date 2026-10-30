@@ -59,12 +59,25 @@
     Object.keys(vars).forEach(function (k) { (TIMING.indexOf(k) > -1 ? to : from)[k] = vars[k]; });
     if ('clipPath' in from) to.clipPath = 'inset(0% 0% 0% 0%)';
     var tw = gsap.fromTo(targets, from, to);
-    ScrollTrigger.create({ trigger: trigger || targets[0], start: startAt || 'top 88%', once: true, onEnter: function () {
-      tw.play();
-      setTimeout(function () { if (tw.progress() < 1) tw.progress(1); }, (tw.totalDuration() + 0.6) * 1000);
-    } });
+    var item = { tw: tw, el: trigger || targets[0] };
+    pending.push(item);
+    ScrollTrigger.create({ trigger: item.el, start: startAt || 'top 88%', once: true, onEnter: function () { play(item); } });
     return tw;
   }
+  // 재생 + 탭이 숨겨져 프레임이 멈춰도 끝 상태 보장
+  var pending = [];
+  function play(item) {
+    var i = pending.indexOf(item);
+    if (i > -1) pending.splice(i, 1);
+    if (item.tw.progress() > 0) return;
+    item.tw.play();
+    setTimeout(function () { if (item.tw.progress() < 1) item.tw.progress(1); }, (item.tw.totalDuration() + 0.6) * 1000);
+  }
+  // 한 번에 건너뛴 구간(앵커 이동·빠른 점프)은 콜백이 생략될 수 있으므로 화면 위·안에 있는 대기 연출을 모두 재생
+  function sweep() {
+    pending.slice().forEach(function (it) { if (it.el.getBoundingClientRect().top < innerHeight * 0.92) play(it); });
+  }
+  ScrollTrigger.addEventListener('scrollEnd', sweep);
   function splitWords(el) {
     var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     var nodes = [];
@@ -300,7 +313,8 @@
   }
   ScrollTrigger.refresh();
   toHash();
+  sweep();
   // 이미지가 늦게 로드되면 위치 다시 계산
-  window.addEventListener('load', function () { ScrollTrigger.refresh(); toHash(); });
+  window.addEventListener('load', function () { ScrollTrigger.refresh(); toHash(); sweep(); });
   }
 })();
