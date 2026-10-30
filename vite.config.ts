@@ -3,6 +3,8 @@ import devServer from '@hono/vite-dev-server'
 import adapter from '@hono/vite-dev-server/cloudflare'
 import { defineConfig } from 'vite'
 import { execSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { computeContentDates } from './scripts/content-dates.mjs'
 
 // 진료 콘텐츠 최종 수정일 = src/data/treatments.ts 마지막 커밋 날짜(빌드 시 상수).
@@ -17,8 +19,13 @@ function lastCommitDate(paths: string[]): string {
   }
 }
 
+// 홈 스크롤 몰입 연출 정적 파일의 내용 해시 (?v= 캐시 버스팅 — 고정 버전 문자열 금지)
+const fileHash = (f: string) => createHash('sha256').update(readFileSync(f)).digest('hex').slice(0, 10)
+
 export default defineConfig({
   define: {
+    __IMMERSIVE_CSS_V__: JSON.stringify(fileHash('public/static/immersive.css')),
+    __IMMERSIVE_JS_V__: JSON.stringify(fileHash('public/static/immersive.js')),
     __TX_CONTENT_DATE__: JSON.stringify(lastCommitDate(['src/data/treatments.ts'])),
     // 사이트맵 lastmod·llms 최종 갱신 = 콘텐츠 실제 수정 커밋 날짜 (폴백 src/lib/content-dates.fallback.json)
     __CONTENT_DATES__: JSON.stringify(computeContentDates()),

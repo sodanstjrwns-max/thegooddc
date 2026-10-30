@@ -1,0 +1,36 @@
+/* 더착한치과 메인 스크롤 몰입 연출 — /static/immersive.js 가 html.mx 를 붙였을 때만 작동 */
+html.mx.lenis, html.mx.lenis body { height: auto; }
+html.mx .lenis.lenis-smooth { scroll-behavior: auto !important; }
+html.mx { scroll-behavior: auto !important; }
+/* 섹션 제목의 CSS 줄 마스크(view-timeline)는 낱말 등장이 대신 맡는다 */
+html.mx .shead h2 { animation: none; clip-path: none; }
+
+/* 제목 낱말 마스크 */
+.mx-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
+.mx-wi { display: inline-block; will-change: transform; }
+
+/* 원장 문장·이야기 맺음말: 스크롤 따라 한 낱말씩 밝아짐 */
+.mx-read .mx-wi { opacity: .16; }
+
+/* 사진 시차: translate 만 쓰고, 여유분은 scale 로 확보 (기존 hover transform 과 공존) */
+.mx-par { overflow: hidden; }
+.mx-par img { scale: 1.16; will-change: translate; }
+
+/* 다섯 장 이야기: 지금 읽는 장의 번호가 켜짐 */
+html.mx .fable-marker { transition: background-color .5s cubic-bezier(.16,1,.3,1), box-shadow .5s cubic-bezier(.16,1,.3,1); }
+html.mx .fable-no { transition: color .5s; }
+html.mx .fable-chapter.mx-on .fable-marker { background: var(--accent); box-shadow: 0 0 0 8px color-mix(in oklab, var(--accent) 16%, transparent), 0 8px 22px rgba(12,124,164,.3); }
+html.mx .fable-chapter.mx-on .fable-no { color: #fff; }
+
+/* 옆에서 들어오는 카드가 가로 스크롤을 만들지 않도록 */
+html.mx .fable, html.mx .philo, html.mx .cases, html.mx .compare, html.mx .operating { overflow-x: clip; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-read .mx-wi { opacity: 1; }
+  .mx-par img { scale: none; }
+}
+
+/* 좁은 화면 숫자 띠: 숫자가 자라는 동안 칸 높이를 고정(CLS 0)하면서 '15,000'이 칸 밖으로 넘치지 않게 */
+@media (max-width: 520px) {
+  html.mx .statband .n { font-size: 2.15rem; flex-wrap: wrap; justify-content: center; row-gap: 2px; }
+}

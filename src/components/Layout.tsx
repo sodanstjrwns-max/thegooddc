@@ -6,6 +6,7 @@ import { canonical, medicalClinicSchema, webSiteSchema } from '../lib/seo'
 import { ASSET_VERSION } from '../lib/asset-version'
 import { getActiveSettings } from '../lib/runtime-settings'
 import { HUB_PATH, HUB_ANCHOR } from '../lib/hub-link'
+import { ImmersiveHead, ImmersiveScripts } from '../lib/immersive'
 
 interface LayoutProps {
   title: string
@@ -18,6 +19,7 @@ interface LayoutProps {
   ogType?: string
   noindex?: boolean // true면 robots noindex,follow (thin 페이지 등 — 링크는 따라가되 색인 제외)
   article?: { published?: string; modified?: string; section?: string; author?: string } // og:type=article 메타
+  immersive?: boolean // 메인 홈 스크롤 몰입 연출 (GSAP·Lenis) — 홈에서만 true
 }
 
 const FA = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css'
@@ -95,7 +97,7 @@ const GtmNoscript: FC = () => {
 }
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
-  const { title, description, path, keywords, ogImage, ogImageAlt, schemas = [], ogType = 'website', noindex = false, article, children } = props
+  const { title, description, path, keywords, ogImage, ogImageAlt, schemas = [], ogType = 'website', noindex = false, article, immersive = false, children } = props
   const url = canonical(path)
   const img = ogImage
     ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
@@ -169,6 +171,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <link rel="stylesheet" href={FA} media="print" onload="this.media='all'" />
         <noscript><link rel="stylesheet" href={FA} /></noscript>
         <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
+        {immersive && <ImmersiveHead />}
 
         {/* JSON-LD */}
         {allSchemas.map((s) => (
@@ -186,6 +189,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <Footer path={path} />
         <FloatingCTA />
         <script src={`/static/app.js?v=${ASSET_VERSION}`} defer></script>
+        {immersive && <ImmersiveScripts />}
       </body>
     </html>
   )
