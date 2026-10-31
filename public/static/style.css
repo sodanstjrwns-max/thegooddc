@@ -1798,3 +1798,27 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
 .case-photo-lock{background:var(--bg-2);display:grid;place-items:center;text-align:center;color:var(--ink-soft);font-size:.85rem;font-weight:700}
 .case-photo-grid figcaption{font-size:.8rem;color:var(--ink-soft);text-align:center;margin-top:4px}
 @media (max-width:640px){.col-author-box{flex-direction:column;gap:12px;padding:20px}.case-summary-dl{grid-template-columns:1fr;gap:2px}.case-summary-dl dd{margin-bottom:6px}}
+
+/* ============================================================
+   2026-10-31 표준 모드(<!DOCTYPE html>) 전환 보정
+   이전엔 DOCTYPE 이 없어 호환(quirks) 모드로 렌더됐다. 호환 모드의 차이 중
+   이 사이트 모양에 영향을 준 것만 그대로 옮겨 원래 모습을 유지한다.
+   ① 글자 없이 인라인 블록만 있는 줄은 줄 높이(strut)를 생략했다
+      → 혼자 한 줄을 차지하던 라벨·버튼을 같은 크기의 블록으로(정렬 유지)
+   ② 표는 글자 크기·줄 높이·굵기·정렬을 물려받지 않았다
+   ============================================================ */
+.eyebrow,.fable-kicker,.fable-guide .fg-label,.bento-kicker,.mvp-card .mvp-kicker,.visit-block .vi-head,.visit-block>.vi-phone,.cc-more,.doctor-info .lic,.doctor-info>.btn{display:flex;width:fit-content}
+.cc-body .tag{display:block;width:fit-content}
+.eyebrow.center,.eyebrow[style*="justify-content:center"],.shead.center>.eyebrow,[style*="text-align:center"]>.eyebrow,.ph-inner>.eyebrow,.page-hero .container>.eyebrow,.cta-band .eyebrow{margin-inline:auto}
+.ml-text>.eyebrow{width:auto}
+/* 아이콘 한 줄 + <br> (사진 잠금 안내) */
+span>i.fa-lock:first-child:has(+br){display:block}
+span>i.fa-lock:first-child+br{display:none}
+/* 작은 글씨 한 줄만 남는 '자세히 보기' (칼럼·게시판 목록) */
+.col-list-body>span{display:block}
+/* 작은 글씨만 있는 줄: 호환 모드에선 문단 줄 높이를 생략했다 (오시는 길 주차 안내) */
+.sub-card p>br+span[style*="font-size:12.5px"]{display:block}
+.rsv-form>.rsv-submit{display:flex}
+.field>textarea{display:block}
+.mj-card-arrow{line-height:0}
+:where(table){color:var(--ink-2);font-size:medium;line-height:normal;white-space:normal;font-weight:normal;font-style:normal;font-variant:normal;text-align:start}

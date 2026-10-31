@@ -1,4 +1,5 @@
 import type { FC, PropsWithChildren } from 'hono/jsx'
+import { raw } from 'hono/html'
 import { CLINIC } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { AREAS } from '../data/areas'
@@ -106,7 +107,10 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
   // 병원 엔티티는 #medicalclinic 하나 (별도 #dentist·#organization 노드 제거, 2026-09-29)
   const allSchemas = [webSiteSchema(), medicalClinicSchema(), ...schemas]
 
+  // 표준 모드(<!DOCTYPE html>) — 2026-10-31부터. 이전엔 호환(quirks) 모드로 렌더됐다
   return (
+    <>
+    {raw('<!DOCTYPE html>')}
     <html lang="ko">
       <head>
         <meta charset="UTF-8" />
@@ -192,6 +196,7 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         {immersive && <ImmersiveScripts />}
       </body>
     </html>
+    </>
   )
 }
 

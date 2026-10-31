@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { raw as rawHtml } from 'hono/html'
 import { CLINIC } from './data/clinic'
 import { ASSET_VERSION } from './lib/asset-version'
 import { TREATMENTS, getTreatment } from './data/treatments'
@@ -90,8 +91,6 @@ app.use('*', async (c, next) => {
   }
   if (changed) return c.redirect(url.toString(), 301)
   await next()
-  // 미리보기 별칭(immersive-preview.thegooddental.pages.dev 등)은 검색 색인 제외
-  if (url.hostname.endsWith('.pages.dev')) c.header('X-Robots-Tag', 'noindex, nofollow')
 })
 
 // 동적 HTML 응답에도 기본 헤더 적용 (_headers는 정적 자산에만 적용됨).
@@ -1590,6 +1589,8 @@ export default app
 // ===== helpers =====
 function legalPage(title: string, html: string, path?: string) {
   return (
+    <>
+    {rawHtml('<!DOCTYPE html>')}
     <html lang="ko">
       <head>
         <meta charset="UTF-8" />
@@ -1605,11 +1606,14 @@ function legalPage(title: string, html: string, path?: string) {
         <div class="container" style="padding-bottom:60px"><a href="/" class="btn btn-outline"><i class="fa-solid fa-house"></i> 홈으로</a></div>
       </body>
     </html>
+    </>
   )
 }
 
 function notFoundPage() {
   return (
+    <>
+    {rawHtml('<!DOCTYPE html>')}
     <html lang="ko">
       <head>
         <meta charset="UTF-8" />
@@ -1641,6 +1645,7 @@ function notFoundPage() {
         </section>
       </body>
     </html>
+    </>
   )
 }
 
