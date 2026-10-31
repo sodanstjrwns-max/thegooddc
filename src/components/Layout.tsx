@@ -66,9 +66,6 @@ gtag('js',new Date());`
         </>
       )}
 
-      {/* Microsoft Clarity */}
-      <script dangerouslySetInnerHTML={{ __html: '(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","yc84cnr6dd");' }} />
-
       {/* PF 1st-party 비콘 */}
       <script defer src="https://pf-dashboard-2nt.pages.dev/beacon.js"></script>
 
@@ -176,6 +173,9 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <noscript><link rel="stylesheet" href={FA} /></noscript>
         <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
         {immersive && <ImmersiveHead />}
+        {/* Microsoft Clarity — 스타일시트 다음에 둔다(인라인 스크립트가 CSS 로드를 기다림).
+            표준 모드에서 Clarity 가 CSS 적용 전 레이아웃을 읽으면 첫 화면 CLS ~0.29 가 잡혔다 (2026-10-31) */}
+        <script dangerouslySetInnerHTML={{ __html: '(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","yc84cnr6dd");' }} />
 
         {/* JSON-LD */}
         {allSchemas.map((s) => (
