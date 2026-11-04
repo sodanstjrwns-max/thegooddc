@@ -8,7 +8,7 @@ const BASE = `https://${CLINIC.domain}`
 export const CLINIC_ID = `${BASE}/#medicalclinic`
 // 공식 채널 (src/data/clinic.ts sns 에 있는 값만): 네이버 플레이스(예약 링크 주석의 36398883)·카카오 채널
 const NAVER_PLACE = 'https://map.naver.com/p/entry/place/36398883'
-const SAME_AS = [NAVER_PLACE, CLINIC.sns?.kakao, CLINIC.sns?.instagram, CLINIC.sns?.blog, CLINIC.sns?.youtube].filter((u): u is string => !!u)
+const SAME_AS = [NAVER_PLACE, CLINIC.sns?.naverBooking, CLINIC.sns?.kakao, CLINIC.sns?.instagram, CLINIC.sns?.blog, CLINIC.sns?.youtube].filter((u): u is string => !!u)
 
 export interface SeoMeta {
   title: string
@@ -62,6 +62,26 @@ export function dentistSchema() {
       })),
     medicalSpecialty: 'Dentistry',
   }
+}
+
+// 화면(홈 오시는길·/directions)에 표시하는 CLINIC.hours 그대로 — 점심시간이 있는 날은 오전·오후 두 구간으로 나눈다
+// (2026-11-05: 월 09:00-20:00 한 구간으로 적으면 12:00-14:00 휴진이 빠져 실제와 어긋남)
+function openingHoursSpec() {
+  const specs: { '@type': 'OpeningHoursSpecification'; dayOfWeek: string; opens: string; closes: string }[] = []
+  for (const h of CLINIC.hours as readonly { day: string; time: string; lunch: string | null; closed: boolean }[]) {
+    if (h.closed) continue
+    const [open, close] = h.time.split(' - ')
+    if (!open || !close) continue
+    const day = dayToSchema(h.day)
+    const [lunchStart, lunchEnd] = h.lunch ? h.lunch.split(' - ') : []
+    if (lunchStart && lunchEnd) {
+      specs.push({ '@type': 'OpeningHoursSpecification', dayOfWeek: day, opens: open, closes: lunchStart })
+      specs.push({ '@type': 'OpeningHoursSpecification', dayOfWeek: day, opens: lunchEnd, closes: close })
+    } else {
+      specs.push({ '@type': 'OpeningHoursSpecification', dayOfWeek: day, opens: open, closes: close })
+    }
+  }
+  return specs
 }
 
 function dayToSchema(day: string) {
@@ -262,7 +282,8 @@ export function medicalClinicSchema() {
   const streetAddress = CLINIC.address.replace(/^부산\s*강서구\s*/, '').trim()
   return {
     '@context': 'https://schema.org',
-    '@type': ['MedicalClinic', 'Dentist'],
+    // (2026-11-05) 지역 SEO: LocalBusiness 를 명시해 로컬 결과 매칭 강화 (Dentist 의 상위형이라 의미 충돌 없음)
+    '@type': ['Dentist', 'MedicalClinic', 'LocalBusiness'],
     '@id': CLINIC_ID,
     name: CLINIC.name,
     alternateName: CLINIC.nameEn,
@@ -294,14 +315,7 @@ export function medicalClinicSchema() {
       '@type': 'City',
       name: n,
     })),
-    openingHoursSpecification: (CLINIC.hours || [])
-      .filter((h: any) => !h.closed)
-      .map((h: any) => ({
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: dayToSchema(h.day),
-        opens: h.time.split(' - ')[0],
-        closes: h.time.split(' - ')[1],
-      })),
+    openingHoursSpecification: openingHoursSpec(),
     availableService: (CLINIC as any).coreServiceNames || undefined,
   }
 }
