@@ -44,6 +44,7 @@ import { publicColumn } from './lib/column-clean'
 import { setActiveSettings } from './lib/runtime-settings'
 import { listMediumPosts } from './lib/medium'
 import { notifyGoogleIndex, notifyGoogleIndexMany, isGoogleIndexingConfigured } from './lib/google-indexing'
+import { isGoogleCrawler, isGoogleHiddenPath, GOOGLE_HIDE_HEADER } from './lib/google-hide'
 
 // 절대 URL 헬퍼 (자동 색인용)
 const SITE_ORIGIN = `https://${CLINIC.domain}`
@@ -67,6 +68,19 @@ type Bindings = {
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
+
+// 구글 전용 검색 제외 (맨 바깥 미들웨어) — 구글 크롤러 + 대상 경로 + 200 HTML 응답에만
+// `X-Robots-Tag: googlebot: noindex` 를 붙인다. 그 밖의 요청은 아무것도 바꾸지 않는다.
+// 대상 경로·배경·되돌리는 방법: src/lib/google-hide.ts
+app.use('*', async (c, next) => {
+  await next()
+  if (!isGoogleCrawler(c.req.header('User-Agent'))) return
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD') return
+  if (c.res.status !== 200) return
+  if (!isGoogleHiddenPath(c.req.path)) return
+  if (!(c.res.headers.get('Content-Type') || '').toLowerCase().includes('text/html')) return
+  c.header('X-Robots-Tag', GOOGLE_HIDE_HEADER)
+})
 
 // 정규 URL 강제 (GSC 중복 URL 방지)
 //  - www.<host> → https://<host> 301 (같은 경로·쿼리 유지). *.pages.dev 프리뷰는 www. 로 시작하지 않아 영향 없음.
