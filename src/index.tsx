@@ -1089,6 +1089,8 @@ Sitemap: https://${d}/sitemap-areas.xml
 // ※ 예전엔 new Date()(매일 오늘)를 찍었다 (2026-09-29 교정).
 type SmUrl = { loc: string; pri: string; lastmod?: string; img?: { url: string; caption?: string; title?: string } }
 const smEsc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+// 사이트맵 <loc>는 프로토콜상 퍼센트 인코딩이어야 한다. 이미 인코딩된 부분은 건드리지 않고 한글 등 비ASCII만 인코딩한다.
+const smEncLoc = (s: string) => String(s).replace(/[^\x00-\x7F]+/g, (m) => encodeURIComponent(m))
 function urlsetXml(base: string, urls: SmUrl[], withImages = false) {
   const ns = withImages
     ? 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
@@ -1096,7 +1098,7 @@ function urlsetXml(base: string, urls: SmUrl[], withImages = false) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset ${ns}>\n${urls
     .map((u) => {
       const imgTag = u.img ? `\n    <image:image><image:loc>${smEsc(u.img.url)}</image:loc>${u.img.title ? `<image:title>${smEsc(u.img.title)}</image:title>` : ''}${u.img.caption ? `<image:caption>${smEsc(u.img.caption)}</image:caption>` : ''}</image:image>` : ''
-      return `  <url><loc>${base}${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.pri}</priority>${imgTag}</url>`
+      return `  <url><loc>${base}${smEncLoc(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.pri}</priority>${imgTag}</url>`
     })
     .join('\n')}\n</urlset>`
 }
