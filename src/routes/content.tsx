@@ -502,6 +502,23 @@ const RichBody: FC<{ text: string; altBase?: string; imgStart?: number }> = ({ t
   return <>{out}</>
 }
 
+/**
+ * 글 끝 상담 블록 — 백과사전·칼럼 상세 본문 끝(관련 글 목록 위)에 한 번.
+ * 기존 .card / .btn 컴포넌트와 색 토큰만 사용. 버튼은 clinic.ts 에 정의된 채널만(예약·네이버 예약·전화).
+ * 측정: data-cta="article-end" + 기존 클릭 추적(data-track, 위치 article-end).
+ */
+const ArticleEndCta: FC = () => (
+  <aside class="card article-end-cta" aria-label="진료 문의" style="margin-top:32px;padding:clamp(22px,5vw,34px)">
+    <h3 style="margin:0 0 10px">직접 확인이 필요하다면</h3>
+    <p style="margin:0 0 20px;color:var(--ink-soft)">이 글은 일반 정보입니다. 내 상태는 진료실에서 확인해야 정확합니다. 진료 시간 안에 {CLINIC.name}로 문의해 주세요.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <a href="/reservation" class="btn btn-primary" data-cta="article-end" data-track="reservation" data-track-loc="article-end"><i class="fa-regular fa-calendar-check"></i> 예약하기</a>
+      {CLINIC.sns.naverBooking && <a href={CLINIC.sns.naverBooking} target="_blank" rel="noopener" class="btn btn-outline" data-cta="article-end" data-track="naver_booking" data-track-loc="article-end"><i class="fa-regular fa-calendar-check"></i> 네이버 예약</a>}
+      <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-outline" data-cta="article-end" data-track="phone" data-track-loc="article-end"><i class="fa-solid fa-phone"></i> 전화 {CLINIC.phone}</a>
+    </div>
+  </aside>
+)
+
 export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?: number; board?: BoardKind; noindex?: boolean; related?: Column[]; relatedCases?: CaseItem[] }> = ({ slug, column, views = 0, board = 'column', noindex = false, related = [], relatedCases = [] }) => {
   const bm: BoardMeta = BOARDS[board]
   const c = column ?? SEED_COLUMNS.find((x) => x.slug === slug)
@@ -683,6 +700,8 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
             </div>
           </aside>
           )}
+          {/* 글 끝 상담 블록 (칼럼만 — 후기·이야기 게시판 제외) */}
+          {isColumn && <ArticleEndCta />}
           {isColumn && (
           <div class="related-box">
             <h3><i class="fa-solid fa-link" style="color:var(--brand);margin-right:8px"></i>{drAuthor ? '관련 진료 · 작성 의료진' : '관련 진료'}</h3>
@@ -883,6 +902,9 @@ export const EncyclopediaDetailPage: FC<{ slug: string }> = ({ slug }) => {
               본 내용은 일반적인 치과 정보 제공을 목적으로 하며, 실제 진단·치료 방향과 결과는 개인의 상태에 따라 다를 수 있습니다. 정확한 사항은 정밀 진단과 상담을 통해 안내해 드립니다.
             </p>
           )}
+
+          {/* 글 끝 상담 블록 */}
+          <ArticleEndCta />
 
           {related.length > 0 && (
             <div class="related-box">
