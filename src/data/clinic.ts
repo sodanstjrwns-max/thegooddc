@@ -30,8 +30,8 @@ export const CLINIC = {
   addressLocality: '강서구',
   addressDong: '명지동',
   postalCode: '46726',
-  // 명지오션시티 좌표 (근사)
-  geo: { lat: 35.0876, lng: 128.9105 },
+  // 병원 좌표 — 네이버 플레이스 기준 (2026-11-10 확인)
+  geo: { lat: 35.0837542, lng: 128.9039016 },
 
   directions: {
     car: '스타빌딩 지하 1·2층 주차장 이용 (30대 주차 가능)',
