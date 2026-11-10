@@ -112,7 +112,21 @@ export function organizationSchema() {
 }
 
 // Person (의료진)
-export function personSchema(doctor: { name: string; license: string; career: string[]; slug: string; photo?: string }) {
+// (2026-11-10) 화면(의료진 상세 '학력 및 경력'·면허 줄)에 이미 있는 사실만으로 채운다 — 새 사실을 만들지 않는다.
+//  - jobTitle = 직함(대표원장), hasCredential = 면허·학위 줄(치의학박사 · 통합치의학과 전문의)
+//  - alumniOf = '○○대학교 … 학위/졸업' 경력 줄의 학교, memberOf = '○○학회 정회원' 경력 줄의 학회
+//  - '전) …', 수료 과정, 학회 표기가 아닌 줄은 구조화하지 않고 description 에만 남긴다
+//  - brief: 경력을 화면에 싣지 않는 목록(/doctors)용 — 학력·학회·경력 설명을 빼고 같은 @id 로 이름·직함·면허만
+export function personSchema(doctor: { name: string; title?: string; license: string; career: string[]; slug: string; photo?: string }, opts: { brief?: boolean } = {}) {
+  const uniq = (xs: string[]) => [...new Set(xs)]
+  const credentials = doctor.license.split('·').map((s) => s.trim()).filter(Boolean)
+  const schools = uniq(doctor.career
+    .filter((c) => !/^전\)/.test(c) && /(학위|졸업)/.test(c))
+    .map((c) => (c.match(/^(\S+대학교)/) || [])[1])
+    .filter(Boolean) as string[])
+  const societies = uniq(doctor.career
+    .map((c) => (c.match(/^(\S+학회)\s*(정회원|회원)/) || [])[1])
+    .filter(Boolean) as string[])
   // 사진 주소는 데이터(doctor.photo)를 신뢰 — slug로 파일명을 추측하면 404가 난다
   const img = doctor.photo
     ? doctor.photo.startsWith('http')
@@ -124,11 +138,31 @@ export function personSchema(doctor: { name: string; license: string; career: st
     '@type': 'Person',
     '@id': `${BASE}/doctors/${doctor.slug}/#person`,
     name: doctor.name,
-    jobTitle: doctor.license,
+    jobTitle: doctor.title || doctor.license,
+    ...(credentials.length ? { hasCredential: credentials.map((name) => ({ '@type': 'EducationalOccupationalCredential', name })) } : {}),
+    ...(!opts.brief && schools.length ? { alumniOf: schools.map((name) => ({ '@type': 'CollegeOrUniversity', name })) } : {}),
+    ...(!opts.brief && societies.length ? { memberOf: societies.map((name) => ({ '@type': 'Organization', name })) } : {}),
     worksFor: { '@id': CLINIC_ID },
     url: `${BASE}/doctors/${doctor.slug}`,
-    description: doctor.career.join(', '),
+    ...(opts.brief ? {} : { description: doctor.career.join(', ') }),
     image: img,
+  }
+}
+
+// 비용 안내(/pricing) WebPage — 화면 '기준일'(수가표 최종 갱신일)이 유효한 날짜일 때만 dateModified·lastReviewed 를 넣는다
+export function pricingWebPageSchema(updated: string) {
+  const ymd = /^\d{4}-\d{2}-\d{2}/.test(updated || '') && !Number.isNaN(Date.parse(updated.slice(0, 10))) ? updated.slice(0, 10) : ''
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${BASE}/pricing#webpage`,
+    url: `${BASE}/pricing`,
+    name: `비급여 진료비용 안내 | ${CLINIC.name}`,
+    inLanguage: 'ko-KR',
+    isPartOf: { '@id': `${BASE}/#website` },
+    about: { '@id': CLINIC_ID },
+    publisher: { '@id': CLINIC_ID },
+    ...(ymd ? { dateModified: ymd, lastReviewed: ymd } : {}),
   }
 }
 

@@ -12,7 +12,7 @@ export const DoctorsListPage: FC = () => (
     description="더착한치과 의료진을 소개합니다. 치의학박사, 통합치의학과 전문의 황우석 대표원장의 24년 임상 경험으로 정확하고 편안한 진료를 제공합니다."
     path="/doctors"
     keywords={['강서구 치과 의료진', '명지 치과 원장', '통합치의학과 전문의', '치의학박사']}
-    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '의료진', path: '/doctors' }])]}
+    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '의료진', path: '/doctors' }]), ...DOCTORS.map((d) => personSchema(d, { brief: true }))]}
   >
     <section class="page-hero">
       <div class="container ph-inner">

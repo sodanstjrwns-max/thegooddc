@@ -1175,8 +1175,7 @@ function contentUrls(d: Dyn, base: string): SmUrl[] {
       img: before ? { url: `${base}/files/${before}`, caption: `${cs.title} 치료 전` } : undefined,
     })
   })
-  // 공지 목록 페이지는 1회만, lastmod는 최신 공지 기준
-  if (d.notices.length) urls.push({ loc: `/notice`, pri: '0.5', lastmod: newestOf(d.notices) })
+  // 공지 목록(/notice)은 sitemap-main.xml 에 이미 있다 — 여기에 또 넣으면 같은 URL이 두 사이트맵에 중복된다 (2026-11-10 제거)
   return urls.length ? urls : [{ loc: '/column', pri: '0.7' }]
 }
 // 백과사전 — 상세 용어는 우선순위 높임. 본문 없는 thin 용어(noindex)는 제외
@@ -1426,18 +1425,61 @@ app.get('/seo-health', async (c) => {
   })
 })
 
+// ===== llms.txt 표준 사실 블록 (2026-11-10) =====
+// 값은 전부 레포 상수(CLINIC·DOCTORS·TREATMENTS)와 공개 수가표(toPublic — 관리자가 숨긴 항목 제외)에서만 가져온다.
+// 없는 항목(가까운 역·최종 확인일)은 줄을 넣지 않는다. /llms.txt·/llms-full.txt 맨 위에 같은 블록을 둔다.
+async function llmsFactBlock(env: any): Promise<string> {
+  const d = CLINIC.domain
+  const open = CLINIC.hours.filter((h: any) => !h.closed)
+  const compact = (t: string) => t.replace(/\s+/g, '')
+  const dayTimes = open.map((h: any) => `${h.day} ${compact(h.time)}`).join(', ')
+  const lunchDays = open.filter((h: any) => h.lunch)
+  const noLunchDays = open.filter((h: any) => !h.lunch)
+  const nightDays = open.filter((h: any) => h.note === '야간진료')
+  const closedDays = CLINIC.hours.filter((h: any) => h.closed)
+  const hoursLine = [
+    dayTimes,
+    lunchDays.length ? `점심 ${compact(lunchDays[0].lunch as string)} (${lunchDays.map((h: any) => h.day).join('·')}${noLunchDays.length ? `, ${noLunchDays.map((h: any) => h.day).join('·')}요일은 점심시간 없음` : ''})` : '',
+    nightDays.length ? `야간 진료 ${nightDays.map((h: any) => h.day).join('·')}요일 ${compact(nightDays[0].time).split('-')[1]}까지` : '',
+    closedDays.length ? `휴진 ${closedDays.map((h: any) => h.day).join('·')}요일` : '',
+  ].filter(Boolean).join(' / ')
+  // 주요 비급여 진료비 — 비용 페이지(/pricing)에 공개된 항목만, 표기 그대로 (숫자 없는 '비용 없음'·'X' 제외)
+  let feeLines = ''
+  try {
+    const fees = toPublic(await loadFees(env))
+    const items = fees.groups.flatMap((g) => g.items).filter((it) => /\d/.test(it.cost))
+    const picks: typeof items = []
+    for (const re of [/임플란트/, /크라운/, /인레이/, /레진/, /틀니/, /치석제거|스케일링/]) {
+      const hit = items.find((it) => re.test(it.sub) && !picks.includes(it))
+      if (hit) picks.push(hit)
+    }
+    if (picks.length >= 3) {
+      feeLines = `- 주요 비급여 진료비 (${fees.unitNote}${toYmd(fees.updated) ? `, 기준일 ${toYmd(fees.updated)}` : ''}, '~'는 '이상'):\n` +
+        picks.map((it) => `  - ${it.sub}${it.detail ? ` · ${it.detail}` : ''}: ${it.cost}`).join('\n') + '\n'
+    }
+  } catch {}
+  return `## 병원 정보
+- 이름: ${CLINIC.name} (${CLINIC.nameEn} · 사업자 상호 ${CLINIC.businessName})
+- 진료 분야: ${TREATMENTS.map((t) => t.shortName).join(', ')}
+- 주소: ${CLINIC.address} (우편번호 ${CLINIC.postalCode})
+- 전화: ${CLINIC.phone}
+- 진료 시간: ${hoursLine}
+- 의료진: ${DOCTORS.map((doc: any) => `${doc.name}(${doc.title} · ${doc.license})`).join(', ')}
+- 예약: https://${d}/reservation · 네이버 예약 ${CLINIC.sns.naverBooking}
+- 진료 안내: https://${d}/treatments / 비용 안내: https://${d}/pricing / 의료진: https://${d}/doctors / 지역 안내(허브): https://${d}${MYEONGJI_HUB_PATH} / 자주 묻는 질문: https://${d}/faq
+${feeLines}`
+}
+
 app.get('/llms.txt', async (c) => {
   const d = CLINIC.domain
   const llmsCols = await listPublicColumns(c.env, 'column').catch(() => [] as any[])
   const body = `# ${CLINIC.name} (${CLINIC.nameEn})
 
 > ${CLINIC.philosophy.mission} 부산 강서구 명지의 통합치의학과 전문의 치과입니다.
+> 이 파일은 AI 검색·답변 엔진(ChatGPT, Perplexity, Claude, Gemini 등)이 ${CLINIC.name}의 핵심 정보를 정확히 인용하도록 돕기 위해 제공됩니다.
 
-이 파일은 AI 검색·답변 엔진(ChatGPT, Perplexity, Claude, Gemini 등)이 ${CLINIC.name}의 핵심 정보를 정확히 인용하도록 돕기 위해 제공됩니다.
-
-## 병원 정보
-- 정식명칭: ${CLINIC.name} (${CLINIC.nameEn})
-- 위치: ${CLINIC.address}
+${await llmsFactBlock(c.env)}
+## 추가 정보
 - 좌표: 위도 ${CLINIC.geo.lat}, 경도 ${CLINIC.geo.lng}
 - 대표전화(진료 상담·예약): ${CLINIC.phone}
 - 주차 지원 전용번호: ${CLINIC.directions.parkingSupportPhone} (주차비 지원 접수 전용, 진료 문의 불가)
@@ -1515,6 +1557,7 @@ app.get('/llms-full.txt', async (c) => {
   const d = CLINIC.domain
   const llmsCols = await listPublicColumns(c.env, 'column').catch(() => [] as any[])
   let body = `# ${CLINIC.name} 전체 정보 (AI 인용용 풀텍스트)\n\n`
+  body += `${await llmsFactBlock(c.env)}\n`
   body += `${CLINIC.philosophy?.story || ''}\n\n`
   body += `## 병원 개요\n- 명칭: ${CLINIC.name} (${CLINIC.nameEn})\n- 주소: ${CLINIC.address}\n- 전화: ${CLINIC.phone}\n- 진료시간: ${CLINIC.hoursNote}\n- 대표원장: ${CLINIC.director} ${CLINIC.directorTitle}\n\n`
 

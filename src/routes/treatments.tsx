@@ -240,7 +240,7 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
 
   return (
     <Layout
-      title={`${t.name} | ${CLINIC.name} 강서구 명지`}
+      title={`${t.name} | ${CLINIC.name} 부산 명지오션시티`}
       description={t.summary}
       path={`/treatments/${t.slug}`}
       keywords={t.keywords}

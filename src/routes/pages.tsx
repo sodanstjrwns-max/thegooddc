@@ -5,7 +5,7 @@ import { CLINIC } from '../data/clinic'
 import { TREATMENTS, CORE_TREATMENTS } from '../data/treatments'
 import type { FeesDoc } from '../lib/fees'
 import { DOCTORS } from '../data/doctors'
-import { breadcrumbSchema, faqSchema, speakableSchema } from '../lib/seo'
+import { breadcrumbSchema, faqSchema, speakableSchema, pricingWebPageSchema } from '../lib/seo'
 import type { Notice } from '../lib/content-store'
 import { SEED_NOTICES } from '../lib/content-store'
 
@@ -335,11 +335,11 @@ export const FaqPage: FC = () => {
 // ===== 비용 안내 =====
 export const PricingPage: FC<{ doc: FeesDoc }> = ({ doc }) => (
   <Layout
-    title={`비용 안내 | ${CLINIC.name} 강서구 명지 치과`}
+    title={`비용 안내 | ${CLINIC.name} 부산 명지오션시티 치과`}
     description="더착한치과 비급여 진료비용 안내입니다. 정확한 비용은 정밀 진단 후 개인별 상태에 따라 상담 시 안내해 드립니다."
     path="/pricing"
     keywords={['강서구 치과 비용', '임플란트 비용', '명지 치과 가격']}
-    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '비용 안내', path: '/pricing' }])]}
+    schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '비용 안내', path: '/pricing' }]), pricingWebPageSchema(doc.updated)]}
   >
     <section class="page-hero">
       <div class="container ph-inner">
