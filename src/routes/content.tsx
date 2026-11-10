@@ -676,7 +676,7 @@ export const ColumnDetailPage: FC<{ slug: string; column?: Column | null; views?
             })
           })()}
           {/* 지역 안내 1문장 — "부산 명지 치과" 허브로 (칼럼·이야기, 본문에 이미 허브 링크가 있으면 생략) */}
-          {board !== 'reviews' && !textHasHubLink(c.body.map((b) => String(b.p || '')).join('\n')) && <ColumnHubLine slug={c.slug} />}
+          {board !== 'reviews' && !textHasHubLink(c.body.map((b) => String(b.p || '')).join('\n')) && <ColumnHubLine slug={(c as any).dataSlug || c.slug} />}
           {isColumn && !drAuthor && (
           <aside class="col-author-box" aria-label="작성·발행">
             <div>

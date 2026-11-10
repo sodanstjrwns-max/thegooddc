@@ -32,7 +32,7 @@ import { LoginPage, RegisterPage, MyPage, AdminLoginPage, AdminDashboard, AdminN
 import {
   listNotices, createNotice, updateNotice, deleteNotice, getActivePopupNotices, isPopupActive, kstToday,
   listColumns, getColumn, createColumn, updateColumn, deleteColumn,
-  listPublicColumns, getColumnRedirect,
+  listPublicColumns, getColumnRedirect, getColumnByPublicSlug,
   listCases, createCase, updateCase, deleteCase,
   getSettings, getSettingsDiagnostic, saveSettings,
   listReservations, updateReservation, deleteReservation, buildResStats, reservationsToCsv,
@@ -40,6 +40,7 @@ import {
 } from './lib/content-store'
 import type { BoardKind } from './lib/content-store'
 import { isThinBoardPost, NOINDEX_FOLLOW } from './lib/thin-content'
+import { publicColumn } from './lib/column-clean'
 import { setActiveSettings } from './lib/runtime-settings'
 import { listMediumPosts } from './lib/medium'
 import { notifyGoogleIndex, notifyGoogleIndexMany, isGoogleIndexingConfigured } from './lib/google-indexing'
@@ -178,12 +179,15 @@ async function renderBoardDetail(c: any, board: BoardKind) {
   const canonical = await getColumnRedirect(c.env, slug)
   if (canonical) return c.redirect(encodeURI(`${path}/${canonical}`), 301)
   // KV에 없으면 페이지와 같은 방식으로 시드 글로 폴백 (기존 동작 유지)
-  const column = (await getColumn(c.env, slug)) ?? SEED_COLUMNS.find((x) => x.slug === slug) ?? null
-  if (!column) {
+  const rawColumn = (await getColumnByPublicSlug(c.env, slug)) ?? SEED_COLUMNS.find((x) => x.slug === slug) ?? null
+  // 공개 표시용 정리 — 본문에 붙은 작업 메모·제목 라벨을 가린다 (lib/column-clean.ts, 데이터는 그대로)
+  const column = rawColumn ? publicColumn(rawColumn) : null
+  if (!column || !rawColumn) {
     // 예전엔 200 + "글을 찾을 수 없습니다"(soft 404) → 404 상태 + noindex
     return c.html(<ColumnDetailPage slug={slug} column={null} board={board} />, 404, { 'X-Robots-Tag': 'noindex' })
   }
-  const views = await bumpView(c.env, `column:${slug}`)
+  // 조회수 키는 데이터의 slug 기준 — 주소를 코드 매핑으로 바꾼 글도 기존 조회수를 이어 쓴다
+  const views = await bumpView(c.env, `column:${rawColumn.slug}`)
   const thin = isThinBoardPost(column)
   // 원장 칼럼: 같은 진료 최신 칼럼 3편 + 같은 진료 비포애프터 3건 (내부 링크)
   let related: any[] = [], relatedCases: any[] = []

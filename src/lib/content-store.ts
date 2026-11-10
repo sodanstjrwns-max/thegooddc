@@ -221,6 +221,8 @@ export const SEED_CASES: CaseItem[] = [
   { id: 'cs-seed-4', title: '다수 임플란트 회복', age: '60대', gender: '남성', category: 'implant', area: '경남 김해 장유', doctor: 'hwang-wooseok', period: '약 4개월', desc: '여러 개의 치아를 잃은 경우 정밀 설계로 저작 기능을 회복한 사례입니다.', modified: '2026-05-01' },
 ]
 
+import { publicColumn, publicSlugOf, PUBLIC_SLUG_BY_ID } from './column-clean'
+
 // ---------- KV helpers ----------
 function getKV(env: any): KVNamespace | null {
   return env?.KV ?? null
@@ -379,17 +381,33 @@ export function duplicateColumnTarget(list: Column[], col: Column): string | nul
 }
 
 // 공개 페이지·사이트맵·RSS 용: 중복본 제외 (관리자는 listColumns 로 전체 조회)
+// (2026-11-10) 공개 표시용 정리(lib/column-clean.ts)를 거친다 — 본문에 붙은 작업 메모·제목 라벨을 가리고, 코드 매핑 주소를 쓴다. 데이터는 그대로.
 export async function listPublicColumns(env: any, board?: BoardKind): Promise<Column[]> {
   const all = await readList<Column>(env, KV_COLUMNS, SEED_COLUMNS)
   const list = await listColumns(env, board)
-  return list.filter((x) => duplicateColumnTarget(all, x) === null)
+  return list.filter((x) => duplicateColumnTarget(all, x) === null).map(publicColumn)
 }
 
-// slug 가 중복본이면 원본 slug 를 반환 (301 대상), 아니면 null
+// 공개 주소(slug)로 글 찾기 — 원본(정리 전) 글을 돌려준다. 코드 매핑 주소(PUBLIC_SLUG_BY_ID)가 있는 글은 새 주소로만 찾는다
+// (옛 주소는 getColumnRedirect 가 새 주소로 301).
+export async function getColumnByPublicSlug(env: any, slug: string): Promise<Column | null> {
+  const list = await readList<Column>(env, KV_COLUMNS, SEED_COLUMNS)
+  return list.find((x) => !!PUBLIC_SLUG_BY_ID[x.id] && PUBLIC_SLUG_BY_ID[x.id] === slug)
+    ?? list.find((x) => x.slug === slug && !PUBLIC_SLUG_BY_ID[x.id])
+    ?? null
+}
+
+// slug 가 중복본이면 원본 slug 를, 코드 매핑으로 주소가 바뀐 글의 옛 slug 면 새 slug 를 반환 (301 대상), 아니면 null
 export async function getColumnRedirect(env: any, slug: string): Promise<string | null> {
   const list = await readList<Column>(env, KV_COLUMNS, SEED_COLUMNS)
+  // 요청 주소가 어떤 글의 새(매핑) 주소면 그대로 연다
+  if (list.some((x) => PUBLIC_SLUG_BY_ID[x.id] === slug)) return null
   const col = list.find((x) => x.slug === slug)
-  return col ? duplicateColumnTarget(list, col) : null
+  if (!col) return null
+  const dup = duplicateColumnTarget(list, col)
+  if (dup) { const base = list.find((x) => x.slug === dup); return base ? publicSlugOf(base) : dup }
+  const mapped = publicSlugOf(col)
+  return mapped !== slug ? mapped : null
 }
 
 // body를 폼에서 받을 때: 줄바꿈 2개 단위 단락, 각 단락 첫 줄=소제목(옵션)
