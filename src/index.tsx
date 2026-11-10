@@ -1055,6 +1055,9 @@ Disallow: /api/
 Disallow: /seo-health
 Disallow: /*?*  # 파라미터 URL 중복 색인 방지 (정적 페이지 우선)
 Allow: /*?cat=  # 백과사전 카테고리 검색은 허용
+Allow: /static/  # 스타일·스크립트(?v= 버전 표기)는 렌더링에 필요하므로 허용
+Allow: /images/
+Allow: /favicon
 
 # ── AI 검색·답변 엔진 환영 (Answer Engine Optimization) ──
 ${aiBlock}
