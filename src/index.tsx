@@ -16,6 +16,7 @@ import {
 
 // Pages
 import { HomePage } from './routes/home'
+import { HomeRenewPage } from './routes/home-renew'
 import { TreatmentsListPage, TreatmentDetailPage } from './routes/treatments'
 import { DoctorsListPage, DoctorDetailPage } from './routes/doctors'
 import { MissionPage, DirectionsPage, FaqPage, PricingPage, NoticePage, ReservationPage } from './routes/pages'
@@ -151,7 +152,13 @@ async function getSession(c: any, role: 'member' | 'admin'): Promise<SessionPayl
 // ============================================================
 // PAGE ROUTES
 // ============================================================
-app.get('/', async (c) => c.html(<HomePage popups={await getActivePopupNotices(c.env)} />))
+// 홈 리뉴얼 스위치 (2026-11-23). false 로 바꾸고 다시 배포하면 예전 홈(routes/home.tsx)으로 돌아간다.
+// 되돌리기 지점: git tag pre-home-renewal-1123 · Cloudflare Pages 배포 39b37174
+const HOME_RENEWAL = true
+app.get('/', async (c) => {
+  const popups = await getActivePopupNotices(c.env)
+  return c.html(HOME_RENEWAL ? <HomeRenewPage popups={popups} /> : <HomePage popups={popups} />)
+})
 app.get('/mission', (c) => c.html(<MissionPage />))
 app.get('/treatments', (c) => c.html(<TreatmentsListPage />))
 app.get('/treatments/:slug', async (c) => {

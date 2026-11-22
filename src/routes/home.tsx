@@ -11,7 +11,7 @@ import { myeongjiItemListSchema } from '../data/myeongji-cards'
 import { MyeongjiCardGrid } from '../components/MyeongjiCards'
 
 // 홈 핵심 FAQ — 검색·AI 답변 노출도가 가장 높은 페이지의 직답형 FAQPage
-const HOME_FAQS = [
+export const HOME_FAQS = [
   { q: '더착한치과는 어디에 있나요?', a: `${CLINIC.address}에 있습니다. 명지국제신도시·강서구·김해 장유·사하구 하단에서 가깝습니다.` },
   { q: '야간 진료를 하나요?', a: '월요일과 수요일은 저녁 8시(20:00)까지 야간 진료를 합니다.' },
   { q: '토요일에도 진료하나요?', a: '네, 토요일 오전 8시부터 12시까지 점심시간 없이 진료합니다. 일요일은 정기휴무입니다.' },
@@ -56,16 +56,15 @@ const COMPARE = [
   { label: '상담 방식', us: '꼭 필요한 진료만 설명' },
 ]
 
-export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
+// 홈 SEO 값 — 기존 홈(HomePage)과 새 홈(home-renew.tsx)이 같은 값을 쓴다 (2026-11-23)
+export const homeSeo = () => {
   const doctor = DOCTORS[0]
-  return (
-    <Layout
-      title="명지 치과 | 더착한치과 — 부산 명지오션시티 임플란트·투명교정·스타일네이트"
-      description="부산 명지 치과 더착한치과(명지오션시티 스타빌딩 6층). 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만."
-      keywords={['명지 치과', '부산 명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과']}
-      path="/"
-      immersive
-      schemas={[
+  return {
+    title: '명지 치과 | 더착한치과 — 부산 명지오션시티 임플란트·투명교정·스타일네이트',
+    description: '부산 명지 치과 더착한치과(명지오션시티 스타빌딩 6층). 치의학박사·통합치의학 전문의가 24년 임상 경험과 디지털 가이드 AI 임플란트로 정확하게 진료합니다. 편안한 마취 진료, 꼭 필요한 진료만.',
+    keywords: ['명지 치과', '부산 명지 치과', '명지 임플란트', '명지 교정', '국제신도시 치과', '국제신도시 임플란트', '국제신도시 교정', '강서구 임플란트', '서부산 임플란트', 'AI 가이드 임플란트', '무통마취 치과'],
+    path: '/',
+    schemas: [
         // .aeo-answer 없는 페이지 — 실제 요소(h1·히어로 리드 문단)로 지정 (2026-09-29)
         speakableSchema(['h1', '.hero .lead']),
         faqSchema(HOME_FAQS),
@@ -75,7 +74,16 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
         breadcrumbSchema([{ name: '홈', path: '/' }]),
         // 화면 '명지 진료 안내' 사진 카드 6장과 1:1 (2026-10-14)
         myeongjiItemListSchema('/'),
-      ]}
+      ],
+  }
+}
+
+export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
+  const doctor = DOCTORS[0]
+  return (
+    <Layout
+      {...homeSeo()}
+      immersive
     >
       {popups.length > 0 && <NoticePopups notices={popups} />}
       {/* ===================== HERO — editorial asymmetric ===================== */}
@@ -825,7 +833,7 @@ const NoticePopupCard: FC<{ notice: Notice; i: number }> = ({ notice, i }) => (
   </div>
 )
 
-const NoticePopups: FC<{ notices: Notice[] }> = ({ notices }) => {
+export const NoticePopups: FC<{ notices: Notice[] }> = ({ notices }) => {
   const list = notices.slice(0, POPUP_MAX)
   if (!list.length) return null
   return (

@@ -26,6 +26,9 @@ export default defineConfig({
   define: {
     __IMMERSIVE_CSS_V__: JSON.stringify(fileHash('public/static/immersive.css')),
     __IMMERSIVE_JS_V__: JSON.stringify(fileHash('public/static/immersive.js')),
+    // 새 홈(2026-11-23) 정적 파일 해시
+    __HOME_RENEW_CSS_V__: JSON.stringify(fileHash('public/static/home-renew.css')),
+    __HOME_RENEW_JS_V__: JSON.stringify(fileHash('public/static/home-renew.js')),
     __TX_CONTENT_DATE__: JSON.stringify(lastCommitDate(['src/data/treatments.ts'])),
     // 사이트맵 lastmod·llms 최종 갱신 = 콘텐츠 실제 수정 커밋 날짜 (폴백 src/lib/content-dates.fallback.json)
     __CONTENT_DATES__: JSON.stringify(computeContentDates()),

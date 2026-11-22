@@ -21,9 +21,12 @@ interface LayoutProps {
   noindex?: boolean // true면 robots noindex,follow (thin 페이지 등 — 링크는 따라가되 색인 제외)
   article?: { published?: string; modified?: string; section?: string; author?: string } // og:type=article 메타
   immersive?: boolean // 메인 홈 스크롤 몰입 연출 (GSAP·Lenis) — 홈에서만 true
+  bare?: boolean // 새 홈(2026-11-23): 공통 스타일·머리·바닥 없이 head 메타·스키마·측정만 쓰고 본문은 children 이 전부 그린다
+  headExtra?: any // bare 모드에서 스타일시트 자리에 넣을 요소
 }
 
 const FA = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css'
+const PRETENDARD_SUBSET = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'
 const PRETENDARD = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css'
 
 // ============================================================
@@ -95,7 +98,7 @@ const GtmNoscript: FC = () => {
 }
 
 export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
-  const { title, description, path, keywords, ogImage, ogImageAlt, schemas = [], ogType = 'website', noindex = false, article, immersive = false, children } = props
+  const { title, description, path, keywords, ogImage, ogImageAlt, schemas = [], ogType = 'website', noindex = false, article, immersive = false, bare = false, headExtra, children } = props
   const url = canonical(path)
   const img = ogImage
     ? (/^https?:\/\//.test(ogImage) ? ogImage : canonical(ogImage))
@@ -164,15 +167,24 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-        <link rel="stylesheet" href={PRETENDARD} />
-        {/* Editorial serif pairing — Newsreader (Latin) + Nanum Myeongjo (Korean) — 비차단 로드 */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" media="print" onload="this.media='all'" />
-        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" /></noscript>
-        {/* Font Awesome 아이콘 — 비차단 로드 */}
-        <link rel="stylesheet" href={FA} media="print" onload="this.media='all'" />
-        <noscript><link rel="stylesheet" href={FA} /></noscript>
-        <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
-        {immersive && <ImmersiveHead />}
+        {bare ? (
+          <>
+            <link rel="stylesheet" href={PRETENDARD_SUBSET} />
+            {headExtra}
+          </>
+        ) : (
+          <>
+            <link rel="stylesheet" href={PRETENDARD} />
+            {/* Editorial serif pairing — Newsreader (Latin) + Nanum Myeongjo (Korean) — 비차단 로드 */}
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" media="print" onload="this.media='all'" />
+            <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Nanum+Myeongjo:wght@400;700;800&display=swap" /></noscript>
+            {/* Font Awesome 아이콘 — 비차단 로드 */}
+            <link rel="stylesheet" href={FA} media="print" onload="this.media='all'" />
+            <noscript><link rel="stylesheet" href={FA} /></noscript>
+            <link rel="stylesheet" href={`/static/style.css?v=${ASSET_VERSION}`} />
+          </>
+        )}
+        {immersive && !bare && <ImmersiveHead />}
         {/* Microsoft Clarity — 스타일시트 다음에 둔다(인라인 스크립트가 CSS 로드를 기다림).
             표준 모드에서 Clarity 가 CSS 적용 전 레이아웃을 읽으면 첫 화면 CLS ~0.29 가 잡혔다 (2026-10-31) */}
         <script dangerouslySetInnerHTML={{ __html: '(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","yc84cnr6dd");' }} />
@@ -184,6 +196,8 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
       </head>
       <body>
         <GtmNoscript />
+        {bare ? children : (
+          <>
         <a href="#main" class="skip-link">본문 바로가기</a>
         {/* 2026: scroll-driven reading progress (pure CSS animation-timeline: scroll) */}
         <div class="scroll-progress" aria-hidden="true"></div>
@@ -194,6 +208,8 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = (props) => {
         <FloatingCTA />
         <script src={`/static/app.js?v=${ASSET_VERSION}`} defer></script>
         {immersive && <ImmersiveScripts />}
+          </>
+        )}
       </body>
     </html>
     </>
