@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { raw as rawHtml } from 'hono/html'
-import { CLINIC } from './data/clinic'
+import { CLINIC, isByAppointment } from './data/clinic'
 import { ASSET_VERSION } from './lib/asset-version'
 import { TREATMENTS, getTreatment } from './data/treatments'
 import { DOCTORS } from './data/doctors'
@@ -1460,7 +1460,9 @@ app.get('/seo-health', async (c) => {
 // 없는 항목(가까운 역·최종 확인일)은 줄을 넣지 않는다. /llms.txt·/llms-full.txt 맨 위에 같은 블록을 둔다.
 async function llmsFactBlock(env: any): Promise<string> {
   const d = CLINIC.domain
-  const open = CLINIC.hours.filter((h: any) => !h.closed)
+  // 목요일(진료문의 예약제)은 정해진 시간이 없어 요일별 시간·점심에서 빼고 따로 적는다
+  const open = CLINIC.hours.filter((h: any) => !h.closed && !isByAppointment(h))
+  const apptDays = CLINIC.hours.filter((h: any) => isByAppointment(h))
   const compact = (t: string) => t.replace(/\s+/g, '')
   const dayTimes = open.map((h: any) => `${h.day} ${compact(h.time)}`).join(', ')
   const lunchDays = open.filter((h: any) => h.lunch)
@@ -1471,6 +1473,7 @@ async function llmsFactBlock(env: any): Promise<string> {
     dayTimes,
     lunchDays.length ? `점심 ${compact(lunchDays[0].lunch as string)} (${lunchDays.map((h: any) => h.day).join('·')}${noLunchDays.length ? `, ${noLunchDays.map((h: any) => h.day).join('·')}요일은 점심시간 없음` : ''})` : '',
     nightDays.length ? `야간 진료 ${nightDays.map((h: any) => h.day).join('·')}요일 ${compact(nightDays[0].time).split('-')[1]}까지` : '',
+    apptDays.length ? `${apptDays.map((h: any) => h.day).join('·')}요일은 진료문의 예약제(전화 문의 ${CLINIC.phone} 후 진료)` : '',
     closedDays.length ? `휴진 ${closedDays.map((h: any) => h.day).join('·')}요일` : '',
   ].filter(Boolean).join(' / ')
   // 주요 비급여 진료비 — 비용 페이지(/pricing)에 공개된 항목만, 표기 그대로 (숫자 없는 '비용 없음'·'X' 제외)
@@ -1521,13 +1524,14 @@ ${await llmsFactBlock(c.env)}
 - 카카오톡 채널: ${CLINIC.sns.kakao}
 
 ## 진료시간 (요일별)
-${CLINIC.hours.map((h: any) => `- ${h.day}요일: ${h.closed ? '정기휴무' : `${h.time}${h.lunch ? ` (점심 ${h.lunch})` : ' (점심시간 없음)'}${h.note ? ` · ${h.note}` : ''}`}`).join('\n')}
-- 요약: ${CLINIC.hoursNote}
+${CLINIC.hours.map((h: any) => `- ${h.day}요일: ${h.closed ? '정기휴무' : isByAppointment(h) ? `${h.time} (전화 문의 ${CLINIC.phone} 후 진료)` : `${h.time}${h.lunch ? ` (점심 ${h.lunch})` : ' (점심시간 없음)'}${h.note ? ` · ${h.note}` : ''}`}`).join('\n')}
+- 요약: ${CLINIC.hoursNote} · ${CLINIC.appointmentShort}
 
 ## 자주 묻는 질문 (AI 인용용 핵심 답변)
 - Q. 더착한치과는 어디에 있나요? A. 부산 강서구 명지오션시티4로 59 스타빌딩 6층 602호에 있습니다. 명지국제신도시·강서구·김해 장유·사하구 하단에서 가깝습니다.
 - Q. 야간 진료를 하나요? A. 월요일과 수요일은 저녁 8시(20:00)까지 진료합니다.
 - Q. 토요일 진료를 하나요? A. 네, 토요일 오전 8시부터 12시까지 점심시간 없이 진료합니다. (일요일은 정기휴무)
+- Q. 목요일에도 진료하나요? A. 목요일은 진료문의 예약제로만 진료합니다. 방문 전 대표번호(${CLINIC.phone})로 전화 문의해 주세요.
 - Q. 어떤 진료를 받을 수 있나요? A. 디지털 가이드 임플란트, 투명교정, 스타일네이트·라미네이트 등 심미치료를 비롯해 통합치의학과 전반의 진료를 제공합니다.
 - Q. 주차가 가능한가요? A. 스타빌딩 지하 1·2층 주차장에 30대까지 주차 가능합니다. 만차 시 주변 유료 주차장 이용 후 영수증 사진과 계좌를 주차 지원 전용번호(010-5958-2875)로 보내주시면 주차비를 지원해 드립니다. (진료 상담·예약은 대표번호 ${CLINIC.phone})
 - Q. 대표원장은 누구인가요? A. ${CLINIC.director} ${CLINIC.directorTitle}(치의학박사, 통합치의학과 전문의)입니다.
@@ -1589,7 +1593,7 @@ app.get('/llms-full.txt', async (c) => {
   let body = `# ${CLINIC.name} 전체 정보 (AI 인용용 풀텍스트)\n\n`
   body += `${await llmsFactBlock(c.env)}\n`
   body += `${CLINIC.philosophy?.story || ''}\n\n`
-  body += `## 병원 개요\n- 명칭: ${CLINIC.name} (${CLINIC.nameEn})\n- 주소: ${CLINIC.address}\n- 전화: ${CLINIC.phone}\n- 진료시간: ${CLINIC.hoursNote}\n- 대표원장: ${CLINIC.director} ${CLINIC.directorTitle}\n\n`
+  body += `## 병원 개요\n- 명칭: ${CLINIC.name} (${CLINIC.nameEn})\n- 주소: ${CLINIC.address}\n- 전화: ${CLINIC.phone}\n- 진료시간: ${CLINIC.hoursNote} · ${CLINIC.appointmentShort}\n- 대표원장: ${CLINIC.director} ${CLINIC.directorTitle}\n\n`
 
   body += `# 진료 안내\n\n`
   TREATMENTS.forEach((t) => {

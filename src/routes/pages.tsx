@@ -213,7 +213,7 @@ export const MissionPage: FC = () => {
 export const DirectionsPage: FC = () => (
   <Layout
     title={`오시는 길 · 진료시간 | ${CLINIC.name} 강서구 명지`}
-    description={`${CLINIC.name} 위치 안내. ${CLINIC.address}. ${CLINIC.directions.car}. 진료시간 ${CLINIC.hoursNote}.`}
+    description={`${CLINIC.name} 위치 안내. ${CLINIC.address}. ${CLINIC.directions.car}. 진료시간 ${CLINIC.hoursNote} · ${CLINIC.appointmentShort}.`}
     path="/directions"
     keywords={['강서구 치과 위치', '명지 치과 오시는길', '명지오션시티 치과', '더착한치과 진료시간']}
     schemas={[breadcrumbSchema([{ name: '홈', path: '/' }, { name: '오시는 길', path: '/directions' }])]}
@@ -240,6 +240,7 @@ export const DirectionsPage: FC = () => (
             ))}
           </table>
           <p style="margin-top:18px;color:var(--ink-soft);font-size:15px"><i class="fa-solid fa-circle-info" style="color:var(--brand);margin-right:6px"></i>점심시간 12:00 - 14:00 (토요일 제외)</p>
+          <p style="margin-top:8px;color:var(--ink-soft);font-size:15px"><i class="fa-solid fa-phone" style="color:var(--brand);margin-right:6px"></i>{CLINIC.appointmentNote}</p>
           <div style="margin-top:28px"><a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-primary"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a></div>
         </div>
         <div class="reveal" data-delay="2">
@@ -574,7 +575,7 @@ export const ReservationPage: FC = () => (
               ))}
             </div>
             <input type="hidden" name="timeSlot" id="time-input" />
-            <p class="rsv-hint"><i class="fa-regular fa-clock"></i> 월·수 야간 20시까지 / 토 오전 진료 / 일요일 휴무</p>
+            <p class="rsv-hint"><i class="fa-regular fa-clock"></i> 월·수 야간 20시까지 / 목 진료문의 예약제(전화 문의) / 토 오전 진료 / 일요일 휴무</p>
           </fieldset>
 
           {/* STEP 3 — 연락처 */}

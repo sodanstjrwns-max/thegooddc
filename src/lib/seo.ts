@@ -1,7 +1,7 @@
 // ============================================================
 // SEO / JSON-LD 스키마 헬퍼 (§G)
 // ============================================================
-import { CLINIC } from '../data/clinic'
+import { CLINIC, isByAppointment } from '../data/clinic'
 
 const BASE = `https://${CLINIC.domain}`
 // 병원 엔티티 @id 단일화 (2026-09-29): #dentist·#organization·#medicalclinic 3개 → #medicalclinic 하나
@@ -52,8 +52,9 @@ export function dentistSchema() {
       latitude: CLINIC.geo.lat,
       longitude: CLINIC.geo.lng,
     },
+    // 목요일(진료문의 예약제)은 정해진 시간이 없어 정규 진료시간에서 뺀다 — 넣으면 '영업 중'으로 보여 헛걸음이 생김
     openingHoursSpecification: CLINIC.hours
-      .filter((h) => !h.closed)
+      .filter((h) => !h.closed && !isByAppointment(h))
       .map((h) => ({
         '@type': 'OpeningHoursSpecification',
         dayOfWeek: dayToSchema(h.day),
@@ -66,10 +67,12 @@ export function dentistSchema() {
 
 // 화면(홈 오시는길·/directions)에 표시하는 CLINIC.hours 그대로 — 점심시간이 있는 날은 오전·오후 두 구간으로 나눈다
 // (2026-11-05: 월 09:00-20:00 한 구간으로 적으면 12:00-14:00 휴진이 빠져 실제와 어긋남)
+// (2026-11-23: 목요일 '진료문의 예약제'는 정해진 시간이 없어 뺀다 — schema.org 에 '예약제 요일' 표기가 없고,
+//  빠진 요일은 휴무로 읽힌다. 네이버 플레이스도 목요일을 '정기휴무'로 둠)
 function openingHoursSpec() {
   const specs: { '@type': 'OpeningHoursSpecification'; dayOfWeek: string; opens: string; closes: string }[] = []
   for (const h of CLINIC.hours as readonly { day: string; time: string; lunch: string | null; closed: boolean }[]) {
-    if (h.closed) continue
+    if (h.closed || isByAppointment(h)) continue
     const [open, close] = h.time.split(' - ')
     if (!open || !close) continue
     const day = dayToSchema(h.day)

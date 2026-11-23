@@ -237,7 +237,7 @@ export const MyeongjiExtraPage: FC<{ txKey: string }> = ({ txKey }) => {
         <div class="container">
           <div class="cta-band reveal">
             <h2>{card.name}, 검사부터 상담하세요</h2>
-            <p>{CLINIC.hoursNote}</p>
+            <p>{CLINIC.hoursNote}<br />{CLINIC.appointmentNote}</p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
               <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>

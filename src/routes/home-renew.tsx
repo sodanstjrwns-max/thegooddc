@@ -9,7 +9,7 @@
 import type { FC } from 'hono/jsx'
 import { raw } from 'hono/html'
 import { Layout } from '../components/Layout'
-import { CLINIC } from '../data/clinic'
+import { CLINIC, isByAppointment } from '../data/clinic'
 import { CORE_TREATMENTS, GENERAL_TREATMENTS } from '../data/treatments'
 import { DOCTORS } from '../data/doctors'
 import { STORY_CHAPTERS, STORY_CTA, CASE_STORIES } from '../data/story'
@@ -76,7 +76,9 @@ const STANDARD: [string, string][] = [
 // 진료시간 → 머리 줄 '진료 중' 표시용 (요일 번호: 일 0 ~ 토 6)
 const DAY_NO: Record<string, number> = { 일: 0, 월: 1, 화: 2, 수: 3, 목: 4, 금: 5, 토: 6 }
 const hm = (s: string) => { const m = /(\d{2}):(\d{2})/.exec(s); return m ? Number(m[1]) * 60 + Number(m[2]) : 0 }
+// 예약제 요일(목)은 시간 대신 보여 줄 문구를 넣는다 — home-renew.js 가 문자열이면 그대로 표시
 const HOURS_JSON = JSON.stringify(Object.fromEntries(CLINIC.hours.filter((h) => !h.closed).map((h) => {
+  if (isByAppointment(h)) return [DAY_NO[h.day], '오늘은 예약제 진료 · 전화 문의']
   const [a, b] = h.time.split('-').map((x) => hm(x))
   const l = h.lunch ? h.lunch.split('-').map((x) => hm(x)) : null
   return [DAY_NO[h.day], l ? [a, b, l[0], l[1]] : [a, b]]
@@ -159,7 +161,7 @@ function buildBody(): string {
     <p class="ans-p" data-rv>더착한치과는 부산 강서구 명지오션시티 스타빌딩 6층에 있는 치과입니다. 2015년부터 명지에서, 치의학박사·통합치의학과 전문의 ${e(doctor.name)} 대표원장이 24년 임상 경험과 디지털 가이드 임플란트로 진료합니다. 편안한 마취로 통증을 줄이고, 꼭 필요한 진료만 설명드린 뒤에 시작합니다.</p>
     <dl class="spec">
       <div data-rv><dt>위치</dt><dd>${e(ADDR)} · <a href="${HUB_PATH}">부산 명지 치과</a> 안내</dd></div>
-      <div data-rv><dt>진료 시간</dt><dd>월·수 09:00–20:00(야간) · 화·목·금 09:00–18:00 · 토 08:00–12:00 · 일요일 정기휴무</dd></div>
+      <div data-rv><dt>진료 시간</dt><dd>${pb('월·수 09:00–20:00(야간) ·', '화·금 09:00–18:00 ·', '목 진료문의 예약제(전화 문의) ·', '토 08:00–12:00 ·', '일요일 정기휴무')}</dd></div>
       <div data-rv><dt>의료진</dt><dd><a href="/doctors/${doctor.slug}">${e(doctor.name)} 대표원장</a> — ${e(doctor.license)}</dd></div>
       <div data-rv><dt>진료</dt><dd>${CORE_TREATMENTS.map((t) => `<a href="/treatments/${t.slug}">${e(t.shortName)}</a>`).join(' · ')} · <a href="/treatments">10개 진료과 통합 진료</a></dd></div>
       <div data-rv><dt>예약</dt><dd><a ${tel('answer')}>${TEL}</a> · <a ${book('answer')}>온라인 예약</a>${CLINIC.sns.naverBooking ? ` · <a href="${CLINIC.sns.naverBooking}" target="_blank" rel="noopener" data-track="naver_booking" data-track-loc="answer">네이버 예약</a>` : ''}</dd></div>
@@ -401,8 +403,8 @@ function buildBody(): string {
       <div class="vs-info">
         <div class="vs-b" data-rv><h3>주소</h3><p class="vs-addr">${e(ADDR)}</p><a class="vs-tel lat" ${tel('home-visit')}>${TEL}</a></div>
         <div class="vs-b" data-rv><h3>진료시간</h3>
-          <ul class="vs-h">${CLINIC.hours.map((h) => `<li data-day="${DAY_NO[h.day]}"${h.closed ? ' class="off"' : ''}><b>${h.day}</b><span${h.closed ? '' : ' class="lat"'}>${h.time}</span>${'note' in h && h.note ? `<em>${h.note}</em>` : ''}</li>`).join('')}</ul>
-          <p class="note">${e(CLINIC.hoursNote)}</p>
+          <ul class="vs-h">${CLINIC.hours.map((h) => `<li data-day="${DAY_NO[h.day]}"${h.closed ? ' class="off"' : ''}><b>${h.day}</b><span${h.closed || isByAppointment(h) ? '' : ' class="lat"'}>${h.time}</span>${'note' in h && h.note ? `<em>${h.note}</em>` : ''}</li>`).join('')}</ul>
+          <p class="note">${pb(...CLINIC.hoursNote.split(' · ').map((x, i, a) => e(x) + (i < a.length - 1 ? ' ·' : '')))}<br>${pb(...CLINIC.appointmentNote.split(/(?<=\.) /).map(e))}</p>
         </div>
         <div class="vs-b" data-rv><h3>주차</h3><p>${e(CLINIC.directions.parkingDetail)}</p></div>
       </div>

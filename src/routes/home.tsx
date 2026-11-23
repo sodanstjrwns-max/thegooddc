@@ -620,6 +620,7 @@ export const HomePage: FC<{ popups?: Notice[] }> = ({ popups = [] }) => {
                   ))}
                 </ul>
                 <p class="vi-note"><i class="fa-solid fa-circle-info"></i> {CLINIC.hoursNote}</p>
+                <p class="vi-note"><i class="fa-solid fa-phone"></i> {CLINIC.appointmentNote}</p>
               </div>
               <div class="visit-block">
                 <span class="vi-head"><i class="fa-solid fa-square-parking"></i> 주차</span>

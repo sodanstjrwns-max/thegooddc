@@ -374,14 +374,14 @@
   function initClinicStatus() {
     var el = document.querySelector('[data-clinic-status]');
     if (!el) return;
-    /* 요일 0=일 ~ 6=토. open/close 는 분 단위(24h). lunch 는 [시작,끝] 분(선택). null = 휴진 */
+    /* 요일 0=일 ~ 6=토. open/close 는 분 단위(24h). lunch 는 [시작,끝] 분(선택). null = 휴진, 'appt' = 진료문의 예약제(전화 문의 후 진료) */
     var m = function (h, mm) { return h * 60 + (mm || 0); };
     var SCHEDULE = {
       0: null,                                   /* 일 - 정기휴무 */
       1: { open: m(9), close: m(20), lunch: [m(12), m(14)] }, /* 월 - 야간 */
       2: { open: m(9), close: m(18), lunch: [m(12), m(14)] }, /* 화 */
       3: { open: m(9), close: m(20), lunch: [m(12), m(14)] }, /* 수 - 야간 */
-      4: { open: m(9), close: m(18), lunch: [m(12), m(14)] }, /* 목 */
+      4: 'appt',                                 /* 목 - 진료문의 예약제 (2026-11-23 원장 요청) */
       5: { open: m(9), close: m(18), lunch: [m(12), m(14)] }, /* 금 */
       6: { open: m(8), close: m(12), lunch: null }            /* 토 - 점심없음 */
     };
@@ -394,6 +394,7 @@
       var cur = kst.getHours() * 60 + kst.getMinutes();
       var day = SCHEDULE[dow];
       if (!day) return { state: 'closed', text: '진료종료', sub: '오늘 휴진' };
+      if (day === 'appt') return { state: 'appt', text: '예약제 진료', sub: '목요일은 진료문의 예약제 · 전화 문의' };
       if (cur < day.open) return { state: 'closed', text: '진료 준비중', sub: fmt(day.open) + ' 진료 시작' };
       if (cur >= day.close) return { state: 'closed', text: '진료종료', sub: '오늘 진료 마감' };
       if (day.lunch && cur >= day.lunch[0] && cur < day.lunch[1]) return { state: 'lunch', text: '점심시간', sub: fmt(day.lunch[1]) + ' 진료 재개' };

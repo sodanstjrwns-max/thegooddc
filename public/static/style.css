@@ -1707,9 +1707,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
 .clinic-status[data-state="open"] .cs-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:#16a34a;opacity:.35;animation:csPulse 1.8s ease-out infinite}
 .clinic-status[data-state="open"] .cs-text{color:#15803d}
 /* 점심시간 = 앰버 */
-.clinic-status[data-state="lunch"]{background:color-mix(in oklab,#d97706 12%,#fff);border-color:color-mix(in oklab,#d97706 32%,transparent)}
-.clinic-status[data-state="lunch"] .cs-dot{background:#d97706}
-.clinic-status[data-state="lunch"] .cs-text{color:#b45309}
+.clinic-status[data-state="lunch"],.clinic-status[data-state="appt"]{background:color-mix(in oklab,#d97706 12%,#fff);border-color:color-mix(in oklab,#d97706 32%,transparent)}
+.clinic-status[data-state="lunch"] .cs-dot,.clinic-status[data-state="appt"] .cs-dot{background:#d97706}
+.clinic-status[data-state="lunch"] .cs-text,.clinic-status[data-state="appt"] .cs-text{color:#b45309}
 /* 진료종료/휴진 = 회색 */
 .clinic-status[data-state="closed"]{background:#f3f4f6;border-color:var(--line,#e5e7eb)}
 .clinic-status[data-state="closed"] .cs-dot{background:#9ca3af}

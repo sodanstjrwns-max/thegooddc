@@ -54,7 +54,8 @@
     var H = {}; try { H = JSON.parse(live.getAttribute('data-hours') || '{}') } catch (e) {}
     var t = function (v) { return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0') }
     var h = H[d], txt = '오늘은 휴진'
-    if (h) {
+    if (typeof h === 'string') txt = h /* 예약제 요일(목): 안내 문구 그대로 */
+    else if (h) {
       if (m < h[0]) txt = '오늘 ' + t(h[0]) + ' 진료 시작'
       else if (m >= h[1]) txt = '오늘 진료 종료'
       else if (h.length > 2 && m >= h[2] && m < h[3]) txt = '점심시간 · ' + t(h[3]) + ' 재개'

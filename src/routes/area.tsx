@@ -17,7 +17,7 @@ const BUS_ALL = [
   ...CLINIC.directions.bus.seat,
   ...CLINIC.directions.bus.express,
 ]
-const HOURS_LINE = `평일 09:00-18:00(월·수 야간 20:00), 토 08:00-12:00 · ${CLINIC.hoursNote}`
+const HOURS_LINE = `월·수 09:00-20:00(야간), 화·금 09:00-18:00, ${CLINIC.appointmentShort.replace('목요일', '목')}, 토 08:00-12:00 · ${CLINIC.hoursNote}`
 
 // ============================================================
 // 지역 × 진료 조합 SEO 페이지: /area/:areaSlug-:treatmentSlug
@@ -142,7 +142,7 @@ export const AreaPage: FC<{ areaSlug: string; treatmentSlug: string }> = ({ area
         <div class="container">
           <div class="cta-band reveal">
             <h2>{area.name}에서 {t.shortName}, 지금 상담하세요</h2>
-            <p>{CLINIC.hoursNote}</p>
+            <p>{CLINIC.hoursNote}<br />{CLINIC.appointmentNote}</p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
               <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>
@@ -280,7 +280,7 @@ export const AreaHubPage: FC<{ areaSlug: string }> = ({ areaSlug }) => {
         <div class="container">
           <div class="cta-band reveal">
             <h2>{area.name}에서 가까운 치과, 지금 상담하세요</h2>
-            <p>{CLINIC.hoursNote}</p>
+            <p>{CLINIC.hoursNote}<br />{CLINIC.appointmentNote}</p>
             <div class="hero-actions">
               <a href="/reservation" class="btn btn-accent"><i class="fa-regular fa-calendar-check"></i> 진료 예약</a>
               <a href={`tel:${CLINIC.phoneRaw}`} class="btn btn-ghost"><i class="fa-solid fa-phone"></i> {CLINIC.phone}</a>

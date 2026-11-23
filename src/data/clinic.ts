@@ -54,12 +54,17 @@ export const CLINIC = {
     { day: '월', time: '09:00 - 20:00', lunch: '12:00 - 14:00', closed: false, note: '야간진료' },
     { day: '화', time: '09:00 - 18:00', lunch: '12:00 - 14:00', closed: false },
     { day: '수', time: '09:00 - 20:00', lunch: '12:00 - 14:00', closed: false, note: '야간진료' },
-    { day: '목', time: '09:00 - 18:00', lunch: '12:00 - 14:00', closed: false },
+    // 목요일 — 원장 요청(2026-11-23 카톡·12월 진료일정 포스터): 정해진 시간 없이 '진료문의 예약제', 전화 문의 후 진료.
+    // byAppointment 요일은 정규 진료시간(구조화 데이터·'진료 중' 표시)에서 뺀다. 네이버 플레이스는 '정기휴무 (매주 목요일)'.
+    { day: '목', time: '진료문의 예약제', lunch: null, closed: false, byAppointment: true },
     { day: '금', time: '09:00 - 18:00', lunch: '12:00 - 14:00', closed: false },
     { day: '토', time: '08:00 - 12:00', lunch: null, closed: false, note: '점심시간 없음' },
     { day: '일', time: '정기휴무', lunch: null, closed: true },
   ],
   hoursNote: '매주 일요일 정기휴무 · 점심시간 12:00-14:00 (토요일 제외)',
+  // 목요일 예약제 안내 — 진료시간 표 아래·예약 띠에 한 줄로 (원장 포스터 문구 그대로)
+  appointmentNote: '목요일은 진료문의 예약제로만 진료합니다. 전화문의 부탁드립니다.',
+  appointmentShort: '목요일 진료문의 예약제(전화 문의)',
 
   // 브랜딩 (섹션 6) — Q24 따뜻하고 친근한 / Q25 블루
   brand: {
@@ -121,3 +126,6 @@ export const CLINIC = {
 } as const
 
 export type Clinic = typeof CLINIC
+
+/** 정해진 진료시간 없이 전화 문의 후 예약으로만 진료하는 요일인가 (현재 목요일) */
+export const isByAppointment = (h: { day: string }): boolean => 'byAppointment' in h && (h as { byAppointment?: boolean }).byAppointment === true
