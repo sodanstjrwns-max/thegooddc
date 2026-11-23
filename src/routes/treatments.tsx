@@ -74,9 +74,9 @@ const PROC_META: Record<string, { bodyLocation?: string; preparation?: string; f
   },
   conservative: {
     bodyLocation: '치아 경조직·치수',
-    preparation: '정밀 진단으로 충치 범위와 치아 균열 여부를 파악합니다.',
-    followup: '신경치료 후 크라운으로 보호하고, 정기 검진으로 경계 부위 재발을 관리합니다.',
-    howPerformed: '충치 범위에 따라 레진 충전, 인레이, 신경치료 등으로 자연 치아를 보존하며 수복합니다.',
+    preparation: '정밀 진단으로 충치 범위·신경 반응과 치아 균열 여부를 파악합니다.',
+    followup: '생활치수치료 후에는 정기 방사선 촬영·신경 반응 검사로 경과를 확인하고, 신경치료 후에는 크라운으로 보호하며 정기 검진으로 경계 부위 재발을 관리합니다.',
+    howPerformed: '충치 범위에 따라 레진 충전, 인레이, 신경을 살리는 생활치수치료(VPT), 신경치료 등으로 자연 치아를 보존하며 수복합니다.',
   },
   prosthodontics: {
     bodyLocation: '결손·손상 치아 부위',
@@ -253,7 +253,10 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
         <div class="container ph-inner">
           <Breadcrumb items={[{ name: '홈', path: '/' }, { name: '진료안내', path: '/treatments' }, { name: t.shortName, path: `/treatments/${t.slug}` }]} />
           <div class="eyebrow">{t.category === 'core' ? 'SIGNATURE CARE' : 'TREATMENT'}</div>
-          <h1>{t.name}</h1>
+          {/* 제목 줄바꿈: '충치치료·생활치수치료'처럼 띄어쓰기 없는 가운뎃점이 있으면 점 뒤에서만 끊고(점이 줄 첫머리로 가지 않게), 낱말 안에서는 끊지 않는다 */}
+          <h1>{/\S·\S/.test(t.name)
+            ? t.name.split(' ').map((w, wi) => <>{wi > 0 && ' '}{w.split(/(?<=·)/).map((p, pi) => <>{pi > 0 && <wbr />}<span style="white-space:nowrap">{p}</span></>)}</>)
+            : t.name}</h1>
           <p>{t.tagline}</p>
           <div class="hero-actions" style="margin-top:30px">
             <a href="/reservation" class="btn btn-accent magnetic"><i class="fa-regular fa-calendar-check"></i> {STORY_CTA.reserve}</a>
@@ -382,6 +385,15 @@ export const TreatmentDetailPage: FC<{ slug: string; columns?: { slug: string; t
                   </table>
                 </div>
               )}
+              {t.moreComparisons && t.moreComparisons.map((cmp, ci) => (
+                <div id={`cmp-${ci + 2}`} class="reveal">
+                  <h2>{cmp.title}</h2>
+                  <table class="cmp-table">
+                    <thead><tr>{cmp.columns.map((c) => <th>{c}</th>)}</tr></thead>
+                    <tbody>{cmp.rows.map((row) => <tr>{row.map((cell) => <td>{cell}</td>)}</tr>)}</tbody>
+                  </table>
+                </div>
+              ))}
 
               {/* 주의사항·고려사항 (의료광고법 준수 — 정확한 정보 제공) */}
               {t.cautions && (

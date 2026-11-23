@@ -31,7 +31,7 @@ const RAW: { key: string; short: string; tag: string; title: string; alt: string
   { key: 'clear-aligner', short: '투명교정', tag: 'CLEAR ALIGNER', title: '명지 투명교정 | 구강 스캔으로 시작하는 탈착식 교정 — 더착한치과', alt: '명지 투명교정 — 대표원장이 디지털 영상으로 진단 계획을 살펴보는 모습' },
   { key: 'minish', short: '스타일네이트', tag: 'MINIMAL PREP', title: '명지 스타일네이트 | 덜 깎는 라미네이트가 맞는 경우 — 더착한치과', alt: '명지 스타일네이트 — 얇은 세라믹 라미네이트 시편과 셰이드 가이드' },
   { key: 'orthodontics', short: '치아교정', tag: 'ORTHODONTICS', title: '명지 치아교정 | 브라켓 교정 시작 전 확인할 것 — 더착한치과', alt: '명지 치아교정 — 브라켓과 와이어가 장착된 치아 교정 모형' },
-  { key: 'conservative', short: '충치치료', tag: 'CAVITY CARE', title: '명지 충치치료 | 레진·인레이·신경치료 고르는 기준 — 더착한치과', alt: '명지 충치치료 — 러버댐과 기구를 준비한 보존 치료 진료실' },
+  { key: 'conservative', short: '충치치료', tag: 'CAVITY CARE', title: '명지 충치치료 | 생활치수치료(VPT)·레진·인레이·신경치료 기준 — 더착한치과', alt: '명지 충치치료 — 러버댐과 기구를 준비한 보존 치료 진료실' },
   { key: 'periodontics', short: '잇몸치료', tag: 'GUM CARE', title: '명지 잇몸치료 | 잇몸 출혈, 스케일링으로 충분할까 — 더착한치과', alt: '명지 잇몸치료 — 스케일링 기구와 치간칫솔을 준비하는 진료실' },
 ]
 

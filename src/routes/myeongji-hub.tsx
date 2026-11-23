@@ -40,7 +40,7 @@ const TX_NOTE: Record<string, string> = {
   'clear-aligner': '탈착식 투명 장치로 하는 교정',
   minish: '치아를 덜 다듬고 시작하는 최소삭제 라미네이트',
   integrated: '통합치의학과 전문의가 입안 전체를 함께 진단',
-  conservative: '충치·신경치료로 자연 치아 보존',
+  conservative: '신경을 살리는 생활치수치료(VPT) 중심 충치치료',
   prosthodontics: '크라운·브릿지·틀니',
   orthodontics: '브라켓 교정 등 치아교정 전반',
   periodontics: '잇몸 출혈·치주염 관리와 치료',
