@@ -225,7 +225,8 @@ em{font-style:normal;color:var(--tl)}
 .pm-w i{position:absolute;left:-3%;right:-3%;top:52%;height:.085em;background:var(--cy);transform-origin:0 50%;border-radius:9px}
 .pm-a h3{font-family:var(--disp);font-weight:800;font-size:clamp(1.3rem,2.5vw,2.3rem);letter-spacing:-.045em;line-height:1.2;color:#fff}
 .pm-a p{margin-top:8px;color:rgba(255,255,255,.72);font-size:clamp(.92rem,1.15vw,1.05rem);line-height:1.65;max-width:30em}
-.rm .pm,html:not(.js) .pm{height:auto}
+/* 동작 줄이기·JS 없음: 고정 장면이 풀리면 .pm-pin::before 장식 원(right:-18vw)이 .pm 기준으로 붙어 가로 넘침 → 여기서만 자른다(평소엔 sticky 때문에 자르지 않음) */
+.rm .pm,html:not(.js) .pm{height:auto;overflow:hidden}
 .rm .pm-pin,html:not(.js) .pm-pin{position:static;height:auto;padding:120px 0 100px}
 
 /* ---------- 06 철학 ---------- */
